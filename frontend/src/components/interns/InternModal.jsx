@@ -13,7 +13,7 @@ export function InternModal({ isOpen, onClose, onSubmit, initialData }) {
             name: e.target.name.value,
             email: e.target.email.value,
             role: e.target.role.value,
-            // ... other fields
+            password: 'password123'
         });
         onClose();
     };

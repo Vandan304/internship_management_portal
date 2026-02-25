@@ -2,6 +2,7 @@ import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { LayoutDashboard, Users, FileText, Download, Settings, LogOut, X } from 'lucide-react';
 import { cn } from '../../utils/cn';
+import { useAuth } from '../../context/AuthContext';
 
 const navItems = [
     { icon: LayoutDashboard, label: 'Dashboard', to: '/admin' },
@@ -11,6 +12,8 @@ const navItems = [
 ];
 
 export function Sidebar({ isOpen, onClose }) {
+    const { logout } = useAuth();
+
     return (
         <>
             {/* Mobile Overlay */}
@@ -63,7 +66,7 @@ export function Sidebar({ isOpen, onClose }) {
 
                 {/* Footer Actions */}
                 <div className="p-4 border-t border-gray-50">
-                    <button className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:bg-red-50 hover:text-red-600 w-full transition-colors">
+                    <button onClick={logout} className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:bg-red-50 hover:text-red-600 w-full transition-colors">
                         <LogOut size={18} />
                         <span>Sign Out</span>
                     </button>

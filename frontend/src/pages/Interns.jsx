@@ -9,7 +9,7 @@ import { useData } from '../context/DataContext';
 
 export default function Interns() {
     // Access global state from DataContext
-    const { interns, addIntern, updateIntern, deleteIntern } = useData();
+    const { interns, addIntern, updateIntern, deleteIntern, blockIntern, activateIntern } = useData();
     const [searchQuery, setSearchQuery] = useState('');
     const [filterStatus, setFilterStatus] = useState('All');
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -25,17 +25,30 @@ export default function Interns() {
     });
 
     // Handlers
-    const toggleLoginStatus = (id) => {
+    const toggleLoginStatus = async (id) => {
         const intern = interns.find(i => i.id === id);
-        updateIntern(id, { loginAllowed: !intern.loginAllowed });
-        addToast(`Login ${!intern.loginAllowed ? 'allowed' : 'blocked'} for ${intern.name}`, 'info');
+        try {
+            if (intern.loginAllowed) {
+                await blockIntern(id);
+                addToast(`Login blocked for ${intern.name}`, 'info');
+            } else {
+                await activateIntern(id);
+                addToast(`Login allowed for ${intern.name}`, 'success');
+            }
+        } catch (error) {
+            addToast('Failed to update login status', 'error');
+        }
     };
 
-    const toggleStatus = (id) => {
+    const toggleStatus = async (id) => {
         const intern = interns.find(i => i.id === id);
         const newStatus = intern.status === 'Active' ? 'Inactive' : 'Active';
-        updateIntern(id, { status: newStatus });
-        addToast(`${intern.name} is now ${newStatus}`, 'success');
+        try {
+            await updateIntern(id, { isActive: newStatus === 'Active' });
+            addToast(`${intern.name} is now ${newStatus}`, 'success');
+        } catch (error) {
+            addToast('Failed to update status', 'error');
+        }
     };
 
     const handleDelete = (id) => {

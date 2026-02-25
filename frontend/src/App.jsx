@@ -27,19 +27,35 @@ function App() {
         <ToastProvider>
           <Routes>
             <Route path="/" element={<LandingPage />} />
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/register" element={<RegisterPage />} />
+            <Route path="/login" element={
+              <ProtectedRoute>
+                <LoginPage />
+              </ProtectedRoute>
+            } />
+            <Route path="/register" element={
+              <ProtectedRoute>
+                <RegisterPage />
+              </ProtectedRoute>
+            } />
 
-            {/* Admin Routes - Public Access Requested */}
-            <Route path="/admin" element={<AdminLayout />}>
+            {/* Admin Routes */}
+            <Route path="/admin" element={
+              <ProtectedRoute role="admin">
+                <AdminLayout />
+              </ProtectedRoute>
+            }>
               <Route index element={<Dashboard />} />
               <Route path="interns" element={<Interns />} />
               <Route path="certificates" element={<Certificates />} />
               <Route path="permissions" element={<Permissions />} />
             </Route>
 
-            {/* Intern Routes - Public Access Requested */}
-            <Route path="/intern" element={<InternLayout />}>
+            {/* Intern Routes */}
+            <Route path="/intern" element={
+              <ProtectedRoute role="intern">
+                <InternLayout />
+              </ProtectedRoute>
+            }>
               <Route index element={<InternDashboard />} />
               <Route path="certificates" element={<MyCertificates />} />
               <Route path="profile" element={<InternProfile />} />

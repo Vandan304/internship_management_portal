@@ -10,18 +10,9 @@ export const useData = () => {
     return context;
 };
 
-// Initial Dummy Data
-const initialInterns = Array.from({ length: 5 }).map((_, i) => ({
-    id: i + 1,
-    name: `Intern User ${i + 1}`,
-    email: `intern${i + 1}@example.com`,
-    password: 'password123', // Default password for testing
-    role: 'Frontend Developer',
-    status: i % 3 === 0 ? 'Inactive' : 'Active',
-    joinDate: '2026-01-15',
-    loginAllowed: true,
-}));
+import axios from 'axios';
 
+// Initial Dummy Data for certificates only
 const initialCertificates = [
     {
         id: 1,
@@ -45,43 +36,122 @@ const initialCertificates = [
 ];
 
 export const DataProvider = ({ children }) => {
-    const [interns, setInterns] = useState(() => {
-        const saved = localStorage.getItem('interns');
-        return saved ? JSON.parse(saved) : initialInterns;
-    });
+    const [interns, setInterns] = useState([]);
+
+    const fetchInterns = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            if (token) {
+                axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+                const res = await axios.get('http://localhost:5000/api/admin/interns');
+                if (res.data.success) {
+                    setInterns(res.data.data.map(i => ({
+                        ...i,
+                        id: i._id,
+                        status: i.isActive ? 'Active' : 'Inactive',
+                        joinDate: i.createdAt ? i.createdAt.split('T')[0] : 'N/A'
+                    })));
+                }
+            }
+        } catch (error) {
+            console.error("Error fetching interns:", error);
+        }
+    };
+
+    useEffect(() => {
+        fetchInterns();
+    }, []);
 
     const [certificates, setCertificates] = useState(() => {
         const saved = localStorage.getItem('certificates');
         return saved ? JSON.parse(saved) : initialCertificates;
     });
 
-    // Persistence
-    useEffect(() => {
-        localStorage.setItem('interns', JSON.stringify(interns));
-    }, [interns]);
-
+    // Persistence for certificates only
     useEffect(() => {
         localStorage.setItem('certificates', JSON.stringify(certificates));
     }, [certificates]);
 
     // --- Intern Actions ---
-    const addIntern = (intern) => {
-        const newIntern = { ...intern, id: Date.now(), loginAllowed: true, status: 'Active', password: 'password123' };
-        setInterns([newIntern, ...interns]);
+    const addIntern = async (intern) => {
+        try {
+            const token = localStorage.getItem('token');
+            const res = await axios.post('http://localhost:5000/api/admin/intern', intern, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (res.data.success) {
+                fetchInterns(); // Refresh list
+            }
+        } catch (error) {
+            console.error("Error adding intern:", error.response?.data || error);
+            throw error;
+        }
     };
 
-    const updateIntern = (id, updates) => {
-        setInterns(interns.map(i => i.id === id ? { ...i, ...updates } : i));
+    const updateIntern = async (id, updates) => {
+        try {
+            const token = localStorage.getItem('token');
+            const res = await axios.put(`http://localhost:5000/api/admin/intern/${id}`, updates, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (res.data.success) {
+                fetchInterns(); // Refresh list
+            }
+        } catch (error) {
+            console.error("Error updating intern:", error.response?.data || error);
+            throw error;
+        }
     };
 
-    const deleteIntern = (id) => {
-        setInterns(interns.filter(i => i.id !== id));
-        // Also remove assignments for this intern
-        setCertificates(certificates.map(c => ({
-            ...c,
-            assignments: c.assignments.filter(a => a.internId !== id)
-        })));
+    const deleteIntern = async (id) => {
+        try {
+            const token = localStorage.getItem('token');
+            const res = await axios.delete(`http://localhost:5000/api/admin/intern/${id}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (res.data.success) {
+                fetchInterns(); // Refresh list
+                // Also remove assignments for this intern
+                setCertificates(certificates.map(c => ({
+                    ...c,
+                    assignments: c.assignments.filter(a => a.internId !== id)
+                })));
+            }
+        } catch (error) {
+            console.error("Error deleting intern:", error.response?.data || error);
+            throw error;
+        }
     };
+
+    const blockIntern = async (id) => {
+        try {
+            const token = localStorage.getItem('token');
+            const res = await axios.patch(`http://localhost:5000/api/admin/intern/${id}/block`, {}, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (res.data.success) {
+                fetchInterns(); // Refresh list
+            }
+        } catch (error) {
+            console.error("Error blocking intern:", error.response?.data || error);
+            throw error;
+        }
+    }
+
+    const activateIntern = async (id) => {
+        try {
+            const token = localStorage.getItem('token');
+            const res = await axios.patch(`http://localhost:5000/api/admin/intern/${id}/activate`, {}, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (res.data.success) {
+                fetchInterns(); // Refresh list
+            }
+        } catch (error) {
+            console.error("Error activating intern:", error.response?.data || error);
+            throw error;
+        }
+    }
 
     // --- Certificate Actions ---
     const addCertificate = (cert) => {
@@ -128,9 +198,12 @@ export const DataProvider = ({ children }) => {
     const value = {
         interns,
         certificates,
+        fetchInterns,
         addIntern,
         updateIntern,
         deleteIntern,
+        blockIntern,
+        activateIntern,
         addCertificate,
         deleteCertificate,
         updateCertificate,

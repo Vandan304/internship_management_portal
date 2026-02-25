@@ -4,23 +4,27 @@ import { Users, UserCheck, FileText, Download, TrendingUp, MoreVertical } from '
 import { Button } from '../components/ui/Button';
 import { useToast } from '../context/ToastContext';
 
-const stats = [
-    { title: 'Total Interns', value: '1,234', change: '+12%', icon: Users, color: 'text-blue-600', bg: 'bg-blue-50' },
-    { title: 'Active Interns', value: '856', change: '+5%', icon: UserCheck, color: 'text-emerald-600', bg: 'bg-emerald-50' },
-    { title: 'Certificates', value: '3,421', change: '+8%', icon: FileText, color: 'text-purple-600', bg: 'bg-purple-50' },
-    { title: 'Downloads', value: '8,920', change: '+24%', icon: Download, color: 'text-orange-600', bg: 'bg-orange-50' },
-];
-
-const activities = [
-    { title: 'New registration', time: '2 mins ago', user: 'Amit Kumar' },
-    { title: 'Certificate downloaded', time: '15 mins ago', user: 'Sarah Wilson' },
-    { title: 'Intern promoted', time: '1 hour ago', user: 'Rajesh Singh' },
-    { title: 'New batch added', time: '3 hours ago', user: 'System Admin' },
-    { title: 'Profile updated', time: '5 hours ago', user: 'Priya Patel' },
-];
+import { useData } from '../context/DataContext';
 
 export default function Dashboard() {
     const { addToast } = useToast();
+    const { interns, certificates } = useData();
+
+    const activeInterns = interns.filter(i => i.status === 'Active').length;
+    const totalDownloads = certificates.reduce((acc, current) => acc + current.assignments.length, 0); // rough estimate from assignments
+
+    const stats = [
+        { title: 'Total Interns', value: interns.length, change: '+12%', icon: Users, color: 'text-blue-600', bg: 'bg-blue-50' },
+        { title: 'Active Interns', value: activeInterns, change: '+5%', icon: UserCheck, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+        { title: 'Certificates', value: certificates.length, change: '+8%', icon: FileText, color: 'text-purple-600', bg: 'bg-purple-50' },
+        { title: 'Downloads', value: totalDownloads, change: '+24%', icon: Download, color: 'text-orange-600', bg: 'bg-orange-50' },
+    ];
+
+    const activities = interns.slice(0, 5).map(intern => ({
+        title: 'New registration',
+        time: intern.joinDate,
+        user: intern.name
+    }));
 
     const handleDownload = () => {
         addToast('Downloading monthly report...', 'info');
@@ -87,16 +91,16 @@ export default function Dashboard() {
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-100">
-                                    {[1, 2, 3, 4, 5].map((i) => (
-                                        <tr key={i} className="hover:bg-gray-50/50 transition-colors">
-                                            <td className="px-4 py-3 font-medium text-gray-900">Intern User {i}</td>
-                                            <td className="px-4 py-3 text-gray-500">Frontend Dev</td>
+                                    {interns.slice(0, 5).map((intern, i) => (
+                                        <tr key={intern.id || i} className="hover:bg-gray-50/50 transition-colors">
+                                            <td className="px-4 py-3 font-medium text-gray-900">{intern.name}</td>
+                                            <td className="px-4 py-3 text-gray-500">{intern.role}</td>
                                             <td className="px-4 py-3">
-                                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                                    Active
+                                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${intern.status === 'Active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
+                                                    {intern.status}
                                                 </span>
                                             </td>
-                                            <td className="px-4 py-3 text-gray-500">Jan 29, 2026</td>
+                                            <td className="px-4 py-3 text-gray-500">{intern.joinDate}</td>
                                             <td className="px-4 py-3">
                                                 <button className="text-gray-400 hover:text-gray-600">
                                                     <MoreVertical size={16} />

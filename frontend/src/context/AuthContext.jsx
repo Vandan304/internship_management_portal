@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { useData } from './DataContext';
+import axios from 'axios';
 
 const AuthContext = createContext(null);
 
@@ -11,121 +11,91 @@ export const useAuth = () => {
     return context;
 };
 
+// Set base URL for all axios requests
+axios.defaults.baseURL = 'http://localhost:5000';
+
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
-    const { interns } = useData(); // Access the real intern data
 
     useEffect(() => {
-        // Auto-Simulate Login based on URL for "Open Access" request
-        const path = window.location.pathname;
+        const verifyToken = async () => {
+            const token = localStorage.getItem('token');
+            if (token) {
+                try {
+                    // Attach token to global axios headers
+                    axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
-        if (path.includes('/admin')) {
-            const adminUser = {
-                id: 'admin_1',
-                name: 'Admin User',
-                email: 'admin@demo.com',
-                role: 'admin',
-                avatar: 'https://ui-avatars.com/api/?name=Admin+User&background=0D8ABC&color=fff'
-            };
-            setUser(adminUser);
-        } else if (path.includes('/intern')) {
-            // Find first intern from DataContext or dummy
-            const firstIntern = interns[0] || {
-                id: 1,
-                name: 'Intern User 1',
-                email: 'intern1@example.com',
-                role: 'intern',
-                status: 'Active'
-            };
-
-            const internUser = {
-                ...firstIntern,
-                role: 'intern',
-                avatar: `https://ui-avatars.com/api/?name=${firstIntern.name}&background=0D8ABC&color=fff`
-            };
-            setUser(internUser);
-        } else {
-            // Fallback to local storage or null
-            const storedUser = localStorage.getItem('user');
-            if (storedUser) {
-                setUser(JSON.parse(storedUser));
-            }
-        }
-        setIsLoading(false);
-    }, [interns]); // Add interns to dependancy so we pick up data if loaded later
-
-    const login = async (email, password, role) => {
-        // Simulate API call
-        return new Promise((resolve, reject) => {
-            setTimeout(() => {
-                if (role === 'admin') {
-                    // Simple admin check
-                    if (email.includes('admin')) { // Weak check for demo
-                        const adminUser = {
-                            id: 'admin_1',
-                            name: 'Admin User',
-                            email,
-                            role: 'admin',
-                            avatar: 'https://ui-avatars.com/api/?name=Admin+User&background=0D8ABC&color=fff'
-                        };
-                        setUser(adminUser);
-                        localStorage.setItem('user', JSON.stringify(adminUser));
-                        resolve(adminUser);
+                    // Verify the token by calling the protected /me route
+                    const res = await axios.get('/api/auth/me');
+                    if (res.data.success) {
+                        setUser(res.data.user);
                     } else {
-                        reject(new Error('Invalid admin credentials'));
+                        logout();
                     }
-                } else {
-                    // Check against Interns in DataContext
-                    const foundIntern = interns.find(i => i.email === email && i.loginAllowed);
-
-                    if (foundIntern) {
-                        // In a real app check password here too: && foundIntern.password === password
-                        const internUser = {
-                            ...foundIntern,
-                            role: 'intern', // Ensure role is set to intern
-                            avatar: `https://ui-avatars.com/api/?name=${foundIntern.name}&background=0D8ABC&color=fff`
-                        };
-                        setUser(internUser);
-                        localStorage.setItem('user', JSON.stringify(internUser));
-                        resolve(internUser);
-                    } else {
-                        reject(new Error('Invalid credentials or account blocked'));
-                    }
+                } catch (error) {
+                    console.error("Token verification failed:", error);
+                    logout();
                 }
-            }, 800);
-        });
+            }
+            setIsLoading(false);
+        };
+
+        verifyToken();
+    }, []);
+
+    const login = async (email, password) => {
+        try {
+            const res = await axios.post('/api/auth/login', {
+                email,
+                password
+            });
+
+            if (res.data.success) {
+                const { token, user } = res.data;
+                setUser(user);
+                localStorage.setItem('token', token);
+                // Set global header for future requests
+                axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+                return user; // Return user for redirectTo logic if needed in component
+            }
+            return null;
+
+        } catch (error) {
+            console.error("Login Error in AuthContext:", error.response?.data || error);
+
+            // Extract the specific error message from the backend
+            const errorMessage = error.response?.data?.message || 'Login failed. Please try again.';
+
+            // Throw a new error with the extracted message so the frontend component can catch and display it
+            throw new Error(errorMessage);
+        }
     };
 
     const register = async (name, email, password, role) => {
-        // Simulate API call
-        return new Promise((resolve) => {
-            setTimeout(() => {
-                const userData = {
-                    id: Date.now().toString(), // Use timestamp for ID
-                    name,
-                    email,
-                    role,
-                    avatar: `https://ui-avatars.com/api/?name=${name}&background=0D8ABC&color=fff`
-                };
-                // In a real app, this should probably create the user in the backend (DataContext)
-                // For now, we are just returning success. 
-                // CRITICAL NOTE: Registration in this demo DOES NOT automatically add to DataContext interns list
-                // because we usually want admins to control intern creation. 
-                // But if we want self-registration:
-                // This 'register' function is mainly used by simple auth flows.
-                // Given the requirement "Admin can create intern", maybe public registration is not the primary way, 
-                // but let's leave it as is for now. Self-registered users won't be in the Admin's "interns" list 
-                // unless we add them there. 
+        try {
+            const res = await axios.post('/api/auth/register', {
+                name,
+                email,
+                password,
+                role
+            });
 
-                resolve(userData);
-            }, 1000);
-        });
-    }
+            if (res.data.success) {
+                return res.data.user;
+            }
+            return null;
+        } catch (error) {
+            console.error("Registration Error in AuthContext:", error.response?.data || error);
+            const errorMessage = error.response?.data?.message || 'Registration failed. Please try again.';
+            throw new Error(errorMessage);
+        }
+    };
 
     const logout = () => {
         setUser(null);
-        localStorage.removeItem('user');
+        localStorage.removeItem('token');
+        delete axios.defaults.headers.common['Authorization'];
     };
 
     const value = {

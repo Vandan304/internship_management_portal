@@ -7,11 +7,13 @@ const RegisterPage = () => {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
     const [role, setRole] = useState('intern');
+    const [error, setError] = useState('');
     const { register } = useAuth();
 
     const handleRegister = async (e) => {
         e.preventDefault();
         setLoading(true);
+        setError('');
 
         const name = e.target.name.value;
         const email = e.target.email.value;
@@ -19,7 +21,7 @@ const RegisterPage = () => {
         const confirmPassword = e.target.confirmPassword.value;
 
         if (password !== confirmPassword) {
-            alert("Passwords do not match!");
+            setError("Passwords do not match!");
             setLoading(false);
             return;
         }
@@ -27,9 +29,9 @@ const RegisterPage = () => {
         try {
             await register(name, email, password, role);
             navigate('/login');
-        } catch (error) {
-            console.error("Registration failed:", error);
-            alert(error.message || "Registration failed. Please try again.");
+        } catch (err) {
+            console.error("Registration failed:", err);
+            setError(err.message || "Registration failed. Please try again.");
         } finally {
             setLoading(false);
         }
@@ -55,6 +57,11 @@ const RegisterPage = () => {
                 </div>
 
                 <div className="bg-white/80 backdrop-blur-xl border border-white/20 shadow-xl rounded-2xl p-8">
+                    {error && (
+                        <div className="mb-4 p-3 rounded-lg bg-red-50 border border-red-200 text-red-600 text-sm text-center">
+                            {error}
+                        </div>
+                    )}
                     <form onSubmit={handleRegister} className="space-y-5">
                         <div className="space-y-2">
                             <label className="text-sm font-medium text-gray-700" htmlFor="name">Full Name</label>

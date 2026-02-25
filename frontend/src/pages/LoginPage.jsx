@@ -6,28 +6,27 @@ import { useAuth } from '../context/AuthContext';
 const LoginPage = () => {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
     const { login } = useAuth();
 
     const handleLogin = async (e) => {
         e.preventDefault();
         setLoading(true);
+        setError(''); // Clear any previous errors
         try {
-            // For now, simple detection of role based on email or just simulating
-            // In a real app, the backend would return the role
             const email = e.target[0].value;
-            const password = e.target[1].value; // Assuming password is the second input
-            const role = email.includes('admin') ? 'admin' : 'intern';
+            const password = e.target[1].value;
 
-            const user = await login(email, password, role);
+            const user = await login(email, password);
 
-            if (user.role === 'admin') {
+            if (user?.role === 'admin') {
                 navigate('/admin');
-            } else {
+            } else if (user?.role === 'intern') {
                 navigate('/intern');
             }
-        } catch (error) {
-            console.error(error);
-            // Optionally, set an error state to display to the user
+        } catch (err) {
+            console.error("Login failed:", err);
+            setError(err.message || 'Login failed. Please try again.');
         } finally {
             setLoading(false);
         }
@@ -53,6 +52,11 @@ const LoginPage = () => {
                 </div>
 
                 <div className="bg-white/80 backdrop-blur-xl border border-white/20 shadow-xl rounded-2xl p-8">
+                    {error && (
+                        <div className="mb-4 p-3 rounded-lg bg-red-50 border border-red-200 text-red-600 text-sm text-center">
+                            {error}
+                        </div>
+                    )}
                     <form onSubmit={handleLogin} className="space-y-6">
                         <div className="space-y-2">
                             <label className="text-sm font-medium text-gray-700" htmlFor="email">Email Address</label>
