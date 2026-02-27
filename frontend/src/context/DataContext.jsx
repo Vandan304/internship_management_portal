@@ -1,4 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import axios from 'axios';
+import { useAuth } from './AuthContext';
 
 const DataContext = createContext(null);
 
@@ -10,32 +12,12 @@ export const useData = () => {
     return context;
 };
 
-import axios from 'axios';
+// State managed via backend
 
-// Initial Dummy Data for certificates only
-const initialCertificates = [
-    {
-        id: 1,
-        name: 'Web Development Internship.pdf',
-        size: '2.4 MB',
-        uploadedDate: '2026-01-20',
-        visibility: 'Public',
-        assignments: [
-            { internId: 1, canDownload: true },
-            { internId: 2, canDownload: false }
-        ]
-    },
-    {
-        id: 2,
-        name: 'React Advanced Course.pdf',
-        size: '1.8 MB',
-        uploadedDate: '2026-01-25',
-        visibility: 'Private',
-        assignments: []
-    },
-];
+// State managed via backend
 
 export const DataProvider = ({ children }) => {
+    const { user, isAuthenticated } = useAuth();
     const [interns, setInterns] = useState([]);
 
     const fetchInterns = async () => {
@@ -58,19 +40,63 @@ export const DataProvider = ({ children }) => {
         }
     };
 
-    useEffect(() => {
-        fetchInterns();
-    }, []);
+    const [certificates, setCertificates] = useState([]);
 
-    const [certificates, setCertificates] = useState(() => {
-        const saved = localStorage.getItem('certificates');
-        return saved ? JSON.parse(saved) : initialCertificates;
-    });
+    const fetchCertificatesAdmin = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            if (token) {
+                const res = await axios.get('http://localhost:5000/api/certificates', {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                if (res.data.success) {
+                    setCertificates(res.data.data.map(c => ({
+                        ...c,
+                        id: c._id, // map Mongo _id to id for frontend compatibility
+                        name: c.title,
+                        fileName: c.fileName,
+                        visibility: c.isVisible ? 'Public' : 'Private',
+                        uploadedDate: c.createdAt ? c.createdAt.split('T')[0] : 'N/A'
+                    })));
+                }
+            }
+        } catch (error) {
+            console.error("Error fetching certificates:", error);
+        }
+    };
 
-    // Persistence for certificates only
+    const fetchMyCertificates = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            if (token) {
+                const res = await axios.get('http://localhost:5000/api/certificates/my-certificates', {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                if (res.data.success) {
+                    setCertificates(res.data.data.map(c => ({
+                        ...c,
+                        id: c._id,
+                        name: c.title,
+                        fileName: c.fileName,
+                        uploadedDate: c.createdAt ? c.createdAt.split('T')[0] : 'N/A'
+                    })));
+                }
+            }
+        } catch (error) {
+            console.error("Error fetching my certificates:", error);
+        }
+    };
+
     useEffect(() => {
-        localStorage.setItem('certificates', JSON.stringify(certificates));
-    }, [certificates]);
+        if (isAuthenticated && user) {
+            if (user.role === 'admin') {
+                fetchInterns();
+                fetchCertificatesAdmin();
+            } else if (user.role === 'intern') {
+                fetchMyCertificates();
+            }
+        }
+    }, [isAuthenticated, user]);
 
     // --- Intern Actions ---
     const addIntern = async (intern) => {
@@ -154,65 +180,138 @@ export const DataProvider = ({ children }) => {
     }
 
     // --- Certificate Actions ---
-    const addCertificate = (cert) => {
-        const newCert = { ...cert, id: Date.now(), assignments: [], visibility: 'Private' };
-        setCertificates([newCert, ...certificates]);
-    };
-
-    const deleteCertificate = (id) => {
-        setCertificates(certificates.filter(c => c.id !== id));
-    };
-
-    const updateCertificate = (id, updates) => {
-        setCertificates(certificates.map(c => c.id === id ? { ...c, ...updates } : c));
-    };
-
-    const assignCertificate = (certId, internId) => {
-        setCertificates(certificates.map(c => {
-            if (c.id === certId) {
-                // Check if already assigned
-                if (c.assignments.some(a => a.internId === internId)) return c;
-                return {
-                    ...c,
-                    assignments: [...c.assignments, { internId, canDownload: false }] // Default no download
-                };
+    const addCertificate = async (formData) => {
+        try {
+            const token = localStorage.getItem('token');
+            const res = await axios.post('http://localhost:5000/api/certificates/upload', formData, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'multipart/form-data'
+                }
+            });
+            if (res.data.success) {
+                fetchCertificatesAdmin(); // Refresh list
             }
-            return c;
-        }));
+            return res.data;
+        } catch (error) {
+            console.error("Error uploading certificate:", error.response?.data || error);
+            throw error;
+        }
     };
 
-    const toggleDownloadPermission = (certId, internId) => {
-        setCertificates(certificates.map(c => {
-            if (c.id === certId) {
-                return {
-                    ...c,
-                    assignments: c.assignments.map(a =>
-                        a.internId === internId ? { ...a, canDownload: !a.canDownload } : a
-                    )
-                };
+    const deleteCertificate = async (id) => {
+        try {
+            const token = localStorage.getItem('token');
+            const res = await axios.delete(`http://localhost:5000/api/certificates/${id}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (res.data.success) {
+                fetchCertificatesAdmin(); // Refresh list
             }
-            return c;
-        }));
+        } catch (error) {
+            console.error("Error deleting certificate:", error.response?.data || error);
+            throw error;
+        }
     };
 
-    const value = {
-        interns,
-        certificates,
-        fetchInterns,
-        addIntern,
-        updateIntern,
-        deleteIntern,
-        blockIntern,
-        activateIntern,
-        addCertificate,
-        deleteCertificate,
-        updateCertificate,
-        assignCertificate,
-        toggleDownloadPermission
+    const updateCertificate = async (id, updates) => {
+        try {
+            const token = localStorage.getItem('token');
+            const apiUpdates = {};
+            if (updates.name) apiUpdates.title = updates.name;
+            if (updates.visibility) apiUpdates.isVisible = updates.visibility === 'Public';
+
+            const res = await axios.put(`http://localhost:5000/api/certificates/${id}`, apiUpdates, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (res.data.success) {
+                fetchCertificatesAdmin();
+            }
+        } catch (error) {
+            console.error("Error updating certificate:", error.response?.data || error);
+            throw error;
+        }
+    };
+
+    const toggleCertificateVisibility = async (id) => {
+        try {
+            const token = localStorage.getItem('token');
+            const res = await axios.patch(`http://localhost:5000/api/certificates/${id}/visibility`, {}, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (res.data.success) {
+                fetchCertificatesAdmin();
+            }
+        } catch (error) {
+            console.error("Error toggling certificate visibility:", error.response?.data || error);
+            throw error;
+        }
+    }
+
+    const toggleDownloadPermission = async (certId) => {
+        try {
+            const token = localStorage.getItem('token');
+            const res = await axios.patch(`http://localhost:5000/api/certificates/${certId}/download`, {}, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (res.data.success) {
+                fetchCertificatesAdmin();
+            }
+        } catch (error) {
+            console.error("Error toggling download permission:", error.response?.data || error);
+            throw error;
+        }
+    };
+
+    // --- Intern Certificate Endpoints ---
+    const downloadCertificate = async (id, fileName) => {
+        try {
+            const token = localStorage.getItem('token');
+            const res = await axios.get(`http://localhost:5000/api/certificates/download/${id}`, {
+                headers: { Authorization: `Bearer ${token}` },
+                responseType: 'blob' // Tell Axios to expect binary data
+            });
+
+            // Create a blob URL and trigger download mathematically
+            const url = window.URL.createObjectURL(new Blob([res.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', fileName || 'certificate.pdf');
+            document.body.appendChild(link);
+            link.click();
+            link.parentNode.removeChild(link);
+            window.URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error("Error downloading certificate:", error);
+            throw error;
+        }
     };
 
     return (
-        <DataContext.Provider value={value}>
+        <DataContext.Provider value={{
+            stats: {
+                totalInterns: interns.length,
+                activeInterns: interns.filter(i => i.status === 'Active').length,
+                completedInternships: interns.filter(i => i.status === 'Completed').length,
+                totalCertificates: certificates.length
+            },
+            interns,
+            certificates,
+            fetchInterns,
+            addIntern,
+            updateIntern,
+            deleteIntern,
+            blockIntern,
+            activateIntern,
+            addCertificate,
+            deleteCertificate,
+            updateCertificate,
+            toggleCertificateVisibility,
+            toggleDownloadPermission,
+            fetchCertificatesAdmin,
+            fetchMyCertificates,
+            downloadCertificate
+        }}>
             {children}
         </DataContext.Provider>
     );

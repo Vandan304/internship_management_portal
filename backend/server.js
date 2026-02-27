@@ -31,6 +31,14 @@ mongoose.connect(process.env.MONGODB_URI)
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
 
+const certificateRoutes = require('./routes/certificateRoutes');
+const path = require('path');
+
+// Serve uploaded files statically so the frontend can access them via URL
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+app.use('/api/certificates', certificateRoutes);
+
 app.get('/', (req, res) => {
     res.send({ message: 'Backend is running' });
 });

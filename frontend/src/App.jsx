@@ -22,8 +22,8 @@ import { DataProvider } from './context/DataContext';
 
 function App() {
   return (
-    <DataProvider>
-      <AuthProvider>
+    <AuthProvider>
+      <DataProvider>
         <ToastProvider>
           <Routes>
             <Route path="/" element={<LandingPage />} />
@@ -64,8 +64,8 @@ function App() {
 
           </Routes>
         </ToastProvider>
-      </AuthProvider>
-    </DataProvider>
+      </DataProvider>
+    </AuthProvider>
   );
 }
 

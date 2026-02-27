@@ -4,31 +4,14 @@ import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
 
 const MyCertificates = () => {
-    const { certificates } = useData();
+    const { certificates, downloadCertificate } = useData();
     const { user } = useAuth();
     const [searchTerm, setSearchTerm] = useState('');
 
-    // Filter certificates assigned to this user
-    // And ensure visibility is Public OR assigned
-    // Actually, usually if assigned, you can see it. But let's check visibility too if needed.
-    // Requirement says "Hidden certificates should not appear".
-    // AND "Show certificates assigned by admin". 
-    // Let's assume: If assigned, it shows up unless visibility is 'Private' AND not assigned? 
-    // No, usually Assignment overrides visibility, or Visibility hides it from everyone.
-    // Let's assume: If assigned to ME, I can see it. If visibility is Private, maybe I can't?
-    // Let's go with: If assigned to ME, I see it.
-
-    const myCertificates = certificates.filter(cert =>
-        cert.assignments && cert.assignments.some(a => a.internId === user.id)
-    ).map(cert => {
-        const assignment = cert.assignments.find(a => a.internId === user.id);
-        return {
-            ...cert,
-            canDownload: assignment.canDownload
-        };
-    });
-
-    const filteredCertificates = myCertificates.filter(cert =>
+    // The backend `my-certificates` endpoint already strictly filters for:
+    // 1. Assigned strictly to this exact user.id
+    // 2. isVisible is strictly true
+    const filteredCertificates = certificates.filter(cert =>
         cert.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
@@ -92,11 +75,21 @@ const MyCertificates = () => {
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                         <div className="flex items-center justify-end gap-2">
-                                            <button className="p-2 text-gray-400 hover:text-brand-600 transition-colors" title="Preview">
+                                            <a
+                                                href={`http://localhost:5000${cert.fileUrl}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="p-2 text-gray-400 hover:text-brand-600 transition-colors"
+                                                title="Preview"
+                                            >
                                                 <Eye className="w-5 h-5" />
-                                            </button>
+                                            </a>
                                             {cert.canDownload && (
-                                                <button className="p-2 text-gray-400 hover:text-brand-600 transition-colors" title="Download">
+                                                <button
+                                                    onClick={() => downloadCertificate(cert.id, cert.fileName)}
+                                                    className="p-2 text-gray-400 hover:text-brand-600 transition-colors"
+                                                    title="Download"
+                                                >
                                                     <Download className="w-5 h-5" />
                                                 </button>
                                             )}
