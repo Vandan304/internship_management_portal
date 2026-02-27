@@ -1,10 +1,55 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { User, Mail, Calendar, Hash, Save, Camera } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { useToast } from '../../context/ToastContext';
+import axios from 'axios';
 
 const InternProfile = () => {
-    const { user } = useAuth();
+    const { user, updateUser } = useAuth();
+    const { addToast } = useToast();
     const [isEditing, setIsEditing] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
+
+    // Form state
+    const [formData, setFormData] = useState({
+        name: '',
+        email: ''
+    });
+
+    useEffect(() => {
+        if (user) {
+            setFormData({
+                name: user.name || '',
+                email: user.email || ''
+            });
+        }
+    }, [user, isEditing]);
+
+    const handleInputChange = (e) => {
+        setFormData({
+            ...formData,
+            [e.target.name]: e.target.value
+        });
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setIsSaving(true);
+        try {
+            const res = await axios.put('/api/users/update-profile', formData);
+            if (res.data.success) {
+                updateUser(res.data.user); // Update context instantly
+                setIsEditing(false); // Close edit mode
+                addToast("Profile updated successfully", "success");
+            }
+        } catch (error) {
+            console.error("Error updating profile:", error);
+            const message = error.response?.data?.message || "Failed to update profile";
+            addToast(message, "error");
+        } finally {
+            setIsSaving(false);
+        }
+    };
 
     return (
         <div className="space-y-6">
@@ -16,8 +61,8 @@ const InternProfile = () => {
                 <button
                     onClick={() => setIsEditing(!isEditing)}
                     className={`px-4 py-2 rounded-lg font-medium transition-colors ${isEditing
-                            ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                            : 'bg-brand-600 text-white hover:bg-brand-700 shadow-lg shadow-brand-500/30'
+                        ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        : 'bg-brand-600 text-white hover:bg-brand-700 shadow-lg shadow-brand-500/30'
                         }`}
                 >
                     {isEditing ? 'Cancel Edit' : 'Edit Profile'}
@@ -34,6 +79,7 @@ const InternProfile = () => {
                                 alt="Profile"
                                 className="w-32 h-32 rounded-full mx-auto border-4 border-white shadow-lg"
                             />
+                            {/* Visual placeholder for future feature */}
                             {isEditing && (
                                 <button className="absolute bottom-0 right-0 p-2 bg-brand-600 text-white rounded-full shadow-lg hover:bg-brand-700 transition-colors">
                                     <Camera className="w-5 h-5" />
@@ -57,7 +103,7 @@ const InternProfile = () => {
                     <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden p-6">
                         <h3 className="text-lg font-semibold text-gray-900 mb-6">Personal Details</h3>
 
-                        <form className="space-y-6">
+                        <form className="space-y-6" onSubmit={handleSubmit}>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="space-y-2">
                                     <label className="text-sm font-medium text-gray-700">Full Name</label>
@@ -67,8 +113,11 @@ const InternProfile = () => {
                                         </div>
                                         <input
                                             type="text"
+                                            name="name"
                                             disabled={!isEditing}
-                                            defaultValue={user?.name || "Intern Name"}
+                                            value={formData.name}
+                                            onChange={handleInputChange}
+                                            required
                                             className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 outline-none disabled:bg-gray-50 disabled:text-gray-500"
                                         />
                                     </div>
@@ -82,8 +131,11 @@ const InternProfile = () => {
                                         </div>
                                         <input
                                             type="email"
+                                            name="email"
                                             disabled={!isEditing}
-                                            defaultValue={user?.email || "intern@example.com"}
+                                            value={formData.email}
+                                            onChange={handleInputChange}
+                                            required
                                             className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 outline-none disabled:bg-gray-50 disabled:text-gray-500"
                                         />
                                     </div>
@@ -98,14 +150,14 @@ const InternProfile = () => {
                                         <input
                                             type="text"
                                             disabled
-                                            defaultValue="INT-2026-001"
+                                            defaultValue={`INT-${user?.id?.slice(-4) || '001'}`}
                                             className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 outline-none disabled:bg-gray-50 disabled:text-gray-500"
                                         />
                                     </div>
                                 </div>
 
                                 <div className="space-y-2">
-                                    <label className="text-sm font-medium text-gray-700">Joining Date</label>
+                                    <label className="text-sm font-medium text-gray-700">Role</label>
                                     <div className="relative">
                                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                             <Calendar className="h-5 w-5 text-gray-400" />
@@ -113,7 +165,7 @@ const InternProfile = () => {
                                         <input
                                             type="text"
                                             disabled
-                                            defaultValue="Jan 10, 2026"
+                                            defaultValue="Intern"
                                             className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 outline-none disabled:bg-gray-50 disabled:text-gray-500"
                                         />
                                     </div>
@@ -123,11 +175,12 @@ const InternProfile = () => {
                             {isEditing && (
                                 <div className="flex justify-end pt-4 border-t border-gray-100">
                                     <button
-                                        type="button"
-                                        className="flex items-center gap-2 px-6 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors shadow-lg shadow-brand-500/20"
+                                        type="submit"
+                                        disabled={isSaving}
+                                        className="flex items-center gap-2 px-6 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors shadow-lg shadow-brand-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
                                         <Save className="w-4 h-4" />
-                                        Save Changes
+                                        {isSaving ? 'Saving...' : 'Save Changes'}
                                     </button>
                                 </div>
                             )}

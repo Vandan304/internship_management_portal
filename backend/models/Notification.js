@@ -14,6 +14,11 @@ const notificationSchema = new mongoose.Schema({
         type: mongoose.Schema.ObjectId,
         ref: 'Certificate'
     },
+    type: {
+        type: String,
+        enum: ['certificate', 'profile', 'system'],
+        default: 'system'
+    },
     isRead: {
         type: Boolean,
         default: false

@@ -1,5 +1,6 @@
 const Certificate = require('../models/Certificate');
 const User = require('../models/User');
+const Notification = require('../models/Notification');
 const fs = require('fs');
 const path = require('path');
 
@@ -46,7 +47,16 @@ exports.uploadCertificate = async (req, res) => {
             canDownload: canDownload === 'true' || canDownload === true
         });
 
-        // 6. Return success response
+        // 6. Create notification for the assigned intern
+        await Notification.create({
+            userId: assignedTo,
+            title: "New Certificate Assigned",
+            message: `You have been assigned the "${title}" certificate.`,
+            type: "certificate",
+            certificateId: certificate._id
+        });
+
+        // 7. Return success response
         res.status(201).json({
             success: true,
             certificate
@@ -213,6 +223,17 @@ exports.toggleDownload = async (req, res) => {
 
         certificate.canDownload = !certificate.canDownload;
         await certificate.save();
+
+        // If permission was granted and there is an assigned user, create a notification
+        if (certificate.canDownload && certificate.assignedTo) {
+            await Notification.create({
+                userId: certificate.assignedTo,
+                title: "Download Permission Enabled",
+                message: `You can now download your "${certificate.title}" certificate.`,
+                type: "certificate",
+                certificateId: certificate._id
+            });
+        }
 
         res.json({
             success: true,

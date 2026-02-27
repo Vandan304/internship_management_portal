@@ -1,94 +1,138 @@
-import React from 'react';
-import { Bell, Award, UserCheck, Info, Check } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { Card, CardHeader, CardContent } from '../../components/ui/Card';
+import { Bell, Check, CheckCircle2, Clock } from 'lucide-react';
+import { formatDistanceToNow } from 'date-fns';
+import { useToast } from '../../context/ToastContext';
 
 const InternNotifications = () => {
-    const notifications = [
-        {
-            id: 1,
-            type: 'success',
-            icon: Award,
-            title: 'New Certificate Assigned',
-            message: 'You have been assigned the "Full Stack Web Development" certificate.',
-            time: '2 hours ago',
-            read: false
-        },
-        {
-            id: 2,
-            type: 'info',
-            icon: UserCheck,
-            title: 'Profile Update Successful',
-            message: 'Your profile information has been successfully updated.',
-            time: '1 day ago',
-            read: true
-        },
-        {
-            id: 3,
-            type: 'warning',
-            icon: Info,
-            title: 'System Maintenance',
-            message: 'The portal will be undergoing scheduled maintenance on Saturday at 10 PM.',
-            time: '2 days ago',
-            read: true
-        },
-    ];
+    const [notifications, setNotifications] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const { addToast } = useToast();
+
+    const formatTime = (date) => {
+        try {
+            return formatDistanceToNow(new Date(date), { addSuffix: true });
+        } catch {
+            return new Date(date).toLocaleString();
+        }
+    };
+
+    const fetchNotifications = async () => {
+        try {
+            setIsLoading(true);
+            const res = await axios.get('/api/notifications');
+            if (res.data.success) {
+                setNotifications(res.data.data);
+            }
+        } catch (error) {
+            console.error('Error fetching notifications:', error);
+            addToast('Failed to load notifications', 'error');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchNotifications();
+    }, []);
+
+    const handleMarkAsRead = async (id) => {
+        try {
+            const res = await axios.patch(`/api/notifications/${id}/read`);
+            if (res.data.success) {
+                setNotifications(prev =>
+                    prev.map(n => n._id === id ? { ...n, isRead: true } : n)
+                );
+            }
+        } catch (error) {
+            console.error('Error marking as read:', error);
+        }
+    };
+
+    const handleMarkAllAsRead = async () => {
+        try {
+            const res = await axios.patch('/api/notifications/mark-all-read');
+            if (res.data.success) {
+                setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+                addToast('All notifications marked as read', 'success');
+            }
+        } catch (error) {
+            console.error('Error marking all as read:', error);
+            addToast('Failed to mark all as read', 'error');
+        }
+    };
+
+    const unreadCount = notifications.filter(n => !n.isRead).length;
 
     return (
-        <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="space-y-6 animate-fade-in-up">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Notifications</h1>
-                    <p className="text-gray-500">Stay updated with your latest alerts</p>
+                    <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                        <Bell className="w-6 h-6 text-brand-600" />
+                        Notifications
+                    </h2>
+                    <p className="text-gray-500 text-sm mt-1">Stay updated on your certificates and profile changes.</p>
                 </div>
-                <button className="text-sm font-medium text-brand-600 hover:text-brand-700 flex items-center gap-1">
-                    <Check className="w-4 h-4" />
-                    Mark all as read
-                </button>
-            </div>
-
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden divide-y divide-gray-100">
-                {notifications.map((notification) => (
-                    <div
-                        key={notification.id}
-                        className={`p-6 flex gap-4 transition-colors hover:bg-gray-50 ${!notification.read ? 'bg-brand-50/30' : ''}`}
+                {unreadCount > 0 && (
+                    <button
+                        onClick={handleMarkAllAsRead}
+                        className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors shadow-sm text-sm font-medium"
                     >
-                        <div className={`
-                            w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0
-                            ${notification.type === 'success' ? 'bg-green-100 text-green-600' :
-                                notification.type === 'warning' ? 'bg-yellow-100 text-yellow-600' :
-                                    'bg-blue-100 text-blue-600'}
-                        `}>
-                            <notification.icon className="w-5 h-5" />
-                        </div>
-                        <div className="flex-1">
-                            <div className="flex justify-between items-start">
-                                <h3 className={`font-semibold text-gray-900 ${!notification.read ? 'font-bold' : ''}`}>
-                                    {notification.title}
-                                </h3>
-                                <span className="text-xs text-gray-500 whitespace-nowrap ml-2">{notification.time}</span>
-                            </div>
-                            <p className="text-gray-600 mt-1 text-sm leading-relaxed">
-                                {notification.message}
-                            </p>
-                        </div>
-                        {!notification.read && (
-                            <div className="flex-shrink-0">
-                                <div className="w-2.5 h-2.5 bg-brand-500 rounded-full"></div>
-                            </div>
-                        )}
-                    </div>
-                ))}
-
-                {/* Empty State */}
-                {notifications.length === 0 && (
-                    <div className="p-12 text-center">
-                        <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <Bell className="w-8 h-8 text-gray-400" />
-                        </div>
-                        <h3 className="text-lg font-medium text-gray-900">No notifications</h3>
-                        <p className="text-gray-500 mt-2">You're all caught up!</p>
-                    </div>
+                        <CheckCircle2 className="w-4 h-4" />
+                        Mark all as read
+                    </button>
                 )}
             </div>
+
+            <Card>
+                <CardContent className="p-0">
+                    {isLoading ? (
+                        <div className="p-12 text-center text-gray-500">Loading notifications...</div>
+                    ) : notifications.length === 0 ? (
+                        <div className="p-12 flex flex-col items-center justify-center text-gray-500">
+                            <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-4">
+                                <Bell className="w-8 h-8 text-gray-400" />
+                            </div>
+                            <p className="text-lg font-medium text-gray-900">No notifications yet</p>
+                            <p className="text-sm">We'll notify you when there's an update.</p>
+                        </div>
+                    ) : (
+                        <div className="divide-y divide-gray-100">
+                            {notifications.map((notification) => (
+                                <div
+                                    key={notification._id}
+                                    className={`p-4 sm:p-6 transition-colors duration-200 cursor-pointer ${notification.isRead ? 'bg-white hover:bg-gray-50' : 'bg-brand-50/30 hover:bg-brand-50/50'}`}
+                                    onClick={() => !notification.isRead && handleMarkAsRead(notification._id)}
+                                >
+                                    <div className="flex gap-4">
+                                        <div className="mt-1">
+                                            {!notification.isRead && (
+                                                <div className="w-2.5 h-2.5 bg-brand-600 rounded-full mt-1.5 shadow-sm shadow-brand-500/50" />
+                                            )}
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-1 sm:gap-4 mb-1">
+                                                <h4 className={`text-sm sm:text-base font-semibold ${notification.isRead ? 'text-gray-900' : 'text-brand-900'}`}>
+                                                    {notification.title}
+                                                </h4>
+                                                <span className="flex items-center gap-1 text-xs text-gray-500 whitespace-nowrap">
+                                                    <Clock className="w-3 h-3" />
+                                                    {formatTime(notification.createdAt)}
+                                                </span>
+                                            </div>
+                                            <p className={`text-sm ${notification.isRead ? 'text-gray-600' : 'text-gray-800'}`}>
+                                                {notification.message}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </CardContent>
+            </Card>
         </div>
     );
 };

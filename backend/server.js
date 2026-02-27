@@ -6,6 +6,8 @@ const cors = require('cors');
 // Basic Route imports
 const authRoutes = require('./routes/authRoutes');
 const adminRoutes = require('./routes/adminRoutes');
+const userRoutes = require('./routes/userRoutes');
+const notificationRoutes = require('./routes/notificationRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -30,11 +32,12 @@ mongoose.connect(process.env.MONGODB_URI)
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 const certificateRoutes = require('./routes/certificateRoutes');
 const path = require('path');
 
-// Serve uploaded files statically so the frontend can access them via URL
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 app.use('/api/certificates', certificateRoutes);

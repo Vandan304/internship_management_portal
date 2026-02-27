@@ -1,4 +1,5 @@
 const User = require('../models/User');
+const Notification = require('../models/Notification');
 const bcrypt = require('bcryptjs');
 
 // @route   GET /api/admin/interns
@@ -135,6 +136,13 @@ exports.blockIntern = async (req, res) => {
         intern.loginAllowed = false;
         await intern.save();
 
+        await Notification.create({
+            userId: intern._id,
+            title: "Account Restricted",
+            message: "Your account login has been temporarily restricted by an administrator.",
+            type: "system"
+        });
+
         res.json({ success: true, message: 'Intern blocked successfully', data: { id: intern._id, loginAllowed: intern.loginAllowed } });
     } catch (error) {
         console.error('Error blocking intern:', error);
@@ -159,6 +167,13 @@ exports.activateIntern = async (req, res) => {
 
         intern.loginAllowed = true;
         await intern.save();
+
+        await Notification.create({
+            userId: intern._id,
+            title: "Account Activated",
+            message: "Your account login has been restored by an administrator.",
+            type: "system"
+        });
 
         res.json({ success: true, message: 'Intern activated successfully', data: { id: intern._id, loginAllowed: intern.loginAllowed } });
     } catch (error) {

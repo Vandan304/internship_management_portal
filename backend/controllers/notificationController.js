@@ -44,3 +44,20 @@ exports.markAsRead = async (req, res) => {
         res.status(500).json({ success: false, message: 'Server error' });
     }
 };
+
+// @route   PATCH /api/notifications/mark-all-read
+// @desc    Mark all unread notifications as read
+// @access  Private
+exports.markAllAsRead = async (req, res) => {
+    try {
+        await Notification.updateMany(
+            { userId: req.user.id, isRead: false },
+            { $set: { isRead: true } }
+        );
+
+        res.json({ success: true, message: 'All notifications marked as read' });
+    } catch (error) {
+        console.error('Error updating notifications:', error);
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+};

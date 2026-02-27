@@ -14,9 +14,6 @@ export default function Certificates() {
     const fileInputRef = useRef(null);
     const { addToast } = useToast();
 
-    // Stats Helper
-    const getAssignedCount = (cert) => cert.assignedTo ? 1 : 0; // Backend currently assigns 1:1
-
     const handleDragOver = (e) => {
         e.preventDefault();
         setIsDragOver(true);

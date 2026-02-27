@@ -45,9 +45,9 @@ export default function Interns() {
         const newStatus = intern.status === 'Active' ? 'Inactive' : 'Active';
         try {
             await updateIntern(id, { isActive: newStatus === 'Active' });
-            addToast(`${intern.name} is now ${newStatus}`, 'success');
-        } catch (error) {
-            addToast('Failed to update status', 'error');
+            addToast("Intern deactivated successfully", "success");
+        } catch {
+            addToast("Failed to deactivate intern", "error");
         }
     };
 

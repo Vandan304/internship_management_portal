@@ -1,4 +1,6 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+/* eslint-disable react-refresh/only-export-components */
+/* eslint-disable react-hooks/set-state-in-effect */
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { useAuth } from './AuthContext';
 
@@ -20,7 +22,7 @@ export const DataProvider = ({ children }) => {
     const { user, isAuthenticated } = useAuth();
     const [interns, setInterns] = useState([]);
 
-    const fetchInterns = async () => {
+    const fetchInterns = useCallback(async () => {
         try {
             const token = localStorage.getItem('token');
             if (token) {
@@ -38,11 +40,11 @@ export const DataProvider = ({ children }) => {
         } catch (error) {
             console.error("Error fetching interns:", error);
         }
-    };
+    }, []);
 
     const [certificates, setCertificates] = useState([]);
 
-    const fetchCertificatesAdmin = async () => {
+    const fetchCertificatesAdmin = useCallback(async () => {
         try {
             const token = localStorage.getItem('token');
             if (token) {
@@ -63,9 +65,9 @@ export const DataProvider = ({ children }) => {
         } catch (error) {
             console.error("Error fetching certificates:", error);
         }
-    };
+    }, []);
 
-    const fetchMyCertificates = async () => {
+    const fetchMyCertificates = useCallback(async () => {
         try {
             const token = localStorage.getItem('token');
             if (token) {
@@ -85,10 +87,11 @@ export const DataProvider = ({ children }) => {
         } catch (error) {
             console.error("Error fetching my certificates:", error);
         }
-    };
+    }, []);
 
     useEffect(() => {
-        if (isAuthenticated && user) {
+        let isMounted = true;
+        if (isAuthenticated && user && isMounted) {
             if (user.role === 'admin') {
                 fetchInterns();
                 fetchCertificatesAdmin();
@@ -96,7 +99,8 @@ export const DataProvider = ({ children }) => {
                 fetchMyCertificates();
             }
         }
-    }, [isAuthenticated, user]);
+        return () => { isMounted = false; };
+    }, [isAuthenticated, user, fetchInterns, fetchCertificatesAdmin, fetchMyCertificates]);
 
     // --- Intern Actions ---
     const addIntern = async (intern) => {

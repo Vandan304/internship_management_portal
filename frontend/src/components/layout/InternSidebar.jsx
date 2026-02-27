@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
+import axios from 'axios';
 import {
     LayoutDashboard,
     Award,
@@ -13,6 +14,31 @@ import { useAuth } from '../../context/AuthContext';
 
 export function InternSidebar({ isOpen, onClose }) {
     const { logout } = useAuth();
+    const [unreadCount, setUnreadCount] = useState(0);
+
+    useEffect(() => {
+        let isMounted = true;
+
+        const fetchUnreadCount = async () => {
+            try {
+                const res = await axios.get('/api/notifications');
+                if (res.data.success && isMounted) {
+                    const unread = res.data.data.filter(n => !n.isRead).length;
+                    setUnreadCount(unread);
+                }
+            } catch (error) {
+                console.error('Error fetching unread notifications count:', error);
+            }
+        };
+
+        fetchUnreadCount();
+        const intervalId = setInterval(fetchUnreadCount, 60000); // refresh every minute
+
+        return () => {
+            isMounted = false;
+            clearInterval(intervalId);
+        };
+    }, []);
 
     const navItems = [
         { icon: LayoutDashboard, label: 'Dashboard', path: '/intern' },
@@ -76,7 +102,12 @@ export function InternSidebar({ isOpen, onClose }) {
                                 `}
                             >
                                 <item.icon className="w-5 h-5 opacity-70 group-hover:opacity-100 transition-opacity" />
-                                {item.label}
+                                <span className="flex-1">{item.label}</span>
+                                {item.label === 'Notifications' && unreadCount > 0 && (
+                                    <span className="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                                        {unreadCount}
+                                    </span>
+                                )}
                             </NavLink>
                         ))}
                     </div>

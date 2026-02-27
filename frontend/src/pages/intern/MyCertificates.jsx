@@ -2,10 +2,9 @@ import React, { useState } from 'react';
 import { Award, Eye, Download, Search, Filter } from 'lucide-react';
 import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
-
 const MyCertificates = () => {
     const { certificates, downloadCertificate } = useData();
-    const { user } = useAuth();
+    const [isLoading, setIsLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
 
     // The backend `my-certificates` endpoint already strictly filters for:

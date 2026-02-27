@@ -1,9 +1,34 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Bell, Search, Menu, User } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
 
 export function Header({ onMenuClick }) {
     const { user } = useAuth();
+    const navigate = useNavigate();
+    const [hasUnread, setHasUnread] = useState(false);
+
+    useEffect(() => {
+        const fetchUnread = async () => {
+            try {
+                // Only interns have this route in our specific requested app setup
+                if (user?.role !== 'intern') return;
+
+                const res = await axios.get('/api/notifications');
+                if (res.data.success) {
+                    const unread = res.data.data.some(n => !n.isRead);
+                    setHasUnread(unread);
+                }
+            } catch (error) {
+                console.error('Error fetching notifications:', error);
+            }
+        };
+
+        fetchUnread();
+        const intervalId = setInterval(fetchUnread, 60000);
+        return () => clearInterval(intervalId);
+    }, [user]);
 
     return (
         <header className="h-16 bg-white/80 backdrop-blur-md border-b border-gray-100 sticky top-0 z-30 px-4 sm:px-6 flex items-center justify-between">
@@ -31,9 +56,14 @@ export function Header({ onMenuClick }) {
                     />
                 </div>
 
-                <button className="p-2 text-gray-500 hover:bg-gray-100 hover:text-brand-600 rounded-full transition-colors relative">
+                <button
+                    onClick={() => user?.role === 'intern' ? navigate('/intern/notifications') : null}
+                    className="p-2 text-gray-500 hover:bg-gray-100 hover:text-brand-600 rounded-full transition-colors relative"
+                >
                     <Bell size={20} />
-                    <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
+                    {hasUnread && (
+                        <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
+                    )}
                 </button>
 
                 <div className="h-8 w-px bg-gray-200 mx-1"></div>

@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
 
@@ -17,6 +18,12 @@ axios.defaults.baseURL = 'http://localhost:5000';
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
+
+    const logout = () => {
+        setUser(null);
+        localStorage.removeItem('token');
+        delete axios.defaults.headers.common['Authorization'];
+    };
 
     useEffect(() => {
         const verifyToken = async () => {
@@ -42,7 +49,7 @@ export const AuthProvider = ({ children }) => {
         };
 
         verifyToken();
-    }, []);
+    }, []); // Removed logout from here to prevent infinite triggering, as it has no dependencies anyway.
 
     const login = async (email, password) => {
         try {
@@ -92,10 +99,8 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
-    const logout = () => {
-        setUser(null);
-        localStorage.removeItem('token');
-        delete axios.defaults.headers.common['Authorization'];
+    const updateUser = (updatedUserData) => {
+        setUser(updatedUserData);
     };
 
     const value = {
@@ -104,6 +109,7 @@ export const AuthProvider = ({ children }) => {
         login,
         register,
         logout,
+        updateUser,
         isAuthenticated: !!user,
         isAdmin: user?.role === 'admin',
         isIntern: user?.role === 'intern'
