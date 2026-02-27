@@ -3,8 +3,12 @@ const Notification = require('../models/Notification');
 // @route   GET /api/notifications/my-notifications
 // @desc    Get all notifications for the logged in intern
 // @access  Private/Intern
-exports.getMyNotifications = async (req, res) => {
+exports.getMyNotifications = async (req, res, next) => {
     try {
+        if (!req.user || !req.user.id) {
+            return res.status(401).json({ success: false, message: 'Unauthorized. User information missing.' });
+        }
+
         const notifications = await Notification.find({
             userId: req.user.id
         }).sort({ createdAt: -1 });
@@ -15,15 +19,14 @@ exports.getMyNotifications = async (req, res) => {
             data: notifications
         });
     } catch (error) {
-        console.error('Error fetching notifications:', error);
-        res.status(500).json({ success: false, message: 'Server error' });
+        next(error);
     }
 };
 
 // @route   PATCH /api/notifications/:id/read
 // @desc    Mark a notification as read
 // @access  Private
-exports.markAsRead = async (req, res) => {
+exports.markAsRead = async (req, res, next) => {
     try {
         const notification = await Notification.findById(req.params.id);
 
@@ -40,15 +43,14 @@ exports.markAsRead = async (req, res) => {
 
         res.json({ success: true, data: notification });
     } catch (error) {
-        console.error('Error updating notification:', error);
-        res.status(500).json({ success: false, message: 'Server error' });
+        next(error);
     }
 };
 
 // @route   PATCH /api/notifications/mark-all-read
 // @desc    Mark all unread notifications as read
 // @access  Private
-exports.markAllAsRead = async (req, res) => {
+exports.markAllAsRead = async (req, res, next) => {
     try {
         await Notification.updateMany(
             { userId: req.user.id, isRead: false },
@@ -57,7 +59,6 @@ exports.markAllAsRead = async (req, res) => {
 
         res.json({ success: true, message: 'All notifications marked as read' });
     } catch (error) {
-        console.error('Error updating notifications:', error);
-        res.status(500).json({ success: false, message: 'Server error' });
+        next(error);
     }
 };

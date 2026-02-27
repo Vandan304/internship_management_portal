@@ -19,7 +19,7 @@ export const useData = () => {
 // State managed via backend
 
 export const DataProvider = ({ children }) => {
-    const { user, isAuthenticated } = useAuth();
+    const { user, isAuthenticated, socket } = useAuth();
     const [interns, setInterns] = useState([]);
 
     const fetchInterns = useCallback(async () => {
@@ -101,6 +101,26 @@ export const DataProvider = ({ children }) => {
         }
         return () => { isMounted = false; };
     }, [isAuthenticated, user, fetchInterns, fetchCertificatesAdmin, fetchMyCertificates]);
+
+    // --- Socket & Polling Fallback ---
+    useEffect(() => {
+        if (!isAuthenticated || user?.role !== 'intern') return;
+
+        // 1. Real-time Socket Updates
+        if (socket) {
+            socket.on('refreshCertificates', fetchMyCertificates);
+        }
+
+        // 2. Fallback Polling (Every 5 seconds)
+        const interval = setInterval(() => {
+            fetchMyCertificates();
+        }, 5000);
+
+        return () => {
+            if (socket) socket.off('refreshCertificates', fetchMyCertificates);
+            clearInterval(interval);
+        };
+    }, [socket, user, isAuthenticated, fetchMyCertificates]);
 
     // --- Intern Actions ---
     const addIntern = async (intern) => {

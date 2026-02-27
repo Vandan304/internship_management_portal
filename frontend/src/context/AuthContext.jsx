@@ -1,6 +1,8 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 /* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
+import { io } from 'socket.io-client';
 
 const AuthContext = createContext(null);
 
@@ -18,6 +20,7 @@ axios.defaults.baseURL = 'http://localhost:5000';
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [socket, setSocket] = useState(null);
 
     const logout = () => {
         setUser(null);
@@ -50,6 +53,19 @@ export const AuthProvider = ({ children }) => {
 
         verifyToken();
     }, []); // Removed logout from here to prevent infinite triggering, as it has no dependencies anyway.
+
+    useEffect(() => {
+        let newSocket;
+        if (user) {
+            newSocket = io('http://localhost:5000');
+            setSocket(newSocket);
+            newSocket.emit('join', user._id || user.id);
+        }
+
+        return () => {
+            if (newSocket) newSocket.close();
+        };
+    }, [user]);
 
     const login = async (email, password) => {
         try {
@@ -112,7 +128,8 @@ export const AuthProvider = ({ children }) => {
         updateUser,
         isAuthenticated: !!user,
         isAdmin: user?.role === 'admin',
-        isIntern: user?.role === 'intern'
+        isIntern: user?.role === 'intern',
+        socket
     };
 
     return (

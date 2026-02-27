@@ -8,9 +8,38 @@ const authRoutes = require('./routes/authRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const userRoutes = require('./routes/userRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
+const { errorHandler } = require('./middleware/errorMiddleware');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+
+const http = require('http');
+const socketIo = require('socket.io');
+
+const server = http.createServer(app);
+const io = socketIo(server, {
+    cors: {
+        origin: "*",
+        methods: ["GET", "POST", "PATCH", "PUT", "DELETE"]
+    }
+});
+
+// Expose io to routes/controllers
+app.set('io', io);
+
+io.on('connection', (socket) => {
+    console.log('New client connected:', socket.id);
+
+    // Interns emit 'join' with their user ID to join a specific room for targeted notifications
+    socket.on('join', (userId) => {
+        socket.join(userId);
+        console.log(`User ${userId} joined room ${userId}`);
+    });
+
+    socket.on('disconnect', () => {
+        console.log('Client disconnected:', socket.id);
+    });
+});
 
 // Middleware
 app.use(cors());
@@ -20,7 +49,7 @@ mongoose.connect(process.env.MONGODB_URI)
     .then(() => {
         console.log('Successfully connected to MongoDB.');
 
-        app.listen(PORT, () => {
+        server.listen(PORT, () => {
             console.log(`Server is running on port: ${PORT}`);
         });
     })
@@ -45,3 +74,6 @@ app.use('/api/certificates', certificateRoutes);
 app.get('/', (req, res) => {
     res.send({ message: 'Backend is running' });
 });
+
+// Global Error Handler Middleware (MUST be the last middleware)
+app.use(errorHandler);

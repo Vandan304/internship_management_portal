@@ -9,6 +9,7 @@ const {
     activateIntern
 } = require('../controllers/adminController');
 const { protect, authorizeRoles } = require('../middleware/authMiddleware');
+const { validateObjectId } = require('../middleware/errorMiddleware');
 
 // All routes here should be protected and only accessible by admins
 router.use(protect);
@@ -21,11 +22,11 @@ router.get('/interns', getInterns);
 router.post('/intern', createIntern);
 
 // Route: /api/admin/intern/:id
-router.put('/intern/:id', updateIntern);
-router.delete('/intern/:id', deleteIntern);
+router.put('/intern/:id', validateObjectId, updateIntern);
+router.delete('/intern/:id', validateObjectId, deleteIntern);
 
 // Route: /api/admin/intern/:id/block and /activate
-router.patch('/intern/:id/block', blockIntern);
-router.patch('/intern/:id/activate', activateIntern);
+router.patch('/intern/:id/block', validateObjectId, blockIntern);
+router.patch('/intern/:id/activate', validateObjectId, activateIntern);
 
 module.exports = router;

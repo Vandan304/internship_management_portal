@@ -4,9 +4,14 @@ const Notification = require('../models/Notification');
 // @route   PUT /api/users/update-profile
 // @desc    Update an intern's profile (name, email)
 // @access  Private/Intern
-exports.updateProfile = async (req, res) => {
+exports.updateProfile = async (req, res, next) => {
     try {
         const { name, email } = req.body;
+
+        // SAFE AUTH CHECK: Ensure user is populated by authMiddleware
+        if (!req.user || !req.user.id) {
+            return res.status(401).json({ success: false, message: 'Unauthorized. User information missing.' });
+        }
 
         // Ensure user exists
         let user = await User.findById(req.user.id);
@@ -37,12 +42,14 @@ exports.updateProfile = async (req, res) => {
         await user.save();
 
         // Create notification for profile update
-        await Notification.create({
+        const notification = await Notification.create({
             userId: user._id,
             title: "Profile Update Successful",
             message: "Your profile information has been successfully updated.",
             type: "profile"
         });
+
+        req.app.get('io').to(user._id.toString()).emit('newNotification', notification);
 
         res.json({
             success: true,
@@ -57,7 +64,7 @@ exports.updateProfile = async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Error updating profile:', error);
-        res.status(500).json({ success: false, message: 'Server error during profile update' });
+        // SAFE ERROR HANDLING: Pass the error to the global handler
+        next(error);
     }
 };

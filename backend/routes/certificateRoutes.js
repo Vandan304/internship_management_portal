@@ -13,6 +13,7 @@ const {
 } = require('../controllers/certificateController');
 const { protect, authorizeRoles } = require('../middleware/authMiddleware');
 const upload = require('../middleware/uploadMiddleware');
+const { validateObjectId } = require('../middleware/errorMiddleware');
 
 // Apply protection to all certificate routes
 router.use(protect);
@@ -28,14 +29,14 @@ router.post(
 
 // Intern-only route
 router.get('/my-certificates', authorizeRoles('intern'), getMyCertificates);
-router.get('/download/:id', authorizeRoles('intern'), downloadCertificate);
+router.get('/download/:id', validateObjectId, authorizeRoles('intern'), downloadCertificate);
 
 // General Admin Routes (MUST be below specific paths like /my-certificates)
 router.get('/permissions', authorizeRoles('admin'), getCertificatePermissions);
 router.get('/', authorizeRoles('admin'), getAllCertificates);
-router.put('/:id', authorizeRoles('admin'), updateCertificate);
-router.delete('/:id', authorizeRoles('admin'), deleteCertificate);
-router.patch('/:id/visibility', authorizeRoles('admin'), toggleVisibility);
-router.patch('/:id/download', authorizeRoles('admin'), toggleDownload);
+router.put('/:id', validateObjectId, authorizeRoles('admin'), updateCertificate);
+router.delete('/:id', validateObjectId, authorizeRoles('admin'), deleteCertificate);
+router.patch('/:id/visibility', validateObjectId, authorizeRoles('admin'), toggleVisibility);
+router.patch('/:id/download', validateObjectId, authorizeRoles('admin'), toggleDownload);
 
 module.exports = router;

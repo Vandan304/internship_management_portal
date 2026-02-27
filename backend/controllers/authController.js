@@ -4,7 +4,7 @@ const bcrypt = require('bcryptjs');
 // @route   POST /api/auth/register
 // @desc    Register a user (admin or intern)
 // @access  Public
-exports.register = async (req, res) => {
+exports.register = async (req, res, next) => {
     try {
         const { name, email, password, role } = req.body;
 
@@ -47,8 +47,7 @@ exports.register = async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Registration error:', error);
-        res.status(500).json({ success: false, message: 'Server error during registration' });
+        next(error);
     }
 };
 
@@ -57,7 +56,7 @@ const jwt = require('jsonwebtoken');
 // @route   POST /api/auth/login
 // @desc    Login a user and generate JWT token
 // @access  Public
-exports.login = async (req, res) => {
+exports.login = async (req, res, next) => {
     try {
         const { email, password } = req.body;
 
@@ -122,7 +121,6 @@ exports.login = async (req, res) => {
         );
 
     } catch (error) {
-        console.error('Login error:', error);
-        res.status(500).json({ success: false, message: 'Server error during login' });
+        next(error);
     }
 };

@@ -10,17 +10,20 @@ export default function Dashboard() {
     const { addToast } = useToast();
     const { interns, certificates } = useData();
 
-    const activeInterns = interns.filter(i => i.status === 'Active').length;
-    const totalDownloads = certificates.reduce((acc, current) => acc + current.assignments.length, 0); // rough estimate from assignments
+    const safeInterns = Array.isArray(interns) ? interns : [];
+    const safeCertificates = Array.isArray(certificates) ? certificates : [];
+
+    const activeInterns = safeInterns.filter(i => i.status === 'Active').length;
+    const totalDownloads = safeCertificates.reduce((acc, current) => acc + (current?.assignments?.length || 0), 0); // rough estimate from assignments
 
     const stats = [
-        { title: 'Total Interns', value: interns.length, change: '+12%', icon: Users, color: 'text-blue-600', bg: 'bg-blue-50' },
+        { title: 'Total Interns', value: safeInterns.length, change: '+12%', icon: Users, color: 'text-blue-600', bg: 'bg-blue-50' },
         { title: 'Active Interns', value: activeInterns, change: '+5%', icon: UserCheck, color: 'text-emerald-600', bg: 'bg-emerald-50' },
-        { title: 'Certificates', value: certificates.length, change: '+8%', icon: FileText, color: 'text-purple-600', bg: 'bg-purple-50' },
+        { title: 'Certificates', value: safeCertificates.length, change: '+8%', icon: FileText, color: 'text-purple-600', bg: 'bg-purple-50' },
         { title: 'Downloads', value: totalDownloads, change: '+24%', icon: Download, color: 'text-orange-600', bg: 'bg-orange-50' },
     ];
 
-    const activities = interns.slice(0, 5).map(intern => ({
+    const activities = safeInterns.slice(0, 5).map(intern => ({
         title: 'New registration',
         time: intern.joinDate,
         user: intern.name
@@ -91,7 +94,7 @@ export default function Dashboard() {
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-100">
-                                    {interns.slice(0, 5).map((intern, i) => (
+                                    {safeInterns.slice(0, 5).map((intern, i) => (
                                         <tr key={intern.id || i} className="hover:bg-gray-50/50 transition-colors">
                                             <td className="px-4 py-3 font-medium text-gray-900">{intern.name}</td>
                                             <td className="px-4 py-3 text-gray-500">{intern.role}</td>

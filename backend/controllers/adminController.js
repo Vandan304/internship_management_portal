@@ -5,20 +5,19 @@ const bcrypt = require('bcryptjs');
 // @route   GET /api/admin/interns
 // @desc    Get all interns
 // @access  Private/Admin
-exports.getInterns = async (req, res) => {
+exports.getInterns = async (req, res, next) => {
     try {
         const interns = await User.find({ role: 'intern' }).select('-password');
         res.json({ success: true, count: interns.length, data: interns });
     } catch (error) {
-        console.error('Error fetching interns:', error);
-        res.status(500).json({ success: false, message: 'Server error' });
+        next(error);
     }
 };
 
 // @route   POST /api/admin/intern
 // @desc    Create a new intern
 // @access  Private/Admin
-exports.createIntern = async (req, res) => {
+exports.createIntern = async (req, res, next) => {
     try {
         const { name, email, password } = req.body;
 
@@ -47,15 +46,14 @@ exports.createIntern = async (req, res) => {
 
         res.status(201).json({ success: true, data: internResponse });
     } catch (error) {
-        console.error('Error creating intern:', error);
-        res.status(500).json({ success: false, message: 'Server error' });
+        next(error);
     }
 };
 
 // @route   PUT /api/admin/intern/:id
 // @desc    Update an intern details (name, email)
 // @access  Private/Admin
-exports.updateIntern = async (req, res) => {
+exports.updateIntern = async (req, res, next) => {
     try {
         const { name, email } = req.body;
 
@@ -89,15 +87,14 @@ exports.updateIntern = async (req, res) => {
 
         res.json({ success: true, data: internResponse });
     } catch (error) {
-        console.error('Error updating intern:', error);
-        res.status(500).json({ success: false, message: 'Server error' });
+        next(error);
     }
 };
 
 // @route   DELETE /api/admin/intern/:id
 // @desc    Delete an intern completely
 // @access  Private/Admin
-exports.deleteIntern = async (req, res) => {
+exports.deleteIntern = async (req, res, next) => {
     try {
         const intern = await User.findById(req.params.id);
 
@@ -113,15 +110,14 @@ exports.deleteIntern = async (req, res) => {
 
         res.json({ success: true, message: 'Intern deleted successfully' });
     } catch (error) {
-        console.error('Error deleting intern:', error);
-        res.status(500).json({ success: false, message: 'Server error' });
+        next(error);
     }
 };
 
 // @route   PATCH /api/admin/intern/:id/block
 // @desc    Block an intern login
 // @access  Private/Admin
-exports.blockIntern = async (req, res) => {
+exports.blockIntern = async (req, res, next) => {
     try {
         const intern = await User.findById(req.params.id);
 
@@ -136,24 +132,25 @@ exports.blockIntern = async (req, res) => {
         intern.loginAllowed = false;
         await intern.save();
 
-        await Notification.create({
+        const notification = await Notification.create({
             userId: intern._id,
             title: "Account Restricted",
             message: "Your account login has been temporarily restricted by an administrator.",
             type: "system"
         });
 
+        req.app.get('io').to(intern._id.toString()).emit('newNotification', notification);
+
         res.json({ success: true, message: 'Intern blocked successfully', data: { id: intern._id, loginAllowed: intern.loginAllowed } });
     } catch (error) {
-        console.error('Error blocking intern:', error);
-        res.status(500).json({ success: false, message: 'Server error' });
+        next(error);
     }
 };
 
 // @route   PATCH /api/admin/intern/:id/activate
 // @desc    Re-activate an intern login
 // @access  Private/Admin
-exports.activateIntern = async (req, res) => {
+exports.activateIntern = async (req, res, next) => {
     try {
         const intern = await User.findById(req.params.id);
 
@@ -168,16 +165,17 @@ exports.activateIntern = async (req, res) => {
         intern.loginAllowed = true;
         await intern.save();
 
-        await Notification.create({
+        const notification = await Notification.create({
             userId: intern._id,
             title: "Account Activated",
             message: "Your account login has been restored by an administrator.",
             type: "system"
         });
 
+        req.app.get('io').to(intern._id.toString()).emit('newNotification', notification);
+
         res.json({ success: true, message: 'Intern activated successfully', data: { id: intern._id, loginAllowed: intern.loginAllowed } });
     } catch (error) {
-        console.error('Error activating intern:', error);
-        res.status(500).json({ success: false, message: 'Server error' });
+        next(error);
     }
 };

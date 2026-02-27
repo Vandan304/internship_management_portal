@@ -19,53 +19,56 @@ import { ToastProvider } from './context/ToastContext';
 import ProtectedRoute from './components/layout/ProtectedRoute';
 
 import { DataProvider } from './context/DataContext';
+import ErrorBoundary from './components/ErrorBoundary';
 
 function App() {
   return (
-    <AuthProvider>
-      <DataProvider>
-        <ToastProvider>
-          <Routes>
-            <Route path="/" element={<LandingPage />} />
-            <Route path="/login" element={
-              <ProtectedRoute>
-                <LoginPage />
-              </ProtectedRoute>
-            } />
-            <Route path="/register" element={
-              <ProtectedRoute>
-                <RegisterPage />
-              </ProtectedRoute>
-            } />
+    <ErrorBoundary>
+      <AuthProvider>
+        <DataProvider>
+          <ToastProvider>
+            <Routes>
+              <Route path="/" element={<LandingPage />} />
+              <Route path="/login" element={
+                <ProtectedRoute>
+                  <LoginPage />
+                </ProtectedRoute>
+              } />
+              <Route path="/register" element={
+                <ProtectedRoute>
+                  <RegisterPage />
+                </ProtectedRoute>
+              } />
 
-            {/* Admin Routes */}
-            <Route path="/admin" element={
-              <ProtectedRoute role="admin">
-                <AdminLayout />
-              </ProtectedRoute>
-            }>
-              <Route index element={<Dashboard />} />
-              <Route path="interns" element={<Interns />} />
-              <Route path="certificates" element={<Certificates />} />
-              <Route path="permissions" element={<Permissions />} />
-            </Route>
+              {/* Admin Routes */}
+              <Route path="/admin" element={
+                <ProtectedRoute role="admin">
+                  <AdminLayout />
+                </ProtectedRoute>
+              }>
+                <Route index element={<Dashboard />} />
+                <Route path="interns" element={<Interns />} />
+                <Route path="certificates" element={<Certificates />} />
+                <Route path="permissions" element={<Permissions />} />
+              </Route>
 
-            {/* Intern Routes */}
-            <Route path="/intern" element={
-              <ProtectedRoute role="intern">
-                <InternLayout />
-              </ProtectedRoute>
-            }>
-              <Route index element={<InternDashboard />} />
-              <Route path="certificates" element={<MyCertificates />} />
-              <Route path="profile" element={<InternProfile />} />
-              <Route path="notifications" element={<InternNotifications />} />
-            </Route>
+              {/* Intern Routes */}
+              <Route path="/intern" element={
+                <ProtectedRoute role="intern">
+                  <InternLayout />
+                </ProtectedRoute>
+              }>
+                <Route index element={<InternDashboard />} />
+                <Route path="certificates" element={<MyCertificates />} />
+                <Route path="profile" element={<InternProfile />} />
+                <Route path="notifications" element={<InternNotifications />} />
+              </Route>
 
-          </Routes>
-        </ToastProvider>
-      </DataProvider>
-    </AuthProvider>
+            </Routes>
+          </ToastProvider>
+        </DataProvider>
+      </AuthProvider>
+    </ErrorBoundary>
   );
 }
 

@@ -4,11 +4,13 @@ import { Card, CardHeader, CardContent } from '../../components/ui/Card';
 import { Bell, Check, CheckCircle2, Clock } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useToast } from '../../context/ToastContext';
+import { useAuth } from '../../context/AuthContext';
 
 const InternNotifications = () => {
     const [notifications, setNotifications] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const { addToast } = useToast();
+    const { socket } = useAuth();
 
     const formatTime = (date) => {
         try {
@@ -35,7 +37,28 @@ const InternNotifications = () => {
 
     useEffect(() => {
         fetchNotifications();
-    }, []);
+
+        // 1. Back-up Polling (Every 5 seconds)
+        const interval = setInterval(() => {
+            fetchNotifications();
+        }, 5000);
+
+        // 2. Real-time Socket Updates
+        if (socket) {
+            socket.on('newNotification', (newNotification) => {
+                setNotifications(prev => {
+                    // Prevent duplicates if polling/socket arrive at same time
+                    if (prev.some(n => n._id === newNotification._id)) return prev;
+                    return [newNotification, ...prev];
+                });
+            });
+        }
+
+        return () => {
+            clearInterval(interval);
+            if (socket) socket.off('newNotification');
+        };
+    }, [socket]); // Socket dependency attached so it re-binds if socket initializes late
 
     const handleMarkAsRead = async (id) => {
         try {
@@ -63,7 +86,7 @@ const InternNotifications = () => {
         }
     };
 
-    const unreadCount = notifications.filter(n => !n.isRead).length;
+    const unreadCount = (notifications || []).filter(n => !n.isRead).length;
 
     return (
         <div className="space-y-6 animate-fade-in-up">
@@ -90,7 +113,7 @@ const InternNotifications = () => {
                 <CardContent className="p-0">
                     {isLoading ? (
                         <div className="p-12 text-center text-gray-500">Loading notifications...</div>
-                    ) : notifications.length === 0 ? (
+                    ) : (!notifications || notifications.length === 0) ? (
                         <div className="p-12 flex flex-col items-center justify-center text-gray-500">
                             <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-4">
                                 <Bell className="w-8 h-8 text-gray-400" />
@@ -100,7 +123,7 @@ const InternNotifications = () => {
                         </div>
                     ) : (
                         <div className="divide-y divide-gray-100">
-                            {notifications.map((notification) => (
+                            {(notifications || []).map((notification) => (
                                 <div
                                     key={notification._id}
                                     className={`p-4 sm:p-6 transition-colors duration-200 cursor-pointer ${notification.isRead ? 'bg-white hover:bg-gray-50' : 'bg-brand-50/30 hover:bg-brand-50/50'}`}

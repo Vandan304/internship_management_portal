@@ -9,10 +9,11 @@ const InternDashboard = () => {
 
     // Calculate Stats
     // DataContext myCertificates array already filters out non-visible and non-owned certs at the backend
-    const downloadCount = certificates.filter(c => c.canDownload).length;
+    const safeCertificates = Array.isArray(certificates) ? certificates : [];
+    const downloadCount = safeCertificates.filter(c => c.canDownload).length;
 
     const stats = [
-        { title: 'My Certificates', value: certificates.length, icon: Award, color: 'text-brand-600', bg: 'bg-brand-50' },
+        { title: 'My Certificates', value: safeCertificates.length, icon: Award, color: 'text-brand-600', bg: 'bg-brand-50' },
         { title: 'Available Downloads', value: downloadCount, icon: Download, color: 'text-green-600', bg: 'bg-green-50' },
         { title: 'Account Status', value: user?.status || 'Active', icon: UserCheck, color: 'text-blue-600', bg: 'bg-blue-50' },
     ];
@@ -52,7 +53,7 @@ const InternDashboard = () => {
                 <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
                     <h3 className="text-lg font-bold text-gray-900 mb-4">Recent Certificates</h3>
                     <div className="space-y-4">
-                        {certificates.slice(0, 3).map((cert) => (
+                        {safeCertificates.slice(0, 3).map((cert) => (
                             <div key={cert.id} className="flex items-center gap-4 p-3 rounded-lg hover:bg-gray-50 transition-colors border border-transparent hover:border-gray-100">
                                 <div className="w-10 h-10 rounded-lg bg-orange-100 flex items-center justify-center text-orange-600 flex-shrink-0">
                                     <Award className="w-5 h-5" />
@@ -71,7 +72,7 @@ const InternDashboard = () => {
                                 )}
                             </div>
                         ))}
-                        {certificates.length === 0 && (
+                        {safeCertificates.length === 0 && (
                             <p className="text-sm text-gray-500 text-center py-4">No certificates yet.</p>
                         )}
                     </div>
