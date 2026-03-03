@@ -22,15 +22,15 @@ const certificateSchema = new mongoose.Schema({
     assignedTo: {
         type: mongoose.Schema.ObjectId,
         ref: 'User',
-        required: true
+        default: null
     },
-    isVisible: {
-        type: Boolean,
-        default: true
+    fileSize: {
+        type: Number,
+        default: 0
     },
-    canDownload: {
-        type: Boolean,
-        default: false
+    fileType: {
+        type: String,
+        default: 'application/pdf'
     },
     createdAt: {
         type: Date,

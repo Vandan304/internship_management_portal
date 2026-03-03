@@ -24,7 +24,6 @@ const io = socketIo(server, {
     }
 });
 
-// Expose io to routes/controllers
 app.set('io', io);
 
 io.on('connection', (socket) => {

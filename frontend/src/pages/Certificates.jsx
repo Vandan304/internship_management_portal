@@ -1,13 +1,13 @@
 import React, { useState, useRef } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
-import { Upload, FileText, Globe, EyeOff, Search, Trash2 } from 'lucide-react';
+import { Upload, FileText, Search, Trash2 } from 'lucide-react';
 import { cn } from '../utils/cn';
 import { useToast } from '../context/ToastContext';
 import { useData } from '../context/DataContext';
 
 export default function Certificates() {
-    const { certificates, interns, addCertificate, deleteCertificate, toggleCertificateVisibility, toggleDownloadPermission } = useData();
+    const { certificates, interns, addCertificate, deleteCertificate } = useData();
     const [isDragOver, setIsDragOver] = useState(false);
     const [selectedInternId, setSelectedInternId] = useState('');
     const [certNameInput, setCertNameInput] = useState('');
@@ -39,8 +39,7 @@ export default function Certificates() {
         const formData = new FormData();
         formData.append('title', certNameInput.trim() ? certNameInput : file.name.split('.')[0]);
         formData.append('assignedTo', selectedInternId);
-        formData.append('isVisible', 'false'); // default hidden initially
-        formData.append('canDownload', 'false'); // default no download
+        // The backend `uploadCertificate` will handle default visibility/download if assigned
         formData.append('file', file);
 
         try {
@@ -69,23 +68,7 @@ export default function Certificates() {
         }
     };
 
-    const toggleVisibility = async (id) => {
-        try {
-            await toggleCertificateVisibility(id);
-            addToast('Visibility updated', 'info');
-        } catch (e) {
-            addToast('Failed to update visibility', 'error');
-        }
-    };
-
-    const toggleDownload = async (id) => {
-        try {
-            await toggleDownloadPermission(id);
-            addToast('Download permission updated', 'info');
-        } catch (e) {
-            addToast('Failed to update permission', 'error');
-        }
-    };
+    // Permission toggles moved to Permissions.jsx
 
     return (
         <div className="space-y-6 animate-fade-in-up">
@@ -172,8 +155,8 @@ export default function Certificates() {
                                     <tr>
                                         <th className="px-6 py-3 font-medium">File Name</th>
                                         <th className="px-6 py-3 font-medium">Uploaded</th>
-                                        <th className="px-6 py-3 font-medium">Assigned Count</th>
-                                        <th className="px-6 py-3 font-medium">Visibility</th>
+                                        <th className="px-6 py-3 font-medium">Size</th>
+                                        <th className="px-6 py-3 font-medium text-center">Status</th>
                                         <th className="px-6 py-3 font-medium text-right">Action</th>
                                     </tr>
                                 </thead>
@@ -190,28 +173,16 @@ export default function Certificates() {
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4 text-gray-600">{cert.uploadedDate}</td>
-                                            <td className="px-6 py-4">
-                                                <button
-                                                    onClick={() => toggleDownload(cert.id)}
-                                                    className={cn(
-                                                        "flex items-center gap-1.5 px-2 py-1 rounded text-xs font-medium transition-colors",
-                                                        cert.canDownload ? "bg-green-50 text-green-700 hover:bg-green-100" : "bg-red-50 text-red-700 hover:bg-red-100"
-                                                    )}
-                                                >
-                                                    {cert.canDownload ? 'Allowed' : 'Blocked'}
-                                                </button>
+                                            <td className="px-6 py-4 text-gray-600 text-xs text-nowrap">
+                                                {cert.fileSize ? (cert.fileSize / 1024).toFixed(1) + ' KB' : 'Unknown'}
                                             </td>
-                                            <td className="px-6 py-4">
-                                                <button
-                                                    onClick={() => toggleVisibility(cert.id)}
-                                                    className={cn(
-                                                        "flex items-center gap-1.5 px-2 py-1 rounded text-xs font-medium transition-colors",
-                                                        cert.visibility === 'Public' ? "bg-blue-50 text-blue-700 hover:bg-blue-100" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                                                    )}
-                                                >
-                                                    {cert.visibility === 'Public' ? <Globe size={12} /> : <EyeOff size={12} />}
-                                                    {cert.visibility}
-                                                </button>
+                                            <td className="px-6 py-4 text-center">
+                                                <span className={cn(
+                                                    "inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium",
+                                                    cert.assignedCount > 0 ? "bg-blue-50 text-blue-700" : "bg-gray-100 text-gray-700"
+                                                )}>
+                                                    {cert.assignedCount > 0 ? 'Assigned' : 'Draft'}
+                                                </span>
                                             </td>
                                             <td className="px-6 py-4 text-right">
                                                 <div className="flex items-center justify-end gap-2">

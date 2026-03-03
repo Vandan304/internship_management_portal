@@ -57,7 +57,9 @@ export const DataProvider = ({ children }) => {
                         id: c._id, // map Mongo _id to id for frontend compatibility
                         name: c.title,
                         fileName: c.fileName,
-                        visibility: c.isVisible ? 'Public' : 'Private',
+                        fileSize: c.fileSize,
+                        fileType: c.fileType,
+                        assignedCount: c.assignedCount,
                         uploadedDate: c.createdAt ? c.createdAt.split('T')[0] : 'N/A'
                     })));
                 }

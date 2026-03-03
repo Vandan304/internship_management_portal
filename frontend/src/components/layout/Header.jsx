@@ -56,15 +56,17 @@ export function Header({ onMenuClick }) {
                     />
                 </div>
 
-                <button
-                    onClick={() => user?.role === 'intern' ? navigate('/intern/notifications') : null}
-                    className="p-2 text-gray-500 hover:bg-gray-100 hover:text-brand-600 rounded-full transition-colors relative"
-                >
-                    <Bell size={20} />
-                    {hasUnread && (
-                        <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
-                    )}
-                </button>
+                {user && user.role === "intern" && (
+                    <button
+                        onClick={() => navigate("/intern/notifications")}
+                        className="p-2 text-gray-500 hover:bg-gray-100 hover:text-brand-600 rounded-full transition-colors relative"
+                    >
+                        <Bell size={20} />
+                        {hasUnread && (
+                            <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
+                        )}
+                    </button>
+                )}
 
                 <div className="h-8 w-px bg-gray-200 mx-1"></div>
 
