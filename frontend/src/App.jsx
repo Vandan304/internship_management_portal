@@ -10,6 +10,8 @@ import InternNotifications from './pages/intern/InternNotifications';
 import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
+import VerifyOtp from './pages/VerifyOtp';
+import ResetPassword from './pages/ResetPassword';
 
 import Interns from './pages/Interns';
 import Certificates from './pages/Certificates';
@@ -20,6 +22,7 @@ import ProtectedRoute from './components/layout/ProtectedRoute';
 
 import { DataProvider } from './context/DataContext';
 import ErrorBoundary from './components/ErrorBoundary';
+import { Toaster } from 'react-hot-toast';
 
 function App() {
   return (
@@ -27,8 +30,11 @@ function App() {
       <AuthProvider>
         <DataProvider>
           <ToastProvider>
+            <Toaster position="top-right" />
             <Routes>
               <Route path="/" element={<LandingPage />} />
+              <Route path="/verify-otp" element={<VerifyOtp />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/login" element={
                 <ProtectedRoute>
                   <LoginPage />

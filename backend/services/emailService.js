@@ -44,6 +44,34 @@ Internship Management System`
     }
 };
 
+const sendOTPEmail = async (email, name, otp) => {
+    try {
+        const mailOptions = {
+            from: process.env.EMAIL_USER,
+            to: email,
+            subject: 'Password Reset OTP - Internship Portal',
+            text: `Hello ${name},
+
+You requested to reset your password. Here is your 6-digit OTP code:
+
+${otp}
+
+This code will expire in 10 minutes. If you did not request this, please ignore this email.
+
+Best regards,
+Internship Management System`
+        };
+
+        const info = await transporter.sendMail(mailOptions);
+        console.log('OTP Email sent: ' + info.response);
+        return true;
+    } catch (error) {
+        console.error('Error sending OTP email:', error);
+        return false;
+    }
+};
+
 module.exports = {
-    sendInternCredentials
+    sendInternCredentials,
+    sendOTPEmail
 };

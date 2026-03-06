@@ -33,6 +33,12 @@ const userSchema = new mongoose.Schema({
         unique: true,
         sparse: true
     },
+    resetPasswordOtp: {
+        type: String
+    },
+    resetPasswordExpire: {
+        type: Date
+    },
     isActive: {
         type: Boolean,
         default: true

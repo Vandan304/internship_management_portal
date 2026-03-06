@@ -124,3 +124,122 @@ exports.login = async (req, res, next) => {
         next(error);
     }
 };
+
+// @route   POST /api/auth/forgot-password
+// @desc    Generate OTP for forgotten passwords and email the user
+// @access  Public
+exports.forgotPassword = async (req, res, next) => {
+    try {
+        const { email } = req.body;
+
+        if (!email) {
+            return res.status(400).json({ success: false, message: 'Please provide an email address' });
+        }
+
+        const user = await User.findOne({ email });
+
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'No account found with this email' });
+        }
+
+        // Generate a random 4-digit OTP code securely
+        const otpCode = Math.floor(1000 + Math.random() * 9000).toString();
+
+        // Save the code to the user document alongside an expiration window (10 minutes)
+        user.resetPasswordOtp = otpCode;
+        user.resetPasswordExpire = Date.now() + 10 * 60 * 1000;
+        await user.save();
+
+        // Transmit the code to the email handler
+        const { sendOTPEmail } = require('../services/emailService');
+        const emailSent = await sendOTPEmail(user.email, user.name, otpCode);
+
+        if (!emailSent) {
+            // Nullify codes if emailing fails dynamically 
+            user.resetPasswordOtp = undefined;
+            user.resetPasswordExpire = undefined;
+            await user.save();
+            return res.status(500).json({ success: false, message: 'Error sending OTP email. Please try again later.' });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: 'OTP has been sent to your email'
+        });
+
+    } catch (error) {
+        next(error);
+    }
+};
+
+// @route   POST /api/auth/verify-otp
+// @desc    Verify OTP for password reset
+// @access  Public
+exports.verifyOtp = async (req, res, next) => {
+    try {
+        const { email, otp } = req.body;
+
+        if (!email || !otp) {
+            return res.status(400).json({ success: false, message: 'Please provide email and OTP' });
+        }
+
+        const user = await User.findOne({ email });
+
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+
+        if (user.resetPasswordOtp !== otp) {
+            return res.status(400).json({ success: false, message: 'Invalid OTP' });
+        }
+
+        if (user.resetPasswordExpire < Date.now()) {
+            return res.status(400).json({ success: false, message: 'OTP has expired. Please request a new one.' });
+        }
+
+        res.status(200).json({ success: true, message: 'OTP verified successfully' });
+
+    } catch (error) {
+        next(error);
+    }
+};
+
+// @route   POST /api/auth/reset-password
+// @desc    Reset password using email and new password
+// @access  Public
+exports.resetPassword = async (req, res, next) => {
+    try {
+        const { email, newPassword } = req.body;
+
+        if (!email || !newPassword) {
+            return res.status(400).json({ success: false, message: 'Please provide email and new password' });
+        }
+
+        if (newPassword.length < 6) {
+            return res.status(400).json({ success: false, message: 'Password must be at least 6 characters' });
+        }
+
+        const user = await User.findOne({ email });
+
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+
+        if (!user.resetPasswordOtp || user.resetPasswordExpire < Date.now()) {
+            return res.status(400).json({ success: false, message: 'Password reset session expired. Please request a new OTP.' });
+        }
+
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+        user.password = hashedPassword;
+        user.resetPasswordOtp = undefined;
+        user.resetPasswordExpire = undefined;
+        await user.save();
+
+        res.status(200).json({ success: true, message: 'Password reset successful' });
+
+    } catch (error) {
+        next(error);
+    }
+};

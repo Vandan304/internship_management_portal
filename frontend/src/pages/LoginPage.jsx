@@ -2,21 +2,45 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { GraduationCap, Mail, Lock, ArrowRight, Loader2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import toast from 'react-hot-toast';
+import axios from 'axios';
 
 const LoginPage = () => {
     const navigate = useNavigate();
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const { login } = useAuth();
+
+    const handleForgotPassword = async (e) => {
+        e.preventDefault();
+
+        if (!email.trim()) {
+            toast.error("Please enter your email address first");
+            return;
+        }
+
+        try {
+            setLoading(true);
+            const res = await axios.post('http://localhost:5000/api/auth/forgot-password', { email });
+
+            if (res.data.success) {
+                toast.success("OTP has been sent to your email");
+                navigate('/verify-otp', { state: { email } });
+            }
+        } catch (err) {
+            toast.error(err.response?.data?.message || "Something went wrong. Please try again.");
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const handleLogin = async (e) => {
         e.preventDefault();
         setLoading(true);
         setError(''); // Clear any previous errors
         try {
-            const email = e.target[0].value;
-            const password = e.target[1].value;
-
             const user = await login(email, password);
 
             if (user?.role === 'admin') {
@@ -68,6 +92,8 @@ const LoginPage = () => {
                                     id="email"
                                     type="email"
                                     required
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
                                     className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all outline-none"
                                     placeholder="you@example.com"
                                 />
@@ -77,7 +103,7 @@ const LoginPage = () => {
                         <div className="space-y-2">
                             <div className="flex justify-between items-center">
                                 <label className="text-sm font-medium text-gray-700" htmlFor="password">Password</label>
-                                <a href="#" className="text-sm font-medium text-brand-600 hover:text-brand-700">Forgot password?</a>
+                                <button type="button" onClick={handleForgotPassword} className="text-sm font-medium text-brand-600 hover:text-brand-700 bg-transparent border-none cursor-pointer">Forgot password?</button>
                             </div>
                             <div className="relative">
                                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -87,6 +113,8 @@ const LoginPage = () => {
                                     id="password"
                                     type="password"
                                     required
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
                                     className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all outline-none"
                                     placeholder="••••••••"
                                 />
