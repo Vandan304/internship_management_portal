@@ -1,5 +1,6 @@
 const User = require('../models/User');
 const Notification = require('../models/Notification');
+const Certificate = require('../models/Certificate');
 const bcrypt = require('bcryptjs');
 
 // @route   GET /api/admin/interns
@@ -19,10 +20,17 @@ exports.getInterns = async (req, res, next) => {
 // @access  Private/Admin
 exports.createIntern = async (req, res, next) => {
     try {
-        const { name, email, password } = req.body;
+        const { name, email, internRole } = req.body;
 
-        if (!name || !email || !password) {
-            return res.status(400).json({ success: false, message: 'Please provide name, email, and password' });
+        if (!name || !email || !internRole) {
+            return res.status(400).json({ success: false, message: 'Please provide name, email, and internRole' });
+        }
+
+        const validInternRole = internRole.toLowerCase();
+
+        const allowedRoles = ['fullstack', 'frontend', 'backend', 'ai', 'ml', 'datascience'];
+        if (!allowedRoles.includes(validInternRole)) {
+            return res.status(400).json({ success: false, message: 'Invalid role selected' });
         }
 
         const userExists = await User.findOne({ email });
@@ -30,17 +38,37 @@ exports.createIntern = async (req, res, next) => {
             return res.status(400).json({ success: false, message: 'Intern already exists with this email' });
         }
 
+        const generatedPassword = `${name.replace(/\s+/g, '').toLowerCase()}@${validInternRole}`;
+
         const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(password, salt);
+        const hashedPassword = await bcrypt.hash(generatedPassword, salt);
+
+        const currentYear = new Date().getFullYear();
+        const lastIntern = await User.findOne({
+            internId: new RegExp(`^INT-${currentYear}-`)
+        }).sort({ createdAt: -1 });
+
+        let sequenceCount = '001';
+        if (lastIntern && lastIntern.internId) {
+            const lastSequence = parseInt(lastIntern.internId.split('-')[2]);
+            if (!isNaN(lastSequence)) {
+                sequenceCount = (lastSequence + 1).toString().padStart(3, '0');
+            }
+        }
+        const authInternId = `INT-${currentYear}-${sequenceCount}`;
 
         const intern = await User.create({
             name,
             email,
             password: hashedPassword,
-            role: 'intern'
+            role: 'intern',
+            internRole: validInternRole,
+            internId: authInternId
         });
 
-        // Exclude password in response
+        const { sendInternCredentials } = require('../services/emailService');
+        await sendInternCredentials(email, name, generatedPassword, authInternId, validInternRole);
+
         const internResponse = intern.toObject();
         delete internResponse.password;
 
@@ -105,6 +133,10 @@ exports.deleteIntern = async (req, res, next) => {
         if (intern.role !== 'intern') {
             return res.status(400).json({ success: false, message: 'Cannot delete non-intern users via this route' });
         }
+
+        // Cleanup related data
+        await Certificate.deleteMany({ assignedTo: req.params.id });
+        await Notification.deleteMany({ userId: req.params.id });
 
         await User.findByIdAndDelete(req.params.id);
 

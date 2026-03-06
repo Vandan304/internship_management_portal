@@ -12,7 +12,7 @@ export function InternModal({ isOpen, onClose, onSubmit, initialData }) {
             id: initialData?.id || Date.now(),
             name: e.target.name.value,
             email: e.target.email.value,
-            role: e.target.role.value,
+            internRole: e.target.internRole.value,
             password: 'password123'
         });
         onClose();
@@ -48,14 +48,16 @@ export function InternModal({ isOpen, onClose, onSubmit, initialData }) {
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Role / Domain</label>
                     <select
-                        name="role"
-                        defaultValue={initialData?.role}
+                        name="internRole"
+                        defaultValue={initialData?.internRole || initialData?.role}
                         className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white"
                     >
-                        <option value="Frontend Developer">Frontend Developer</option>
-                        <option value="Backend Developer">Backend Developer</option>
-                        <option value="UI/UX Designer">UI/UX Designer</option>
-                        <option value="Data Scientist">Data Scientist</option>
+                        <option value="fullstack">Full Stack</option>
+                        <option value="frontend">Frontend</option>
+                        <option value="backend">Backend</option>
+                        <option value="ai">AI Engineer</option>
+                        <option value="ml">ML Engineer</option>
+                        <option value="datascience">Data Science</option>
                     </select>
                 </div>
 

@@ -1,0 +1,53 @@
+INTERNSHIP MANAGEMENT PORTAL - FUNCTIONALITY OVERVIEW
+===================================================
+
+This is a comprehensive overview of the MERN stack Internship Management Portal, detailing all modules, roles, and functionalities available in the system.
+
+1. TECH STACK
+-------------
+* Frontend: React.js (with Vite), Tailwind CSS for styling, Context API for state management.
+* Backend: Node.js, Express.js.
+* Database: MongoDB (with Mongoose ORM).
+* Real-time: Socket.io for live notifications and instant UI updates.
+* Authentication: Custom JWT (JSON Web Tokens) with role-based routing.
+
+2. USER ROLES
+-------------
+* Admin: Manages the entire platform, oversees interns, and uploads certificates.
+* Intern: Logs in to view their dashboard, access assigned certificates, and manage their profile.
+
+3. BACKEND ARCHITECTURE
+-----------------------
+Models:
+* User: Handles unified login for Admins and Interns. Separated by `role` ("admin" or "intern").
+* Certificate: Stores file metadata (title, fileUrl, fileSize, fileType, assignedTo).
+* CertificatePermission: Dedicated access control tracking (`isVisible`, `canDownload`) between an Intern and a Certificate.
+* Notification: Stores real-time alert data (title, message, type, isRead).
+
+Key Controllers & Routes:
+* Auth API (/api/auth): register, login, getMe (validates JWT).
+* Admin/Intern API (/api/admin): Manage interns (add, block, activate, delete), update intern profiles, and retrieve dashboard statistics.
+* Certificates API (/api/certificates): Upload PDF files via multer, delete, fetch, and manage permissions (visibility, download access).
+* Notifications API (/api/notifications): Fetch notifications, mark as read.
+
+4. FRONTEND ARCHITECTURE & PAGES
+--------------------------------
+Admin Panel (Protected Route):
+* Admin Dashboard: High-level overview, statistics on total/active interns, and recent certificates.
+* Intern Management: A table view to add, edit, block, activate, or delete interns.
+* Certificates Management: Dedicated file storage hub to drag & drop certificate uploads, assign them to interns, and view file metadata (size, upload date). Free from permission operations to ensure a clean UI.
+* Download Permissions: The Access Control Hub. Admins map assigned certificates to specific interns, toggling "Visibility" (Eye icon) and "Download Access" (Lock/Check icon).
+
+Intern Panel (Protected Route):
+* Intern Dashboard: Personalized welcome screen and summary of the intern's current status and notifications.
+* My Certificates: A portal to view certificates assigned to them by the Admin. They can preview the PDF or download it, but *only* if the Admin has toggled `isVisible` and `canDownload` to true.
+* Notifications: A real-time notification sidebar/center alerting them when an Admin assigns a new certificate or enables download permissions.
+
+5. KEY SYSTEM BEHAVIORS
+-----------------------
+* Separation of Concerns: File storage metadata and access-control flags are strictly decoupled. Deleting a certificate automatically cleans up its corresponding permissions.
+* Real-Time Updates: When an Admin uploads a certificate or enables a download permission, a Socket.io event triggers. The Intern's browser reflects the new notification instantly without needing a page refresh.
+* Secure File Serving: Certificates are served via a secured backend route (`/api/certificates/download/:id`). File system access is physically blocked if the user lacks the JWT authorization or the respective download flags.
+
+===================================================
+End of Document

@@ -24,6 +24,15 @@ const userSchema = new mongoose.Schema({
         enum: ['admin', 'intern'],
         default: 'intern'
     },
+    internRole: {
+        type: String,
+        enum: ['fullstack', 'frontend', 'backend', 'ai', 'ml', 'datascience']
+    },
+    internId: {
+        type: String,
+        unique: true,
+        sparse: true
+    },
     isActive: {
         type: Boolean,
         default: true
@@ -33,7 +42,7 @@ const userSchema = new mongoose.Schema({
         default: true
     }
 }, {
-    timestamps: true // This will automatically add createdAt and updatedAt fields
+    timestamps: true
 });
 
 module.exports = mongoose.model('User', userSchema);

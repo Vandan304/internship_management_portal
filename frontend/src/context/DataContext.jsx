@@ -161,16 +161,19 @@ export const DataProvider = ({ children }) => {
             const res = await axios.delete(`http://localhost:5000/api/admin/intern/${id}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
+
             if (res.data.success) {
-                fetchInterns(); // Refresh list
-                // Also remove assignments for this intern
-                setCertificates(certificates.map(c => ({
+                // Safely manually sync frontend arrays rather than immediately fetching the whole list back
+                setInterns(prev => Array.isArray(prev) ? prev.filter(i => i._id !== id && i.id !== id) : []);
+
+                // Safely remove assignments for this intern
+                setCertificates(prev => Array.isArray(prev) ? prev.map(c => ({
                     ...c,
-                    assignments: c.assignments.filter(a => a.internId !== id)
-                })));
+                    assignments: Array.isArray(c.assignments) ? c.assignments.filter(a => a.internId !== id) : []
+                })) : []);
             }
         } catch (error) {
-            console.error("Error deleting intern:", error.response?.data || error);
+            console.error("Failed to delete intern:", error.response?.data || error);
             throw error;
         }
     };
