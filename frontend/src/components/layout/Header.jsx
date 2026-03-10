@@ -46,7 +46,7 @@ export function Header({ onMenuClick }) {
             </div>
 
             <div className="flex items-center gap-2 sm:gap-4">
-                {/* Search Bar (Optional) */}
+                {/* Search Bar (Optional)
                 <div className="hidden md:flex items-center bg-gray-100 rounded-full px-3 py-1.5 w-64 focus-within:ring-2 focus-within:ring-brand-100 transition-all">
                     <Search size={16} className="text-gray-400" />
                     <input
@@ -54,7 +54,7 @@ export function Header({ onMenuClick }) {
                         placeholder="Search..."
                         className="bg-transparent border-none focus:outline-none text-sm ml-2 w-full text-gray-700 placeholder-gray-400"
                     />
-                </div>
+                </div> */}
 
                 {user && user.role === "intern" && (
                     <button
