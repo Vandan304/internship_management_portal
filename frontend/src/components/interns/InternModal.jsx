@@ -52,9 +52,9 @@ export function InternModal({ isOpen, onClose, onSubmit, initialData }) {
                         defaultValue={initialData?.internRole || initialData?.role}
                         className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white"
                     >
-                        <option value="fullstack">Full Stack</option>
-                        <option value="frontend">Frontend</option>
-                        <option value="backend">Backend</option>
+                        <option value="fullstack">Full Stack Developer</option>
+                        <option value="frontend">Frontend Developer</option>
+                        <option value="backend">Backend Developer</option>
                         <option value="ai">AI Engineer</option>
                         <option value="ml">ML Engineer</option>
                         <option value="datascience">Data Science</option>
