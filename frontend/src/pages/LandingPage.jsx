@@ -14,7 +14,7 @@ const LandingPage = () => {
                                 <GraduationCap className="h-6 w-6 text-white" />
                             </div>
                             <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-brand-700 to-brand-500">
-                                InternFlow
+                                InternSys
                             </span>
                         </div>
                         <div className="flex items-center gap-4">
@@ -137,10 +137,10 @@ const LandingPage = () => {
                 <div className="max-w-7xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-6">
                     <div className="flex items-center gap-2">
                         <GraduationCap className="h-6 w-6 text-brand-500" />
-                        <span className="text-white font-bold text-lg">InternFlow</span>
+                        <span className="text-white font-bold text-lg">InternSys</span>
                     </div>
                     <div className="text-sm">
-                        &copy; {new Date().getFullYear()} InternFlow. All rights reserved.
+                        &copy; {new Date().getFullYear()} InternSys. All rights reserved.
                     </div>
                 </div>
             </footer>

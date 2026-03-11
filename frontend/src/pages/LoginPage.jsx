@@ -68,7 +68,7 @@ const LoginPage = () => {
                             <GraduationCap className="h-6 w-6 text-white" />
                         </div>
                         <span className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-brand-700 to-brand-500">
-                            InternFlow
+                            InternSys
                         </span>
                     </Link>
                     <h2 className="text-2xl font-bold text-gray-900">Welcome back</h2>
