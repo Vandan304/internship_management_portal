@@ -8,7 +8,8 @@ import {
     Bell,
     LogOut,
     GraduationCap,
-    X
+    X,
+    ListTodo
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
@@ -42,6 +43,7 @@ export function InternSidebar({ isOpen, onClose }) {
 
     const navItems = [
         { icon: LayoutDashboard, label: 'Dashboard', path: '/intern' },
+        { icon: ListTodo, label: 'My Tasks', path: '/intern/tasks' },
         { icon: Award, label: 'My Certificates', path: '/intern/certificates' },
         { icon: User, label: 'Profile', path: '/intern/profile' },
         { icon: Bell, label: 'Notifications', path: '/intern/notifications' },

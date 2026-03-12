@@ -1,12 +1,15 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Users, FileText, Download, Settings, LogOut, X } from 'lucide-react';
+import { LayoutDashboard, Users, FileText, Download, Settings, LogOut, X, ListTodo, ClipboardCheck, TrendingUp } from 'lucide-react';
 import { cn } from '../../utils/cn';
 import { useAuth } from '../../context/AuthContext';
 
 const navItems = [
     { icon: LayoutDashboard, label: 'Dashboard', to: '/admin' },
     { icon: Users, label: 'Interns', to: '/admin/interns' },
+    { icon: ListTodo, label: 'Task Management', to: '/admin/tasks' },
+    { icon: ClipboardCheck, label: 'Task Review', to: '/admin/task-review' },
+    { icon: TrendingUp, label: 'Intern Progress', to: '/admin/intern-progress' },
     { icon: FileText, label: 'Certificates', to: '/admin/certificates' },
     { icon: Download, label: 'Permissions', to: '/admin/permissions' },
 ];
@@ -30,13 +33,12 @@ export function Sidebar({ isOpen, onClose }) {
                 "fixed lg:static inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-100 shadow-soft transform transition-transform duration-300 lg:transform-none flex flex-col",
                 isOpen ? "translate-x-0" : "-translate-x-full"
             )}>
-                {/* Logo Area */}
                 <div className="h-16 flex items-center justify-between px-6 border-b border-gray-50">
                     <div className="flex items-center gap-2 font-bold text-xl text-brand-700">
                         <div className="w-8 h-8 bg-brand-600 rounded-lg flex items-center justify-center text-white">
                             <span className="text-lg">I</span>
                         </div>
-                        <span>InternSys</span>
+                        <span>InternFlow</span>
                     </div>
                     <button onClick={onClose} className="lg:hidden text-gray-400 hover:text-gray-600">
                         <X size={20} />

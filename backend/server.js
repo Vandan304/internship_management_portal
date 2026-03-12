@@ -64,11 +64,14 @@ app.use('/api/users', userRoutes);
 app.use('/api/notifications', notificationRoutes);
 
 const certificateRoutes = require('./routes/certificateRoutes');
+const taskRoutes = require('./routes/taskRoutes');
 const path = require('path');
 
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/uploads/certificates', express.static(path.join(__dirname, 'uploads/certificates')));
+app.use('/uploads/tasks', express.static(path.join(__dirname, 'uploads/tasks')));
 
 app.use('/api/certificates', certificateRoutes);
+app.use('/api/tasks', taskRoutes);
 
 app.get('/', (req, res) => {
     res.send({ message: 'Backend is running' });

@@ -1,21 +1,46 @@
 import React from 'react';
-import { Award, Download, UserCheck, Clock } from 'lucide-react';
+import { Award, Download, UserCheck, Clock, CheckCircle, ListTodo } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useData } from '../../context/DataContext';
+import axios from 'axios';
+import { ProgressTracker } from '../../components/intern/ProgressTracker';
 
 const InternDashboard = () => {
     const { user } = useAuth();
     const { certificates, downloadCertificate } = useData();
+    const [tasks, setTasks] = React.useState([]);
+
+    React.useEffect(() => {
+        const fetchTasks = async () => {
+            try {
+                const token = localStorage.getItem('token');
+                const res = await axios.get('/api/tasks/my-tasks', {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                if (res.data.success) {
+                    setTasks(res.data.data);
+                }
+            } catch (error) {
+                console.error('Error fetching tasks for dashboard:', error);
+            }
+        };
+        fetchTasks();
+    }, []);
 
     // Calculate Stats
     // DataContext myCertificates array already filters out non-visible and non-owned certs at the backend
     const safeCertificates = Array.isArray(certificates) ? certificates : [];
     const downloadCount = safeCertificates.filter(c => c.canDownload).length;
 
+    const totalTasks = tasks.length;
+    const completedTasks = tasks.filter(t => t.status === 'approved').length;
+    const pendingTasks = tasks.filter(t => t.status === 'pending' || t.status === 'rejected').length;
+
     const stats = [
+        { title: 'Total Tasks', value: totalTasks, icon: ListTodo, color: 'text-indigo-600', bg: 'bg-indigo-50' },
+        { title: 'Completed Tasks', value: completedTasks, icon: CheckCircle, color: 'text-green-600', bg: 'bg-green-50' },
+        { title: 'Pending Tasks', value: pendingTasks, icon: Clock, color: 'text-yellow-600', bg: 'bg-yellow-50' },
         { title: 'My Certificates', value: safeCertificates.length, icon: Award, color: 'text-brand-600', bg: 'bg-brand-50' },
-        { title: 'Available Downloads', value: downloadCount, icon: Download, color: 'text-green-600', bg: 'bg-green-50' },
-        { title: 'Account Status', value: user?.status || 'Active', icon: UserCheck, color: 'text-blue-600', bg: 'bg-blue-50' },
     ];
 
     const recentActivity = [
@@ -32,7 +57,9 @@ const InternDashboard = () => {
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <ProgressTracker totalTasks={totalTasks} completedTasks={completedTasks} />
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {stats.map((stat, index) => (
                     <div key={index} className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow">
                         <div className="flex items-center justify-between">

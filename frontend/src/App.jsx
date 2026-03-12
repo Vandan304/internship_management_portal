@@ -5,6 +5,7 @@ import { AuthProvider } from './context/AuthContext';
 import Dashboard from './pages/Dashboard';
 import InternDashboard from './pages/intern/InternDashboard';
 import MyCertificates from './pages/intern/MyCertificates';
+import MyTasks from './pages/intern/MyTasks';
 import InternProfile from './pages/intern/InternProfile';
 import InternNotifications from './pages/intern/InternNotifications';
 import LandingPage from './pages/LandingPage';
@@ -16,6 +17,9 @@ import ResetPassword from './pages/ResetPassword';
 import Interns from './pages/Interns';
 import Certificates from './pages/Certificates';
 import Permissions from './pages/Permissions';
+import TaskManagement from './pages/admin/TaskManagement';
+import TaskReview from './pages/admin/TaskReview';
+import InternProgress from './pages/admin/InternProgress';
 import { ToastProvider } from './context/ToastContext';
 
 import ProtectedRoute from './components/layout/ProtectedRoute';
@@ -54,6 +58,9 @@ function App() {
               }>
                 <Route index element={<Dashboard />} />
                 <Route path="interns" element={<Interns />} />
+                <Route path="tasks" element={<TaskManagement />} />
+                <Route path="task-review" element={<TaskReview />} />
+                <Route path="intern-progress" element={<InternProgress />} />
                 <Route path="certificates" element={<Certificates />} />
                 <Route path="permissions" element={<Permissions />} />
               </Route>
@@ -65,6 +72,7 @@ function App() {
                 </ProtectedRoute>
               }>
                 <Route index element={<InternDashboard />} />
+                <Route path="tasks" element={<MyTasks />} />
                 <Route path="certificates" element={<MyCertificates />} />
                 <Route path="profile" element={<InternProfile />} />
                 <Route path="notifications" element={<InternNotifications />} />
