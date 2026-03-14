@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Users, FileText, Download, Settings, LogOut, X, ListTodo, ClipboardCheck, TrendingUp } from 'lucide-react';
+import { LayoutDashboard, Users, FileText, Download, Settings, LogOut, X, ListTodo, ClipboardCheck, TrendingUp, MessageCircle } from 'lucide-react';
 import { cn } from '../../utils/cn';
 import { useAuth } from '../../context/AuthContext';
 
@@ -12,6 +12,7 @@ const navItems = [
     { icon: TrendingUp, label: 'Intern Progress', to: '/admin/intern-progress' },
     { icon: FileText, label: 'Certificates', to: '/admin/certificates' },
     { icon: Download, label: 'Permissions', to: '/admin/permissions' },
+    { icon: MessageCircle, label: 'Chat', to: '/admin/chat' },
 ];
 
 export function Sidebar({ isOpen, onClose }) {

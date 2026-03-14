@@ -9,7 +9,8 @@ import {
     LogOut,
     GraduationCap,
     X,
-    ListTodo
+    ListTodo,
+    MessageCircle
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
@@ -45,6 +46,7 @@ export function InternSidebar({ isOpen, onClose }) {
         { icon: LayoutDashboard, label: 'Dashboard', path: '/intern' },
         { icon: ListTodo, label: 'My Tasks', path: '/intern/tasks' },
         { icon: Award, label: 'My Certificates', path: '/intern/certificates' },
+        { icon: MessageCircle, label: 'Chat', path: '/intern/chat' },
         { icon: User, label: 'Profile', path: '/intern/profile' },
         { icon: Bell, label: 'Notifications', path: '/intern/notifications' },
     ];

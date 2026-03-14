@@ -35,6 +35,31 @@ io.on('connection', (socket) => {
         console.log(`User ${userId} joined room ${userId}`);
     });
 
+    // Chat Events
+    socket.on('joinConversation', (conversationId) => {
+        socket.join(conversationId);
+        console.log(`User joined conversation room ${conversationId}`);
+    });
+
+    socket.on('sendMessage', (message) => {
+        // Broadcast to the conversation room so participants instantly see it
+        if (message.conversationId) {
+            io.to(message.conversationId).emit('receiveMessage', message);
+        }
+        // Emit notification to receiver specifically
+        if (message.receiverId) {
+            socket.to(message.receiverId).emit('newMessageNotification', message);
+        }
+    });
+
+    socket.on('typing', ({ conversationId, senderId, isTyping }) => {
+        socket.to(conversationId).emit('typingIndicator', { senderId, isTyping });
+    });
+
+    socket.on('messageRead', async ({ messageId, conversationId }) => {
+        io.to(conversationId).emit('messageReadConfirmation', { messageId });
+    });
+
     socket.on('disconnect', () => {
         console.log('Client disconnected:', socket.id);
     });
@@ -65,13 +90,16 @@ app.use('/api/notifications', notificationRoutes);
 
 const certificateRoutes = require('./routes/certificateRoutes');
 const taskRoutes = require('./routes/taskRoutes');
+const chatRoutes = require('./routes/chatRoutes');
 const path = require('path');
 
 app.use('/uploads/certificates', express.static(path.join(__dirname, 'uploads/certificates')));
 app.use('/uploads/tasks', express.static(path.join(__dirname, 'uploads/tasks')));
+app.use('/uploads/chat', express.static(path.join(__dirname, 'uploads/chat')));
 
 app.use('/api/certificates', certificateRoutes);
 app.use('/api/tasks', taskRoutes);
+app.use('/api/chat', chatRoutes);
 
 app.get('/', (req, res) => {
     res.send({ message: 'Backend is running' });
