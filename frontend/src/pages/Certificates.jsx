@@ -1,18 +1,21 @@
 import React, { useState, useRef } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
-import { Upload, FileText, Search, Trash2 } from 'lucide-react';
+import { Upload, FileText, Search, Trash2, Download } from 'lucide-react';
 import { cn } from '../utils/cn';
 import { useToast } from '../context/ToastContext';
 import { useData } from '../context/DataContext';
+import ConfirmModal from '../components/ui/ConfirmModal';
 
 export default function Certificates() {
-    const { certificates, interns, addCertificate, deleteCertificate } = useData();
+    const { certificates, interns, addCertificate, deleteCertificate, downloadCertificate } = useData();
     const [isDragOver, setIsDragOver] = useState(false);
     const [selectedInternId, setSelectedInternId] = useState('');
     const [certNameInput, setCertNameInput] = useState('');
     const fileInputRef = useRef(null);
     const { addToast } = useToast();
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [selectedCertId, setSelectedCertId] = useState(null);
 
     const handleDragOver = (e) => {
         e.preventDefault();
@@ -61,10 +64,16 @@ export default function Certificates() {
         }
     };
 
-    const handleDelete = (id) => {
-        if (confirm('Delete this certificate?')) {
-            deleteCertificate(id);
+    const handleDeleteClick = (id) => {
+        setSelectedCertId(id);
+        setIsDeleteModalOpen(true);
+    };
+
+    const confirmDelete = () => {
+        if (selectedCertId) {
+            deleteCertificate(selectedCertId);
             addToast('Certificate deleted', 'error');
+            setSelectedCertId(null);
         }
     };
 
@@ -174,7 +183,11 @@ export default function Certificates() {
                                             </td>
                                             <td className="px-6 py-4 text-gray-600">{cert.uploadedDate}</td>
                                             <td className="px-6 py-4 text-gray-600 text-xs text-nowrap">
-                                                {cert.fileSize ? (cert.fileSize / 1024).toFixed(1) + ' KB' : 'Unknown'}
+                                                {cert.fileSize ? (
+                                                    cert.fileSize > 1024 * 1024 
+                                                        ? (cert.fileSize / (1024 * 1024)).toFixed(1) + ' MB'
+                                                        : (cert.fileSize / 1024).toFixed(1) + ' KB'
+                                                ) : 'Unknown'}
                                             </td>
                                             <td className="px-6 py-4 text-center">
                                                 <span className={cn(
@@ -186,10 +199,17 @@ export default function Certificates() {
                                             </td>
                                             <td className="px-6 py-4 text-right">
                                                 <div className="flex items-center justify-end gap-2">
+                                                    <button 
+                                                        onClick={() => downloadCertificate(cert.id, cert.fileName)} 
+                                                        className="p-2 text-gray-400 hover:text-brand-600 hover:bg-brand-50 rounded-lg transition-colors"
+                                                        title="Download PDF"
+                                                    >
+                                                        <Download size={16} />
+                                                    </button>
                                                     <a href={`http://localhost:5000${cert.fileUrl}`} target="_blank" rel="noopener noreferrer">
                                                         <Button variant="secondary" size="sm" className="hidden sm:flex" >View PDF</Button>
                                                     </a>
-                                                    <button onClick={() => handleDelete(cert.id)} className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                                                    <button onClick={() => handleDeleteClick(cert.id)} className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
                                                         <Trash2 size={16} />
                                                     </button>
                                                 </div>
@@ -202,6 +222,17 @@ export default function Certificates() {
                     </CardContent>
                 </Card>
             </div>
+
+            <ConfirmModal 
+                isOpen={isDeleteModalOpen}
+                onClose={() => setIsDeleteModalOpen(false)}
+                onConfirm={confirmDelete}
+                title="Confirm Deletion"
+                message="Are you sure you want to delete this certificate? This action cannot be undone."
+                confirmText="Delete"
+                cancelText="Cancel"
+                type="danger"
+            />
         </div>
     );
 }

@@ -9,7 +9,9 @@ const {
     toggleDownload,
     getMyCertificates,
     downloadCertificate,
-    getCertificatePermissions
+    getCertificatePermissions,
+    generateCompletionCertificate,
+    generateOfferLetter
 } = require('../controllers/certificateController');
 const { protect, authorizeRoles } = require('../middleware/authMiddleware');
 const upload = require('../middleware/uploadMiddleware');
@@ -19,13 +21,22 @@ const { validateObjectId } = require('../middleware/errorMiddleware');
 router.use(protect);
 
 // Admin-only route for uploading certificates
-// Uses the upload middleware to expect a single file field named 'file'
 router.post(
     '/upload',
     authorizeRoles('admin'),
     upload.single('file'),
     uploadCertificate
 );
+
+// Admin-only route for generating completion certificates
+router.post(
+    '/generate-completion',
+    authorizeRoles('admin'),
+    generateCompletionCertificate
+);
+
+// Admin-only route for generating offer letters
+router.post('/generate-offer-letter', authorizeRoles('admin'), generateOfferLetter);
 
 // Intern-only route
 router.get('/my-certificates', authorizeRoles('intern'), getMyCertificates);

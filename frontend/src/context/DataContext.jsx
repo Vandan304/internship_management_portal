@@ -79,7 +79,7 @@ export const DataProvider = ({ children }) => {
                 if (res.data.success) {
                     setCertificates(res.data.data.map(c => ({
                         ...c,
-                        id: c._id,
+                        id: c._id || c.id,
                         name: c.title,
                         fileName: c.fileName,
                         uploadedDate: c.createdAt ? c.createdAt.split('T')[0] : 'N/A'
@@ -208,6 +208,39 @@ export const DataProvider = ({ children }) => {
         }
     }
 
+    const generateCompletionCertificate = async (internId) => {
+        try {
+            const token = localStorage.getItem('token');
+            const res = await axios.post('http://localhost:5000/api/certificates/generate-completion', { internId }, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (res.data.success) {
+                fetchInterns();
+                fetchCertificatesAdmin();
+            }
+            return res.data;
+        } catch (error) {
+            console.error("Error generating completion certificate:", error.response?.data || error);
+            throw error;
+        }
+    };
+    const generateOfferLetter = async (internId) => {
+        try {
+            const token = localStorage.getItem('token');
+            const res = await axios.post('http://localhost:5000/api/certificates/generate-offer-letter', { internId }, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (res.data.success) {
+                fetchInterns();
+                fetchCertificatesAdmin();
+            }
+            return res.data;
+        } catch (error) {
+            console.error("Error generating offer letter:", error.response?.data || error);
+            throw error;
+        }
+    };
+
     // --- Certificate Actions ---
     const addCertificate = async (formData) => {
         try {
@@ -332,6 +365,8 @@ export const DataProvider = ({ children }) => {
             deleteIntern,
             blockIntern,
             activateIntern,
+            generateCompletionCertificate,
+            generateOfferLetter,
             addCertificate,
             deleteCertificate,
             updateCertificate,

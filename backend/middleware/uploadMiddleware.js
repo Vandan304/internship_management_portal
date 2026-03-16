@@ -2,53 +2,49 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 
-// Ensure the upload directory exists
-const uploadDir = path.join(__dirname, '../uploads/certificates');
-if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true });
-}
+// Ensure upload directories exist
+const uploadDirs = [
+    'uploads/certificates',
+    'uploads/offerletters'
+];
 
-// Memory Storage vs Disk Storage
-// We will use Disk Storage to save files securely to the server with unique names
-const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        cb(null, uploadDir);
-    },
-    filename: function (req, file, cb) {
-        // Unique prefix: timestamp + random number
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-
-        // Sanitize the original file name to avoid path traversal or weird bugs
-        const cleanOriginalName = file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_');
-
-        // Final filename: <unique>-<cleanOriginalName>
-        cb(null, uniqueSuffix + '-' + cleanOriginalName);
+uploadDirs.forEach(dir => {
+    if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+        console.log(`[DIRECTORY CREATED] ${dir}`);
     }
 });
 
-// File filter validation to only permit specific Extensions
-const fileFilter = (req, file, cb) => {
-    // Array of allowed mime types
-    const allowedMimeTypes = [
-        'application/pdf',
-        'image/jpeg',
-        'image/jpg',
-        'image/png'
-    ];
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        if (file.fieldname === 'certificate' || file.fieldname === 'file') {
+            cb(null, 'uploads/certificates/');
+        } else if (file.fieldname === 'offerletter') {
+            cb(null, 'uploads/offerletters/');
+        } else {
+            cb(null, 'uploads/');
+        }
+    },
+    filename: function (req, file, cb) {
+        const internId = req.body.assignedTo || req.body.internId || req.params.internId || 'unknown';
+        const prefix = (file.fieldname === 'certificate' || file.fieldname === 'file') ? 'certificate_' : 'offerletter_';
+        cb(null, `${prefix}${internId}${path.extname(file.originalname)}`);
+    }
+});
 
-    if (allowedMimeTypes.includes(file.mimetype)) {
+const fileFilter = (req, file, cb) => {
+    if (file.mimetype === 'application/pdf') {
         cb(null, true);
     } else {
-        cb(new Error('Invalid file type. Only PDF, PNG, JPG, and JPEG are allowed!'), false);
+        cb(new Error('Only PDF files are allowed!'), false);
     }
 };
 
-// Initialize multer upload object
 const upload = multer({
     storage: storage,
     fileFilter: fileFilter,
     limits: {
-        fileSize: 5 * 1024 * 1024 // 5 MB maximum file size limit
+        fileSize: 10 * 1024 * 1024 // 10MB
     }
 });
 

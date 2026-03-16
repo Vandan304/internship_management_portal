@@ -1,370 +1,428 @@
 const Certificate = require('../models/Certificate');
-const CertificatePermission = require('../models/CertificatePermission');
+const Permission = require('../models/Permission');
 const User = require('../models/User');
 const Notification = require('../models/Notification');
 const fs = require('fs');
 const path = require('path');
+const pdfService = require('../services/pdfService');
 
-// @route   POST /api/certificates/upload
-// @desc    Upload a certificate for an intern
-// @access  Private/Admin
+/**
+ * MODULE 1 — MANUAL CERTIFICATE UPLOAD
+ */
 exports.uploadCertificate = async (req, res, next) => {
+    console.log('[API START] uploadCertificate');
     try {
-        // 1. Check if file was actually uploaded by multer
         if (!req.file) {
+            console.warn('[ERROR] No file uploaded');
             return res.status(400).json({ success: false, message: 'Please upload a file' });
         }
 
-        const { title, assignedTo, isVisible, canDownload } = req.body;
+        const { title, assignedTo } = req.body;
+        console.log('[PARAMS]', `title: ${title}, assignedTo: ${assignedTo}`);
 
-        // 2. Validate required text fields
-        if (!title) {
-            return res.status(400).json({ success: false, message: 'Please provide a title for the certificate' });
+        if (!assignedTo) {
+            return res.status(400).json({ success: false, message: 'Please specify an intern' });
         }
 
-        // 3. Verify the assigned intern exists if assignedTo is provided
-        let intern = null;
-        if (assignedTo) {
-            intern = await User.findById(assignedTo);
-            if (!intern) {
-                return res.status(404).json({ success: false, message: 'Assigned intern not found' });
-            }
-            if (intern.role !== 'intern') {
-                return res.status(400).json({ success: false, message: 'Certificates can only be assigned to interns' });
-            }
+        const intern = await User.findById(assignedTo);
+        if (!intern) {
+            console.warn('[NOT FOUND] Intern not found');
+            return res.status(404).json({ success: false, message: 'Intern not found' });
         }
 
-        // 4. Construct file URL
         const fileUrl = `/uploads/certificates/${req.file.filename}`;
-
-        // 5. Create the Certificate record in DB
+        
+        // Update Certificate model (legacy support)
         const certificate = await Certificate.create({
-            title,
+            title: title || 'Manual Certificate',
             fileUrl,
-            fileName: req.file.originalname,
+            fileName: req.file.filename,
             fileSize: req.file.size || 0,
             fileType: req.file.mimetype || 'application/pdf',
-            uploadedBy: req.user.id, // Comes from authMiddleware (Admin)
-            assignedTo: assignedTo || null
+            uploadedBy: req.user.id,
+            assignedTo: assignedTo
+        });
+        console.log('[DB CREATE SUCCESS] Certificate record created');
+
+        // Update Intern document
+        intern.certificatePath = fileUrl;
+        intern.certificateAssigned = true;
+        await intern.save();
+        console.log('[DB UPDATE SUCCESS] Intern updated with certificate path');
+
+        // Register in Permissions Module
+        await Permission.create({
+            internId: assignedTo,
+            resourceType: 'certificate',
+            resourceName: title || 'Internship Certificate',
+            resourcePath: fileUrl,
+            visibilityEnabled: false,
+            downloadEnabled: false
+        });
+        console.log('[DB CREATE SUCCESS] Permission entry created');
+
+        // Create notification
+        const notification = await Notification.create({
+            userId: assignedTo,
+            title: "New Certificate Uploaded",
+            message: `Your certificate "${title}" has been uploaded by the admin.`,
+            type: "certificate",
+            certificateId: certificate._id
         });
 
-        // 6. If assigned, create a CertificatePermission and send notification
-        if (assignedTo) {
-            await CertificatePermission.create({
-                certificate: certificate._id,
-                intern: assignedTo,
-                isVisible: isVisible === 'true' || isVisible === true || false,
-                canDownload: canDownload === 'true' || canDownload === true || false
-            });
+        req.app.get('io').to(assignedTo.toString()).emit('newNotification', notification);
+        req.app.get('io').to(assignedTo.toString()).emit('refreshCertificates');
 
-            // Create notification for the assigned intern
-            const notification = await Notification.create({
-                userId: assignedTo,
-                title: "New Certificate Assigned",
-                message: `You have been assigned the "${title}" certificate.`,
-                type: "certificate",
-                certificateId: certificate._id
-            });
-
-            // Emit real-time socket event
-            req.app.get('io').to(assignedTo.toString()).emit('newNotification', notification);
-            req.app.get('io').to(assignedTo.toString()).emit('refreshCertificates');
-        }
-
-        // 7. Return success response
-        res.status(201).json({
-            success: true,
-            certificate
-        });
-
+        res.status(201).json({ success: true, certificate });
     } catch (error) {
+        console.error('[ERROR] uploadCertificate:', error.stack);
         next(error);
     }
 };
 
-// @route   GET /api/certificates
-// @desc    Get all certificates (Admin File Management)
-// @access  Private/Admin
-exports.getAllCertificates = async (req, res, next) => {
+/**
+ * MODULE 3 — COMPLETION CERTIFICATE GENERATION
+ */
+exports.generateCompletionCertificate = async (req, res, next) => {
+    console.log('[API START] generateCompletionCertificate');
     try {
-        const certificates = await Certificate.find()
-            .populate('assignedTo', 'name email')
-            .populate('uploadedBy', 'name')
-            .sort({ createdAt: -1 })
-            .lean(); // Faster to use .lean() here
+        const { internId, completionDate } = req.body;
+        console.log('[PARAMS]', `internId: ${internId}, completionDate: ${completionDate}`);
 
-        // Add an assignedCount since we only have single-assignment right now
-        const formattedCertificates = certificates.map(cert => ({
-            ...cert,
-            assignedCount: cert.assignedTo ? 1 : 0
+        const intern = await User.findById(internId);
+        if (!intern) {
+            console.warn('[NOT FOUND] Intern not found');
+            return res.status(404).json({ success: false, message: 'Intern not found' });
+        }
+
+        if (intern.certificateAssigned) {
+            console.warn('[DUPLICATE] Completion Certificate already generated for this intern');
+            return res.status(400).json({ success: false, message: 'Completion Certificate already generated for this intern.' });
+        }
+
+        const firstName = intern.name.split(' ')[0].replace(/[^a-zA-Z0-9]/g, '');
+        const fileName = `${firstName}_Completion_Certificate.pdf`;
+        const certificatePath = `uploads/certificates/${fileName}`;
+        const fullPath = path.join(__dirname, '..', certificatePath);
+        const fileUrl = `/${certificatePath}`;
+
+        // Format dates from User document or fallbacks
+        const sDate = intern.startDate ? new Date(intern.startDate).toLocaleDateString() : 'N/A';
+        const eDate = completionDate || (intern.endDate ? new Date(intern.endDate).toLocaleDateString() : new Date().toLocaleDateString());
+
+        const templateData = {
+            internName: intern.name,
+            internId: intern.internId,
+            position: (intern.internRole || 'Intern').toUpperCase(),
+            startDate: sDate,
+            completionDate: eDate
+        };
+
+        const template = pdfService.getCertificateTemplate(templateData);
+        console.log('[FILE GENERATION START] Generating PDF...');
+        
+        await pdfService.generatePDF(template, fullPath);
+        
+        // Get actual file size
+        const stats = fs.statSync(fullPath);
+        const fileSizeInBytes = stats.size;
+        console.log(`[FILE GENERATION SUCCESS] Certificate stored at ${certificatePath} (${fileSizeInBytes} bytes)`);
+
+        // Update Certificate model
+        const certificate = await Certificate.create({
+            title: `${firstName} Completion Certificate`,
+            fileUrl,
+            fileName: fileName,
+            fileSize: fileSizeInBytes,
+            fileType: 'application/pdf',
+            uploadedBy: req.user.id,
+            assignedTo: internId
+        });
+
+        // Update Intern document
+        intern.certificatePath = fileUrl;
+        intern.certificateAssigned = true;
+        await intern.save();
+        console.log('[DB UPDATE SUCCESS] Intern document updated');
+
+        // Register in Permissions Module
+        await Permission.create({
+            internId: internId,
+            resourceType: 'certificate',
+            resourceName: `${firstName} Completion Certificate`,
+            resourcePath: fileUrl,
+            visibilityEnabled: false,
+            downloadEnabled: false
+        });
+        console.log('[DB CREATE SUCCESS] Permission entry created');
+
+        res.status(201).json({ success: true, message: 'Certificate generated successfully', data: certificate });
+    } catch (error) {
+        console.error('[ERROR] generateCompletionCertificate:', error.stack);
+        next(error);
+    }
+};
+
+exports.generateOfferLetter = async (req, res, next) => {
+    console.log('[API START] generateOfferLetter');
+    try {
+        const { internId } = req.body;
+        console.log('[PARAMS]', `internId: ${internId}`);
+
+        const intern = await User.findById(internId);
+        if (!intern) {
+            console.warn('[NOT FOUND] Intern not found');
+            return res.status(404).json({ success: false, message: 'Intern not found' });
+        }
+
+        if (intern.offerLetterAssigned) {
+            console.warn('[DUPLICATE] Offer Letter already generated for this intern');
+            return res.status(400).json({ success: false, message: 'Offer Letter already generated for this intern.' });
+        }
+        const firstName = intern.name.split(' ')[0].replace(/[^a-zA-Z0-9]/g, '');
+        const fileName = `${firstName}_Offer_Letter.pdf`;
+        const offerLetterPath = `uploads/offerletters/${fileName}`;
+        const fullPath = path.join(__dirname, '..', offerLetterPath);
+        const fileUrl = `/${offerLetterPath}`;
+
+        const templateData = {
+            internName: intern.name,
+            internId: intern.internId,
+            position: (intern.internRole || 'Intern').toUpperCase(),
+            startDate: intern.startDate ? new Date(intern.startDate).toLocaleDateString() : new Date().toLocaleDateString()
+        };
+
+        const template = pdfService.getOfferLetterTemplate(templateData);
+        console.log('[FILE GENERATION START] Generating PDF...');
+        
+        await pdfService.generatePDF(template, fullPath);
+        
+        // Get actual file size
+        const stats = fs.statSync(fullPath);
+        const fileSizeInBytes = stats.size;
+        console.log(`[FILE GENERATION SUCCESS] Offer letter stored at ${offerLetterPath} (${fileSizeInBytes} bytes)`);
+
+        // Update Certificate model (Same logic as Completion Certificate)
+        const certificate = await Certificate.create({
+            title: `${firstName} Internship Offer Letter`,
+            fileUrl,
+            fileName: fileName,
+            fileSize: fileSizeInBytes,
+            fileType: 'application/pdf',
+            uploadedBy: req.user.id,
+            assignedTo: internId
+        });
+
+        // Update Intern document
+        intern.offerLetterPath = fileUrl;
+        intern.offerLetterAssigned = true;
+        await intern.save();
+        console.log('[DB UPDATE SUCCESS] Intern document updated');
+
+        // Register in Permissions Module
+        await Permission.deleteMany({ internId, resourceType: 'offerletter' });
+
+        await Permission.create({
+            internId: internId,
+            resourceType: 'offerletter',
+            resourceName: `${firstName} Offer Letter`,
+            resourcePath: fileUrl,
+            visibilityEnabled: false,
+            downloadEnabled: false
+        });
+        console.log('[DB CREATE SUCCESS] Permission entry created');
+
+        res.status(201).json({ success: true, message: 'Offer letter generated successfully', data: certificate });
+    } catch (error) {
+        console.error('[ERROR] generateOfferLetter:', error.stack);
+        next(error);
+    }
+};
+
+/**
+ * MODULE 4 — PERMISSIONS MANAGEMENT (ADMIN)
+ */
+exports.getCertificatePermissions = async (req, res, next) => {
+    console.log('[API START] getCertificatePermissions');
+    try {
+        const permissions = await Permission.find()
+            .populate('internId', 'name email')
+            .sort({ createdAt: -1 });
+        
+        console.log(`[DB QUERY SUCCESS] Fetched ${permissions.length} permissions`);
+
+        // Map to format expected by frontend
+        const formatted = permissions.map(p => ({
+            _id: p._id,
+            title: p.resourceName,
+            intern: p.internId,
+            resourceType: p.resourceType,
+            isVisible: p.visibilityEnabled,
+            canDownload: p.downloadEnabled,
+            resourcePath: p.resourcePath
         }));
 
-        res.json({
-            success: true,
-            count: formattedCertificates.length,
-            data: formattedCertificates
-        });
+        res.json({ success: true, certificates: formatted });
     } catch (error) {
+        console.error('[ERROR] getCertificatePermissions:', error.message);
         next(error);
     }
 };
 
-// @route   GET /api/certificates/permissions
-// @desc    Get all active certificate permissions (Admin Access Control)
-// @access  Private/Admin
-exports.getCertificatePermissions = async (req, res, next) => {
-    try {
-        const permissions = await CertificatePermission.find()
-            .populate('certificate', 'title fileName createdAt')
-            .populate('intern', 'name email')
-            .sort({ assignedAt: -1 });
-
-        // Map to expected response format
-        const formattedPermissions = permissions.map(perm => {
-            return {
-                _id: perm.certificate ? perm.certificate._id : null, // keep backward compat
-                permissionId: perm._id,
-                title: perm.certificate ? perm.certificate.title : 'Deleted Certificate',
-                intern: perm.intern ? {
-                    _id: perm.intern._id,
-                    name: perm.intern.name,
-                    email: perm.intern.email
-                } : null,
-                isVisible: perm.isVisible,
-                canDownload: perm.canDownload
-            };
-        }).filter(p => p._id && p.intern); // filter out invalid/dangling refs
-
-        res.json({
-            success: true,
-            certificates: formattedPermissions // still using 'certificates' key for frontend backward config
-        });
-    } catch (error) {
-        next(error);
-    }
-};
-
-// @route   PUT /api/certificates/:id
-// @desc    Update certificate metadata (File Management only)
-// @access  Private/Admin
-exports.updateCertificate = async (req, res, next) => {
-    try {
-        const { title } = req.body;
-
-        let certificate = await Certificate.findById(req.params.id);
-
-        if (!certificate) {
-            return res.status(404).json({ success: false, message: 'Certificate not found' });
-        }
-
-        certificate = await Certificate.findByIdAndUpdate(
-            req.params.id,
-            { title: title || certificate.title },
-            { new: true, runValidators: true }
-        ).populate('assignedTo', 'name email').populate('uploadedBy', 'name');
-
-        res.json({
-            success: true,
-            data: certificate
-        });
-    } catch (error) {
-        next(error);
-    }
-};
-
-// @route   DELETE /api/certificates/:id
-// @desc    Delete a certificate
-// @access  Private/Admin
-exports.deleteCertificate = async (req, res, next) => {
-    try {
-        const certificate = await Certificate.findById(req.params.id);
-
-        if (!certificate) {
-            return res.status(404).json({ success: false, message: 'Certificate not found' });
-        }
-
-        // Delete the file from the filesystem
-        if (certificate.fileUrl) {
-            const filePath = path.join(__dirname, '..', certificate.fileUrl);
-            if (fs.existsSync(filePath)) {
-                fs.unlinkSync(filePath);
-            }
-        }
-
-        // Delete associated permissions first
-        await CertificatePermission.deleteMany({ certificate: certificate._id });
-
-        // Delete the certificate
-        await certificate.deleteOne();
-
-        res.json({
-            success: true,
-            message: 'Certificate deleted successfully'
-        });
-    } catch (error) {
-        next(error);
-    }
-};
-
-// @route   PATCH /api/certificates/:id/visibility
-// @desc    Toggle certificate visibility
-// @access  Private/Admin
 exports.toggleVisibility = async (req, res, next) => {
+    console.log('[API START] toggleVisibility');
+    console.log('[PARAMS]', req.params.id);
     try {
-        // Here we rely on the fact that an intern is assigned to a certificate mapping uniquely
-        const permission = await CertificatePermission.findOne({ certificate: req.params.id });
+        const permission = await Permission.findById(req.params.id);
+        if (!permission) return res.status(404).json({ success: false, message: 'Permission not found' });
 
-        if (!permission) {
-            return res.status(404).json({ success: false, message: 'Certificate permission record not found' });
-        }
-
-        permission.isVisible = !permission.isVisible;
+        permission.visibilityEnabled = !permission.visibilityEnabled;
         await permission.save();
+        console.log(`[DB UPDATE SUCCESS] Visibility set to ${permission.visibilityEnabled}`);
 
-        if (permission.intern) {
-            req.app.get('io').to(permission.intern.toString()).emit('refreshCertificates');
-        }
-
-        res.json({
-            success: true,
-            message: `Certificate visibility set to ${permission.isVisible}`,
-            data: permission
-        });
+        req.app.get('io').to(permission.internId.toString()).emit('refreshCertificates');
+        res.json({ success: true, data: permission });
     } catch (error) {
+        console.error('[ERROR] toggleVisibility:', error.message);
         next(error);
     }
 };
 
-// @route   PATCH /api/certificates/:id/download
-// @desc    Toggle certificate download permission
-// @access  Private/Admin
 exports.toggleDownload = async (req, res, next) => {
+    console.log('[API START] toggleDownload');
+    console.log('[PARAMS]', req.params.id);
     try {
-        const permission = await CertificatePermission.findOne({ certificate: req.params.id });
+        const permission = await Permission.findById(req.params.id);
+        if (!permission) return res.status(404).json({ success: false, message: 'Permission not found' });
 
-        if (!permission) {
-            return res.status(404).json({ success: false, message: 'Certificate permission record not found' });
-        }
-
-        permission.canDownload = !permission.canDownload;
+        permission.downloadEnabled = !permission.downloadEnabled;
         await permission.save();
+        console.log(`[DB UPDATE SUCCESS] Download set to ${permission.downloadEnabled}`);
 
-        const certificate = await Certificate.findById(req.params.id);
-
-        // If permission was granted, create a notification
-        if (permission.canDownload && permission.intern && certificate) {
-            const notification = await Notification.create({
-                userId: permission.intern,
-                title: "Download Permission Enabled",
-                message: `You can now download your "${certificate.title}" certificate.`,
-                type: "certificate",
-                certificateId: certificate._id
-            });
-            req.app.get('io').to(permission.intern.toString()).emit('newNotification', notification);
-        }
-
-        if (permission.intern) {
-            req.app.get('io').to(permission.intern.toString()).emit('refreshCertificates');
-        }
-
-        res.json({
-            success: true,
-            message: `Certificate download permission set to ${permission.canDownload}`,
-            data: permission
-        });
+        req.app.get('io').to(permission.internId.toString()).emit('refreshCertificates');
+        res.json({ success: true, data: permission });
     } catch (error) {
+        console.error('[ERROR] toggleDownload:', error.message);
         next(error);
     }
 };
 
-// @route   GET /api/certificates/my-certificates
-// @desc    Get certificates assigned to logged-in intern
-// @access  Private/Intern
+/**
+ * INTERN ACCESS
+ */
 exports.getMyCertificates = async (req, res, next) => {
+    console.log('[API START] getMyCertificates');
     try {
-        if (!req.user || !req.user.id) {
-            return res.status(401).json({ success: false, message: 'Unauthorized. User information missing.' });
+        const permissions = await Permission.find({
+            internId: req.user.id,
+            visibilityEnabled: true
+        }).sort({ createdAt: -1 });
+
+        console.log(`[DB QUERY SUCCESS] Fetched ${permissions.length} visible resources`);
+
+        const data = permissions.map(p => ({
+            _id: p._id,
+            id: p._id, // Providing both for maximum compatibility
+            title: p.resourceName,
+            fileUrl: p.resourcePath,
+            fileName: p.resourcePath.split('/').pop(), // Extract e.g. "Manav_Offer_Letter.pdf"
+            canDownload: p.downloadEnabled,
+            resourceType: p.resourceType,
+            createdAt: p.createdAt
+        }));
+
+        res.json({ success: true, data });
+    } catch (error) {
+        console.error('[ERROR] getMyCertificates:', error.message);
+        next(error);
+    }
+};
+
+exports.downloadCertificate = async (req, res, next) => {
+    console.log('[API START] downloadCertificate');
+    try {
+        const permission = await Permission.findById(req.params.id);
+        if (!permission || permission.internId.toString() !== req.user.id) {
+            return res.status(403).json({ success: false, message: 'Not authorized' });
         }
 
-        // Find active permissions mapped to this intern that are visible
-        const permissions = await CertificatePermission.find({
-            intern: req.user.id,
-            isVisible: true
-        }).populate({
-            path: 'certificate',
-            select: 'title fileUrl fileName fileSize fileType createdAt'
-        }).sort({ assignedAt: -1 });
+        if (!permission.downloadEnabled) {
+            return res.status(403).json({ success: false, message: 'Download is restricted' });
+        }
 
-        // Map to expected structure so frontend doesn't break
-        const certificates = permissions
-            .filter(p => p.certificate) // Ensure certificate document exists
-            .map(p => ({
-                _id: p.certificate._id,
-                title: p.certificate.title,
-                fileUrl: p.certificate.fileUrl,
-                fileName: p.certificate.fileName,
-                fileSize: p.certificate.fileSize,
-                fileType: p.certificate.fileType,
-                createdAt: p.certificate.createdAt,
-                canDownload: p.canDownload
-            }));
+        const filePath = path.join(__dirname, '..', permission.resourcePath);
+        if (!fs.existsSync(filePath)) {
+            return res.status(404).json({ success: false, message: 'File not found' });
+        }
 
-        res.json({
-            success: true,
-            count: certificates.length,
-            data: certificates
+        console.log(`[FILE DOWNLOAD] Serving ${filePath}`);
+        res.download(filePath);
+    } catch (error) {
+        console.error('[ERROR] downloadCertificate:', error.message);
+        next(error);
+    }
+};
+
+// Other required methods for admin management
+exports.updateCertificate = async (req, res, next) => {
+    console.log('[API START] updateCertificate');
+    try {
+        const certificate = await Certificate.findByIdAndUpdate(req.params.id, req.body, {
+            new: true,
+            runValidators: true
         });
+        if (!certificate) return res.status(404).json({ success: false, message: 'Certificate not found' });
+        console.log('[DB UPDATE SUCCESS] Certificate updated');
+        res.json({ success: true, data: certificate });
     } catch (error) {
         next(error);
     }
 };
 
-// @route   GET /api/certificates/download/:id
-// @desc    Download a certificate file securely
-// @access  Private/Intern
-exports.downloadCertificate = async (req, res, next) => {
+exports.getAllCertificates = async (req, res, next) => {
+    console.log('[API START] getAllCertificates');
     try {
-        if (!req.user) {
-            return res.status(401).json({ success: false, message: 'Unauthorized. User information missing.' });
-        }
-
-        const certificate = await Certificate.findById(req.params.id);
-
-        if (!certificate) {
-            return res.status(404).json({ success: false, message: 'Certificate not found' });
-        }
-
-        // Check permissions instead of just certificate fields
-        const permission = await CertificatePermission.findOne({
-            certificate: req.params.id,
-            intern: req.user.id
-        });
-
-        // 1. Verify ownership (Must have a permission record)
-        if (!permission) {
-            return res.status(403).json({ success: false, message: 'Not authorized to access this certificate' });
-        }
-
-        // 2. Verify download permission and visibility
-        if (!permission.isVisible) {
-            return res.status(403).json({ success: false, message: 'Certificate is not visible' });
-        }
-        if (!permission.canDownload) {
-            return res.status(403).json({ success: false, message: 'Download permission is disabled for this certificate' });
-        }
-
-        // 3. Construct absolute file path
-        const filePath = path.join(__dirname, '..', certificate.fileUrl);
-
-        // 4. Check if file physically exists
-        if (!fs.existsSync(filePath)) {
-            return res.status(404).json({ success: false, message: 'File no longer exists on the server' });
-        }
-
-        // 5. Send file for download securely
-        res.download(filePath, certificate.fileName);
-
+        const certificates = await Certificate.find().populate('assignedTo', 'name email').sort({ createdAt: -1 });
+        console.log(`[DB QUERY SUCCESS] Fetched ${certificates.length} certificates`);
+        res.json({ success: true, data: certificates });
     } catch (error) {
+        next(error);
+    }
+};
+
+exports.deleteCertificate = async (req, res, next) => {
+    console.log('[API START] deleteCertificate');
+    try {
+        const certificate = await Certificate.findById(req.params.id);
+        if (certificate) {
+            const filePath = path.join(__dirname, '..', certificate.fileUrl);
+            if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+            
+            // Identify document type and reset intern flags for regeneration
+            if (certificate.assignedTo) {
+                const intern = await User.findById(certificate.assignedTo);
+                if (intern) {
+                    if (certificate.title === 'Internship Offer Letter') {
+                        intern.offerLetterAssigned = false;
+                        intern.offerLetterPath = null;
+                        console.log(`[REGEN ENABLED] Reset offerLetterAssigned for intern ${intern.name}`);
+                    } else if (certificate.title === 'Completion Certificate') {
+                        intern.certificateAssigned = false;
+                        intern.certificatePath = null;
+                        console.log(`[REGEN ENABLED] Reset certificateAssigned for intern ${intern.name}`);
+                    }
+                    await intern.save();
+                }
+            }
+
+            // Delete related permission
+            await Permission.deleteMany({ resourcePath: certificate.fileUrl });
+            await certificate.deleteOne();
+            console.log('[DB DELETE SUCCESS] Certificate and related files deleted');
+        }
+        res.json({ success: true, message: 'Deleted' });
+    } catch (error) {
+        console.error('[ERROR] deleteCertificate:', error.stack);
         next(error);
     }
 };

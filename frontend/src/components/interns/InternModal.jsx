@@ -13,6 +13,8 @@ export function InternModal({ isOpen, onClose, onSubmit, initialData }) {
             name: e.target.name.value,
             email: e.target.email.value,
             internRole: e.target.internRole.value,
+            startDate: e.target.startDate.value,
+            endDate: e.target.endDate.value,
             password: 'password123'
         });
         onClose();
@@ -59,6 +61,29 @@ export function InternModal({ isOpen, onClose, onSubmit, initialData }) {
                         <option value="ml">ML Engineer</option>
                         <option value="datascience">Data Science</option>
                     </select>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+                        <input
+                            name="startDate"
+                            defaultValue={initialData?.startDate?.split('T')[0]}
+                            type="date"
+                            required
+                            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white"
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
+                        <input
+                            name="endDate"
+                            defaultValue={initialData?.endDate?.split('T')[0]}
+                            type="date"
+                            required
+                            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white"
+                        />
+                    </div>
                 </div>
 
                 {!isEdit && (

@@ -46,6 +46,30 @@ const userSchema = new mongoose.Schema({
     loginAllowed: {
         type: Boolean,
         default: true
+    },
+    certificatePath: {
+        type: String,
+        default: null
+    },
+    certificateAssigned: {
+        type: Boolean,
+        default: false
+    },
+    offerLetterPath: {
+        type: String,
+        default: null
+    },
+    offerLetterAssigned: {
+        type: Boolean,
+        default: false
+    },
+    startDate: {
+        type: Date,
+        default: null
+    },
+    endDate: {
+        type: Date,
+        default: null
     }
 }, {
     timestamps: true

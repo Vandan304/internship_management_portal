@@ -94,6 +94,7 @@ const chatRoutes = require('./routes/chatRoutes');
 const path = require('path');
 
 app.use('/uploads/certificates', express.static(path.join(__dirname, 'uploads/certificates')));
+app.use('/uploads/offerletters', express.static(path.join(__dirname, 'uploads/offerletters')));
 app.use('/uploads/tasks', express.static(path.join(__dirname, 'uploads/tasks')));
 app.use('/uploads/chat', express.static(path.join(__dirname, 'uploads/chat')));
 

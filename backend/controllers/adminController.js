@@ -2,15 +2,16 @@ const User = require('../models/User');
 const Notification = require('../models/Notification');
 const Certificate = require('../models/Certificate');
 const bcrypt = require('bcryptjs');
+const path = require('path');
 
-// @route   GET /api/admin/interns
-// @desc    Get all interns
-// @access  Private/Admin
 exports.getInterns = async (req, res, next) => {
+    console.log('[API START] getInterns');
     try {
         const interns = await User.find({ role: 'intern' }).select('-password');
+        console.log(`[DB QUERY SUCCESS] Fetched ${interns.length} interns`);
         res.json({ success: true, count: interns.length, data: interns });
     } catch (error) {
+        console.error('[ERROR] getInterns:', error.message);
         next(error);
     }
 };
@@ -19,9 +20,12 @@ exports.getInterns = async (req, res, next) => {
 // @desc    Create a new intern
 // @access  Private/Admin
 exports.createIntern = async (req, res, next) => {
+    console.log('[API START] createIntern');
+    console.log('[BODY]', JSON.stringify(req.body));
     try {
-        const { name, email, internRole } = req.body;
-
+        const { name, email, internRole, startDate, endDate } = req.body;
+        console.log('[PARAMS]', `name: ${name}, email: ${email}, role: ${internRole}, dates: ${startDate} to ${endDate}`);
+        
         if (!name || !email || !internRole) {
             return res.status(400).json({ success: false, message: 'Please provide name, email, and internRole' });
         }
@@ -63,17 +67,58 @@ exports.createIntern = async (req, res, next) => {
             password: hashedPassword,
             role: 'intern',
             internRole: validInternRole,
-            internId: authInternId
+            internId: authInternId,
+            startDate: startDate || null,
+            endDate: endDate || null
         });
+        console.log(`[DB CREATE SUCCESS] Intern created with ID: ${authInternId}`);
+
+        // --- MODULE 2: OFFER LETTER GENERATION ---
+        try {
+            const pdfService = require('../services/pdfService');
+            const Permission = require('../models/Permission');
+            
+            const offerLetterPath = `uploads/offerletters/offerletter_${intern._id}.pdf`;
+            const template = pdfService.getOfferLetterTemplate({
+                internName: name,
+                internId: authInternId,
+                position: validInternRole.toUpperCase(),
+                startDate: startDate || new Date().toLocaleDateString()
+            });
+
+            await pdfService.generatePDF(template, path.join(__dirname, '..', offerLetterPath));
+            console.log(`[FILE GENERATION SUCCESS] Offer letter created at ${offerLetterPath}`);
+
+            intern.offerLetterPath = `/${offerLetterPath}`;
+            intern.offerLetterAssigned = true;
+            await intern.save();
+            console.log('[DB UPDATE SUCCESS] Intern updated with offer letter path');
+
+            await Permission.create({
+                internId: intern._id,
+                resourceType: 'offerletter',
+                resourceName: 'Offer Letter',
+                resourcePath: `/${offerLetterPath}`,
+                visibilityEnabled: false,
+                downloadEnabled: false
+            });
+            console.log('[DB CREATE SUCCESS] Permission entry for offer letter created');
+
+        } catch (pdfError) {
+            console.error('[ERROR] Offer letter generation failed:', pdfError.message);
+            // Don't fail the whole request if PDF fails, but log it
+        }
 
         const { sendInternCredentials } = require('../services/emailService');
         await sendInternCredentials(email, name, generatedPassword, authInternId, validInternRole);
+        console.log('[EMAIL SUCCESS] Credentials sent to intern');
 
         const internResponse = intern.toObject();
         delete internResponse.password;
 
         res.status(201).json({ success: true, data: internResponse });
     } catch (error) {
+        console.error('[ERROR] createIntern:', error.message);
         next(error);
     }
 };
@@ -82,12 +127,16 @@ exports.createIntern = async (req, res, next) => {
 // @desc    Update an intern details (name, email)
 // @access  Private/Admin
 exports.updateIntern = async (req, res, next) => {
+    console.log('[API START] updateIntern');
+    console.log('[PARAMS]', JSON.stringify(req.params));
+    console.log('[BODY]', JSON.stringify(req.body));
     try {
-        const { name, email } = req.body;
+        const { name, email, internRole, startDate, endDate } = req.body;
 
         let intern = await User.findById(req.params.id);
 
         if (!intern) {
+            console.warn('[NOT FOUND] Intern not found');
             return res.status(404).json({ success: false, message: 'Intern not found' });
         }
 
@@ -100,21 +149,26 @@ exports.updateIntern = async (req, res, next) => {
             if (emailExists) {
                 return res.status(400).json({ success: false, message: 'Email is already in use' });
             }
+            intern.email = email;
         }
 
-        intern.name = name || intern.name;
-        intern.email = email || intern.email;
+        if (name) intern.name = name;
+        if (internRole) intern.internRole = internRole.toLowerCase();
+        if (startDate) intern.startDate = startDate;
+        if (endDate) intern.endDate = endDate;
         if (req.body.isActive !== undefined) {
             intern.isActive = req.body.isActive;
         }
 
         await intern.save();
+        console.log('[DB UPDATE SUCCESS] Intern details updated');
 
         const internResponse = intern.toObject();
         delete internResponse.password;
 
         res.json({ success: true, data: internResponse });
     } catch (error) {
+        console.error('[ERROR] updateIntern:', error.message);
         next(error);
     }
 };
@@ -123,10 +177,13 @@ exports.updateIntern = async (req, res, next) => {
 // @desc    Delete an intern completely
 // @access  Private/Admin
 exports.deleteIntern = async (req, res, next) => {
+    console.log('[API START] deleteIntern');
+    console.log('[PARAMS]', JSON.stringify(req.params));
     try {
         const intern = await User.findById(req.params.id);
 
         if (!intern) {
+            console.warn('[NOT FOUND] Intern not found');
             return res.status(404).json({ success: false, message: 'Intern not found' });
         }
 
@@ -137,11 +194,15 @@ exports.deleteIntern = async (req, res, next) => {
         // Cleanup related data
         await Certificate.deleteMany({ assignedTo: req.params.id });
         await Notification.deleteMany({ userId: req.params.id });
+        const Permission = require('../models/Permission');
+        await Permission.deleteMany({ internId: req.params.id });
 
         await User.findByIdAndDelete(req.params.id);
+        console.log('[DB DELETE SUCCESS] Intern and related data deleted');
 
         res.json({ success: true, message: 'Intern deleted successfully' });
     } catch (error) {
+        console.error('[ERROR] deleteIntern:', error.message);
         next(error);
     }
 };
@@ -150,10 +211,13 @@ exports.deleteIntern = async (req, res, next) => {
 // @desc    Block an intern login
 // @access  Private/Admin
 exports.blockIntern = async (req, res, next) => {
+    console.log('[API START] blockIntern');
+    console.log('[PARAMS]', JSON.stringify(req.params));
     try {
         const intern = await User.findById(req.params.id);
 
         if (!intern) {
+            console.warn('[NOT FOUND] Intern not found');
             return res.status(404).json({ success: false, message: 'Intern not found' });
         }
 
@@ -163,6 +227,7 @@ exports.blockIntern = async (req, res, next) => {
 
         intern.loginAllowed = false;
         await intern.save();
+        console.log('[DB UPDATE SUCCESS] Intern login blocked');
 
         const notification = await Notification.create({
             userId: intern._id,
@@ -175,6 +240,7 @@ exports.blockIntern = async (req, res, next) => {
 
         res.json({ success: true, message: 'Intern blocked successfully', data: { id: intern._id, loginAllowed: intern.loginAllowed } });
     } catch (error) {
+        console.error('[ERROR] blockIntern:', error.message);
         next(error);
     }
 };
@@ -183,10 +249,13 @@ exports.blockIntern = async (req, res, next) => {
 // @desc    Re-activate an intern login
 // @access  Private/Admin
 exports.activateIntern = async (req, res, next) => {
+    console.log('[API START] activateIntern');
+    console.log('[PARAMS]', JSON.stringify(req.params));
     try {
         const intern = await User.findById(req.params.id);
 
         if (!intern) {
+            console.warn('[NOT FOUND] Intern not found');
             return res.status(404).json({ success: false, message: 'Intern not found' });
         }
 
@@ -196,6 +265,7 @@ exports.activateIntern = async (req, res, next) => {
 
         intern.loginAllowed = true;
         await intern.save();
+        console.log('[DB UPDATE SUCCESS] Intern login activated');
 
         const notification = await Notification.create({
             userId: intern._id,
@@ -208,6 +278,8 @@ exports.activateIntern = async (req, res, next) => {
 
         res.json({ success: true, message: 'Intern activated successfully', data: { id: intern._id, loginAllowed: intern.loginAllowed } });
     } catch (error) {
+        console.error('[ERROR] activateIntern:', error.message);
         next(error);
     }
 };
+
