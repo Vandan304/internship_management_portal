@@ -15,7 +15,7 @@ const ChatSidebar = ({ conversations, currentUserId, activeConversation, onSelec
             <div className="p-4 border-b border-gray-50 flex flex-col gap-4 shrink-0">
                 <div className="flex items-center justify-between">
                     <h2 className="text-xl font-bold text-gray-800">Messages</h2>
-                    <button 
+                    <button
                         onClick={onNewChat}
                         className="p-2 bg-brand-50 text-brand-600 rounded-full hover:bg-brand-100 transition-colors shadow-sm"
                         title="Start new chat"
@@ -25,7 +25,7 @@ const ChatSidebar = ({ conversations, currentUserId, activeConversation, onSelec
                 </div>
                 <div className="relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                    <input 
+                    <input
                         type="text"
                         placeholder="Search conversations..."
                         value={searchTerm}
@@ -48,9 +48,9 @@ const ChatSidebar = ({ conversations, currentUserId, activeConversation, onSelec
                     filteredConversations.map(conv => {
                         const otherUser = conv.participants.find(p => p._id !== currentUserId);
                         const isActive = activeConversation?._id === conv._id;
-                        
+
                         return (
-                            <div 
+                            <div
                                 key={conv._id}
                                 onClick={() => onSelectConversation(conv)}
                                 className={`p-4 border-b border-gray-50 w-full cursor-pointer hover:bg-gray-50 transition-colors flex items-center gap-3 ${isActive ? 'bg-brand-50/50 relative' : ''}`}
