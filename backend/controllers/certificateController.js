@@ -96,8 +96,21 @@ exports.generateCompletionCertificate = async (req, res, next) => {
         }
 
         if (intern.certificateAssigned) {
-            console.warn('[DUPLICATE] Completion Certificate already generated for this intern');
-            return res.status(400).json({ success: false, message: 'Completion Certificate already generated for this intern.' });
+            // Self-Healing: Check if the certificate actually exists in the database
+            const existingCert = await Certificate.findOne({ 
+                assignedTo: internId, 
+                title: { $regex: /Certificate$/i } 
+            });
+
+            if (!existingCert) {
+                console.log(`[SELF-HEALING] Resetting stale certificateAssigned flag for ${intern.name}`);
+                intern.certificateAssigned = false;
+                intern.certificatePath = null;
+                await intern.save();
+            } else {
+                console.warn('[DUPLICATE] Completion Certificate already generated for this intern');
+                return res.status(400).json({ success: false, message: 'Completion Certificate already generated for this intern.' });
+            }
         }
 
         const firstName = intern.name.split(' ')[0].replace(/[^a-zA-Z0-9]/g, '');
@@ -128,6 +141,8 @@ exports.generateCompletionCertificate = async (req, res, next) => {
         const fileSizeInBytes = stats.size;
         console.log(`[FILE GENERATION SUCCESS] Certificate stored at ${certificatePath} (${fileSizeInBytes} bytes)`);
 
+        // Removed automatic cleanup to enforce manual deletion flow
+
         // Update Certificate model
         const certificate = await Certificate.create({
             title: `${firstName} Completion Certificate`,
@@ -144,6 +159,9 @@ exports.generateCompletionCertificate = async (req, res, next) => {
         intern.certificateAssigned = true;
         await intern.save();
         console.log('[DB UPDATE SUCCESS] Intern document updated');
+
+        // Register in Permissions Module (Clean up old ones first for accuracy)
+        await Permission.deleteMany({ internId: internId, resourceType: 'certificate' });
 
         // Register in Permissions Module
         await Permission.create({
@@ -176,8 +194,21 @@ exports.generateOfferLetter = async (req, res, next) => {
         }
 
         if (intern.offerLetterAssigned) {
-            console.warn('[DUPLICATE] Offer Letter already generated for this intern');
-            return res.status(400).json({ success: false, message: 'Offer Letter already generated for this intern.' });
+            // Self-Healing: Check if the offer letter actually exists in the database
+            const existingOffer = await Certificate.findOne({ 
+                assignedTo: internId, 
+                title: { $regex: /Offer Letter$/i } 
+            });
+
+            if (!existingOffer) {
+                console.log(`[SELF-HEALING] Resetting stale offerLetterAssigned flag for ${intern.name}`);
+                intern.offerLetterAssigned = false;
+                intern.offerLetterPath = null;
+                await intern.save();
+            } else {
+                console.warn('[DUPLICATE] Offer Letter already generated for this intern');
+                return res.status(400).json({ success: false, message: 'Offer Letter already generated for this intern.' });
+            }
         }
         const firstName = intern.name.split(' ')[0].replace(/[^a-zA-Z0-9]/g, '');
         const fileName = `${firstName}_Offer_Letter.pdf`;
@@ -201,6 +232,8 @@ exports.generateOfferLetter = async (req, res, next) => {
         const stats = fs.statSync(fullPath);
         const fileSizeInBytes = stats.size;
         console.log(`[FILE GENERATION SUCCESS] Offer letter stored at ${offerLetterPath} (${fileSizeInBytes} bytes)`);
+
+        // Removed automatic cleanup to enforce manual deletion flow
 
         // Update Certificate model (Same logic as Completion Certificate)
         const certificate = await Certificate.create({
@@ -402,18 +435,32 @@ exports.deleteCertificate = async (req, res, next) => {
             if (certificate.assignedTo) {
                 const intern = await User.findById(certificate.assignedTo);
                 if (intern) {
-                    if (certificate.title === 'Internship Offer Letter') {
+                    let updated = false;
+                    const fileUrl = (certificate.fileUrl || '').replace(/\\/g, '/'); // Normalize slashes
+                    const title = (certificate.title || '').toLowerCase();
+
+                    // Folder-based Detection (Highly Accurate fallback)
+                    if (fileUrl.includes('/offerletters/') || title.includes('offer letter') || title.includes('offerletter')) {
                         intern.offerLetterAssigned = false;
                         intern.offerLetterPath = null;
-                        console.log(`[REGEN ENABLED] Reset offerLetterAssigned for intern ${intern.name}`);
-                    } else if (certificate.title === 'Completion Certificate') {
+                        updated = true;
+                        console.log(`[REGEN ENABLED] Reset offerLetterAssigned for ${intern.name}`);
+                    } 
+                    
+                    if (fileUrl.includes('/certificates/') || title.includes('certificate')) {
                         intern.certificateAssigned = false;
                         intern.certificatePath = null;
-                        console.log(`[REGEN ENABLED] Reset certificateAssigned for intern ${intern.name}`);
+                        updated = true;
+                        console.log(`[REGEN ENABLED] Reset certificateAssigned for ${intern.name}`);
                     }
-                    await intern.save();
+
+                    if (updated) {
+                        await intern.save();
+                        console.log(`[DB UPDATE SUCCESS] Flags reset for intern ${intern.name}`);
+                    }
                 }
             }
+   
 
             // Delete related permission
             await Permission.deleteMany({ resourcePath: certificate.fileUrl });
