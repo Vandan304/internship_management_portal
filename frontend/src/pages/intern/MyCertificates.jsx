@@ -15,8 +15,8 @@ const MyCertificates = () => {
     );
 
     return (
-        <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex flex-col h-[calc(100vh-140px)] sm:h-[calc(100vh-160px)] space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 flex-shrink-0">
                 <div>
                     <h1 className="text-2xl font-bold text-gray-900">My Certificates</h1>
                     <p className="text-gray-500">View and download your earned certificates</p>
@@ -24,7 +24,7 @@ const MyCertificates = () => {
             </div>
 
             {/* Filters and Search */}
-            <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col sm:flex-row gap-4">
+            <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col sm:flex-row gap-4 flex-shrink-0">
                 <div className="relative flex-1">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
                     <input
@@ -38,10 +38,10 @@ const MyCertificates = () => {
             </div>
 
             {/* Certificates Table */}
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-                <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50">
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm flex-1 overflow-hidden flex flex-col">
+                <div className="overflow-y-auto flex-1">
+                    <table className="min-w-full divide-y divide-gray-200 border-collapse">
+                        <thead className="bg-gray-50 sticky top-0 z-10">
                             <tr>
                                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Certificate Name</th>
                                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Issue Date</th>
@@ -98,17 +98,18 @@ const MyCertificates = () => {
                             ))}
                         </tbody>
                     </table>
-                </div>
-                {/* Empty State */}
-                {filteredCertificates.length === 0 && (
-                    <div className="p-12 text-center">
-                        <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <Search className="w-8 h-8 text-gray-400" />
+                    
+                    {/* Empty State */}
+                    {filteredCertificates.length === 0 && (
+                        <div className="p-12 text-center">
+                            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <Search className="w-8 h-8 text-gray-400" />
+                            </div>
+                            <h3 className="text-lg font-medium text-gray-900">No certificates found</h3>
+                            <p className="text-gray-500 mt-2">You haven't been assigned any certificates yet.</p>
                         </div>
-                        <h3 className="text-lg font-medium text-gray-900">No certificates found</h3>
-                        <p className="text-gray-500 mt-2">You haven't been assigned any certificates yet.</p>
-                    </div>
-                )}
+                    )}
+                </div>
             </div>
         </div>
     );

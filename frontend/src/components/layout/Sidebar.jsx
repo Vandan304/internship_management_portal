@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Users, FileText, Download, Settings, LogOut, X, ListTodo, ClipboardCheck, TrendingUp, MessageCircle } from 'lucide-react';
+import { LayoutDashboard, Users, FileText, Download, Settings, LogOut, X, ListTodo, ClipboardCheck, TrendingUp, MessageCircle, Trophy } from 'lucide-react';
 import { cn } from '../../utils/cn';
 import { useAuth } from '../../context/AuthContext';
 
@@ -10,6 +10,7 @@ const navItems = [
     { icon: ListTodo, label: 'Task Management', to: '/admin/tasks' },
     { icon: ClipboardCheck, label: 'Task Review', to: '/admin/task-review' },
     { icon: TrendingUp, label: 'Intern Progress', to: '/admin/intern-progress' },
+    { icon: Trophy, label: 'Leaderboard', to: '/admin/leaderboard' },
     { icon: FileText, label: 'Certificates', to: '/admin/certificates' },
     { icon: Download, label: 'Permissions', to: '/admin/permissions' },
     { icon: MessageCircle, label: 'Chat', to: '/admin/chat' },

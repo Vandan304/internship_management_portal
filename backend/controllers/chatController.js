@@ -1,6 +1,7 @@
 const Conversation = require('../models/Conversation');
 const Message = require('../models/Message');
 const User = require('../models/User');
+const { encryptMessage, decryptMessage } = require('../utils/encryption');
 
 // GET /api/chat/users
 exports.getChatUsers = async (req, res, next) => {
@@ -42,6 +43,14 @@ exports.getConversations = async (req, res, next) => {
                 isRead: false
             });
             conv.unreadCount = unreadCount;
+
+            // Decrypt last message if it exists
+            if (conv.lastMessage && conv.lastMessage.encryptedMessage) {
+                conv.lastMessage.messageText = decryptMessage(
+                    conv.lastMessage.encryptedMessage, 
+                    conv.lastMessage.iv
+                );
+            }
         }
             
         res.status(200).json({ success: true, count: conversations.length, data: conversations });
@@ -55,9 +64,18 @@ exports.getMessages = async (req, res, next) => {
     try {
         const { conversationId } = req.params;
         const messages = await Message.find({ conversationId })
-            .sort({ createdAt: 1 });
+            .sort({ createdAt: 1 })
+            .lean();
             
-        res.status(200).json({ success: true, count: messages.length, data: messages });
+        // Decrypt messages before sending to client
+        const decryptedMessages = messages.map(msg => {
+            if (msg.encryptedMessage) {
+                msg.messageText = decryptMessage(msg.encryptedMessage, msg.iv);
+            }
+            return msg;
+        });
+            
+        res.status(200).json({ success: true, count: decryptedMessages.length, data: decryptedMessages });
     } catch (error) {
         next(error);
     }
@@ -78,12 +96,18 @@ exports.sendMessage = async (req, res, next) => {
                 participants: [senderId, receiverId]
             });
         }
+
+        // Encrypt message text
+        const { encryptedMessage, iv, algorithm } = encryptMessage(messageText);
         
         const message = await Message.create({
             conversationId: conversation._id,
             senderId,
             receiverId,
-            messageText,
+            messageText: '', // Don't store plain text
+            encryptedMessage,
+            iv,
+            algorithm,
             fileUrl
         });
         
@@ -93,7 +117,16 @@ exports.sendMessage = async (req, res, next) => {
         // Populate the sender details to return to the client
         const populatedMessage = await Message.findById(message._id)
             .populate('senderId', 'name')
-            .populate('receiverId', 'name');
+            .populate('receiverId', 'name')
+            .lean();
+
+        // Decrypt for the response
+        if (populatedMessage.encryptedMessage) {
+            populatedMessage.messageText = decryptMessage(
+                populatedMessage.encryptedMessage, 
+                populatedMessage.iv
+            );
+        }
 
         res.status(201).json({ success: true, data: populatedMessage });
     } catch (error) {

@@ -43,9 +43,13 @@ const userSchema = new mongoose.Schema({
         type: Boolean,
         default: true
     },
-    loginAllowed: {
+    loginAccess: {
         type: Boolean,
-        default: true
+        default: false
+    },
+    points: {
+        type: Number,
+        default: 0
     },
     certificatePath: {
         type: String,

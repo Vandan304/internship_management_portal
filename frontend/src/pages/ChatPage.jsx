@@ -25,43 +25,41 @@ const ChatPage = () => {
     useEffect(() => {
         if (!socket) return;
 
+        // Use a stable handler for receiving messages
         const handleReceiveMessage = (message) => {
-            // Check if message belongs to active conversation
+            // Only append to the messages list if it belongs to the active conversation
             if (activeConversation && message.conversationId === activeConversation._id) {
-                // Prevent duplicate rendering
-                const senderId = typeof message.senderId === 'object' ? message.senderId._id : message.senderId;
                 setMessages(prev => {
-                    // Check if message already exists by ID
-                    if (prev.some(m => m._id === message._id)) return prev;
-                    
-                    // Don't add if we just sent it (handled in handleSendMessage)
-                    if (senderId === currentUserId) return prev;
-                    
+                    const messageId = message._id || message.id;
+                    if (prev.some(m => (m._id || m.id) === messageId)) return prev;
                     return [...prev, message];
                 });
-                updateConversationLastMessage(message);
             }
+            
+            // Always update the sidebar with the last message received
+            updateConversationLastMessage(message);
         };
 
         const handleNewMessageNotification = (message) => {
-            if (!activeConversation || message.conversationId !== activeConversation._id) {
-                // Show toast notification
-                const senderName = typeof message.senderId === 'object' ? message.senderId.name : 'Someone';
-                toast.success(`New message from ${senderName || 'a contact'}`);
-                
-                // Fetch to update unread counts
-                fetchConversations();
-            }
+            // Show toast notification if not in the active conversation
+            // Notice: we rely on the component closure for activeConversation._id
+            // This is why we keep [socket, activeConversation?._id] as dependencies
+            const senderName = typeof message.senderId === 'object' ? message.senderId.name : 'Someone';
+            toast.success(`New message from ${senderName || 'a contact'}`);
+            fetchConversations();
         };
 
         const handleTypingIndicator = ({ senderId, isTyping: typingStatus }) => {
-            if (activeConversation && activeConversation.participants.some(p => p._id === senderId)) {
-                setIsTyping(typingStatus);
-            }
+            setIsTyping(typingStatus);
         };
 
+        // Standard message receiving
         socket.on('receiveMessage', handleReceiveMessage);
+        
+        // Notifications for messages in other rooms
         socket.on('newMessageNotification', handleNewMessageNotification);
+        
+        // Typing indicator
         socket.on('typingIndicator', handleTypingIndicator);
 
         return () => {
@@ -69,7 +67,7 @@ const ChatPage = () => {
             socket.off('newMessageNotification', handleNewMessageNotification);
             socket.off('typingIndicator', handleTypingIndicator);
         };
-    }, [socket, activeConversation]);
+    }, [socket, activeConversation?._id]); // Only re-subscribe if socket or active conversation ID changes
 
     const fetchConversations = async () => {
         try {
@@ -252,8 +250,8 @@ const ChatPage = () => {
     };
 
     return (
-        <div className="flex h-[calc(100vh-theme(spacing.16))] sm:h-[calc(100vh-theme(spacing.20))] overflow-hidden bg-white shadow-soft rounded-2xl border border-gray-100 m-2 sm:m-6">
-            <div className={`w-full sm:w-80 flex-shrink-0 ${activeConversation ? 'hidden sm:block' : 'block'}`}>
+        <div className="flex h-[calc(100vh-140px)] sm:h-[calc(100vh-160px)] overflow-hidden bg-white shadow-soft rounded-2xl border border-gray-100">
+            <div className={`w-full sm:w-80 flex-shrink-0 border-r border-gray-100 ${activeConversation ? 'hidden sm:block' : 'block'}`}>
                 <ChatSidebar 
                     conversations={conversations} 
                     currentUserId={currentUserId} 

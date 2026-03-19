@@ -6,9 +6,6 @@ const fs = require('fs');
 const path = require('path');
 const pdfService = require('../services/pdfService');
 
-/**
- * MODULE 1 — MANUAL CERTIFICATE UPLOAD
- */
 exports.uploadCertificate = async (req, res, next) => {
     console.log('[API START] uploadCertificate');
     try {
@@ -31,7 +28,7 @@ exports.uploadCertificate = async (req, res, next) => {
         }
 
         const fileUrl = `/uploads/certificates/${req.file.filename}`;
-        
+
         // Update Certificate model (legacy support)
         const certificate = await Certificate.create({
             title: title || 'Manual Certificate',
@@ -95,11 +92,19 @@ exports.generateCompletionCertificate = async (req, res, next) => {
             return res.status(404).json({ success: false, message: 'Intern not found' });
         }
 
+        // NEW: STRICT VALIDATION RULE - check loginAccess
+        if (!intern.loginAccess) {
+            return res.status(403).json({
+                success: false,
+                message: "Login access is not enabled for this intern. Certificate generation is not allowed."
+            });
+        }
+
         if (intern.certificateAssigned) {
             // Self-Healing: Check if the certificate actually exists in the database
-            const existingCert = await Certificate.findOne({ 
-                assignedTo: internId, 
-                title: { $regex: /Certificate$/i } 
+            const existingCert = await Certificate.findOne({
+                assignedTo: internId,
+                title: { $regex: /Certificate$/i }
             });
 
             if (!existingCert) {
@@ -133,9 +138,9 @@ exports.generateCompletionCertificate = async (req, res, next) => {
 
         const template = pdfService.getCertificateTemplate(templateData);
         console.log('[FILE GENERATION START] Generating PDF...');
-        
+
         await pdfService.generatePDF(template, fullPath);
-        
+
         // Get actual file size
         const stats = fs.statSync(fullPath);
         const fileSizeInBytes = stats.size;
@@ -193,11 +198,19 @@ exports.generateOfferLetter = async (req, res, next) => {
             return res.status(404).json({ success: false, message: 'Intern not found' });
         }
 
+        // NEW: STRICT VALIDATION RULE - check loginAccess
+        if (!intern.loginAccess) {
+            return res.status(403).json({
+                success: false,
+                message: "Login access is not enabled for this intern. Offer letter cannot be generated."
+            });
+        }
+
         if (intern.offerLetterAssigned) {
             // Self-Healing: Check if the offer letter actually exists in the database
-            const existingOffer = await Certificate.findOne({ 
-                assignedTo: internId, 
-                title: { $regex: /Offer Letter$/i } 
+            const existingOffer = await Certificate.findOne({
+                assignedTo: internId,
+                title: { $regex: /Offer Letter$/i }
             });
 
             if (!existingOffer) {
@@ -225,9 +238,9 @@ exports.generateOfferLetter = async (req, res, next) => {
 
         const template = pdfService.getOfferLetterTemplate(templateData);
         console.log('[FILE GENERATION START] Generating PDF...');
-        
+
         await pdfService.generatePDF(template, fullPath);
-        
+
         // Get actual file size
         const stats = fs.statSync(fullPath);
         const fileSizeInBytes = stats.size;
@@ -281,7 +294,7 @@ exports.getCertificatePermissions = async (req, res, next) => {
         const permissions = await Permission.find()
             .populate('internId', 'name email')
             .sort({ createdAt: -1 });
-        
+
         console.log(`[DB QUERY SUCCESS] Fetched ${permissions.length} permissions`);
 
         // Map to format expected by frontend
@@ -430,7 +443,7 @@ exports.deleteCertificate = async (req, res, next) => {
         if (certificate) {
             const filePath = path.join(__dirname, '..', certificate.fileUrl);
             if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
-            
+
             // Identify document type and reset intern flags for regeneration
             if (certificate.assignedTo) {
                 const intern = await User.findById(certificate.assignedTo);
@@ -445,8 +458,8 @@ exports.deleteCertificate = async (req, res, next) => {
                         intern.offerLetterPath = null;
                         updated = true;
                         console.log(`[REGEN ENABLED] Reset offerLetterAssigned for ${intern.name}`);
-                    } 
-                    
+                    }
+
                     if (fileUrl.includes('/certificates/') || title.includes('certificate')) {
                         intern.certificateAssigned = false;
                         intern.certificatePath = null;
@@ -460,7 +473,7 @@ exports.deleteCertificate = async (req, res, next) => {
                     }
                 }
             }
-   
+
 
             // Delete related permission
             await Permission.deleteMany({ resourcePath: certificate.fileUrl });

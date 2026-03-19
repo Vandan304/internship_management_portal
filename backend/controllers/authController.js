@@ -76,7 +76,7 @@ exports.login = async (req, res, next) => {
             return res.status(403).json({ success: false, message: 'Account is inactive. Please contact support.' });
         }
 
-        if (!user.loginAllowed) {
+        if (!user.loginAccess) {
             return res.status(403).json({ success: false, message: 'Login is not allowed for this account.' });
         }
 

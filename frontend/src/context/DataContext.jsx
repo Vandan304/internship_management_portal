@@ -349,6 +349,33 @@ export const DataProvider = ({ children }) => {
         }
     };
 
+    const [leaderboardData, setLeaderboardData] = useState({ top3: [], fullList: [] });
+
+    const fetchLeaderboard = useCallback(async () => {
+        try {
+            const token = localStorage.getItem('token');
+            if (token) {
+                const res = await axios.get('http://localhost:5000/api/leaderboard', {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                if (res.data.success) {
+                    setLeaderboardData({
+                        top3: res.data.top3,
+                        fullList: res.data.fullList
+                    });
+                }
+            }
+        } catch (error) {
+            console.error("Error fetching leaderboard:", error);
+        }
+    }, []);
+
+    useEffect(() => {
+        if (isAuthenticated) {
+            fetchLeaderboard();
+        }
+    }, [isAuthenticated, fetchLeaderboard]);
+
     return (
         <DataContext.Provider value={{
             stats: {
@@ -359,6 +386,8 @@ export const DataProvider = ({ children }) => {
             },
             interns,
             certificates,
+            leaderboardData,
+            fetchLeaderboard,
             fetchInterns,
             addIntern,
             updateIntern,

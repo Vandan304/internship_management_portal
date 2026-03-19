@@ -26,44 +26,8 @@ const io = socketIo(server, {
 
 app.set('io', io);
 
-io.on('connection', (socket) => {
-    console.log('New client connected:', socket.id);
-
-    // Interns emit 'join' with their user ID to join a specific room for targeted notifications
-    socket.on('join', (userId) => {
-        socket.join(userId);
-        console.log(`User ${userId} joined room ${userId}`);
-    });
-
-    // Chat Events
-    socket.on('joinConversation', (conversationId) => {
-        socket.join(conversationId);
-        console.log(`User joined conversation room ${conversationId}`);
-    });
-
-    socket.on('sendMessage', (message) => {
-        // Broadcast to the conversation room so participants instantly see it
-        if (message.conversationId) {
-            io.to(message.conversationId).emit('receiveMessage', message);
-        }
-        // Emit notification to receiver specifically
-        if (message.receiverId) {
-            socket.to(message.receiverId).emit('newMessageNotification', message);
-        }
-    });
-
-    socket.on('typing', ({ conversationId, senderId, isTyping }) => {
-        socket.to(conversationId).emit('typingIndicator', { senderId, isTyping });
-    });
-
-    socket.on('messageRead', async ({ messageId, conversationId }) => {
-        io.to(conversationId).emit('messageReadConfirmation', { messageId });
-    });
-
-    socket.on('disconnect', () => {
-        console.log('Client disconnected:', socket.id);
-    });
-});
+const chatSocket = require('./socket/chatSocket');
+chatSocket(io);
 
 // Middleware
 app.use(cors());
@@ -91,6 +55,7 @@ app.use('/api/notifications', notificationRoutes);
 const certificateRoutes = require('./routes/certificateRoutes');
 const taskRoutes = require('./routes/taskRoutes');
 const chatRoutes = require('./routes/chatRoutes');
+const leaderboardRoutes = require('./routes/leaderboardRoutes');
 const path = require('path');
 
 app.use('/uploads/certificates', express.static(path.join(__dirname, 'uploads/certificates')));
@@ -101,6 +66,7 @@ app.use('/uploads/chat', express.static(path.join(__dirname, 'uploads/chat')));
 app.use('/api/certificates', certificateRoutes);
 app.use('/api/tasks', taskRoutes);
 app.use('/api/chat', chatRoutes);
+app.use('/api/leaderboard', leaderboardRoutes);
 
 app.get('/', (req, res) => {
     res.send({ message: 'Backend is running' });

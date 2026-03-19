@@ -21,6 +21,7 @@ import Permissions from './pages/Permissions';
 import TaskManagement from './pages/admin/TaskManagement';
 import TaskReview from './pages/admin/TaskReview';
 import InternProgress from './pages/admin/InternProgress';
+import Leaderboard from './pages/Leaderboard';
 import { ToastProvider } from './context/ToastContext';
 
 import ProtectedRoute from './components/layout/ProtectedRoute';
@@ -62,6 +63,7 @@ function App() {
                 <Route path="tasks" element={<TaskManagement />} />
                 <Route path="task-review" element={<TaskReview />} />
                 <Route path="intern-progress" element={<InternProgress />} />
+                <Route path="leaderboard" element={<Leaderboard />} />
                 <Route path="certificates" element={<Certificates />} />
                 <Route path="permissions" element={<Permissions />} />
                 <Route path="chat" element={<ChatPage />} />
@@ -76,6 +78,7 @@ function App() {
                 <Route index element={<InternDashboard />} />
                 <Route path="tasks" element={<MyTasks />} />
                 <Route path="certificates" element={<MyCertificates />} />
+                <Route path="leaderboard" element={<Leaderboard />} />
                 <Route path="profile" element={<InternProfile />} />
                 <Route path="notifications" element={<InternNotifications />} />
                 <Route path="chat" element={<ChatPage />} />

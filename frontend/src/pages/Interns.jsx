@@ -6,6 +6,7 @@ import { cn } from '../utils/cn';
 import { InternModal } from '../components/interns/InternModal';
 import { useToast } from '../context/ToastContext';
 import { useData } from '../context/DataContext';
+import ConfirmModal from '../components/ui/ConfirmModal';
 
 export default function Interns() {
     const { interns, addIntern, updateIntern, deleteIntern, blockIntern, activateIntern, generateCompletionCertificate, generateOfferLetter } = useData();
@@ -14,6 +15,9 @@ export default function Interns() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingIntern, setEditingIntern] = useState(null);
     const { addToast } = useToast();
+
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [internToDelete, setInternToDelete] = useState(null);
 
     const filteredInterns = interns.filter(intern => {
         const matchesSearch = intern.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -25,7 +29,7 @@ export default function Interns() {
     const toggleLoginStatus = async (id) => {
         const intern = interns.find(i => i.id === id);
         try {
-            if (intern.loginAllowed) {
+            if (intern.loginAccess) {
                 await blockIntern(id);
                 addToast(`Login blocked for ${intern.name}`, 'info');
             } else {
@@ -46,12 +50,18 @@ export default function Interns() {
         }
     };
 
-    const handleDelete = (id) => {
-        if (confirm('Are you sure you want to delete this intern? This will remove all their assigned certificates.')) {
-            deleteIntern(id);
+    const handleDeleteClick = (id) => {
+        setInternToDelete(id);
+        setIsDeleteModalOpen(true);
+    };
+
+    const confirmDelete = () => {
+        if (internToDelete) {
+            deleteIntern(internToDelete);
             addToast('Intern deleted successfully', 'error');
+            setInternToDelete(null);
         }
-    }
+    };
 
     const handleAddIntern = () => {
         setEditingIntern(null);
@@ -156,7 +166,7 @@ export default function Interns() {
                                                 <input
                                                     type="checkbox"
                                                     className="sr-only peer"
-                                                    checked={intern.loginAllowed}
+                                                    checked={intern.loginAccess}
                                                     onChange={() => toggleLoginStatus(intern.id)}
                                                 />
                                                 <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none ring-0 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
@@ -166,16 +176,25 @@ export default function Interns() {
                                             {intern.status === 'Active' && (
                                                 <button
                                                     onClick={async () => {
+                                                        if (!intern.loginAccess) {
+                                                            addToast('Enable login access before generating offer letter', 'error');
+                                                            return;
+                                                        }
                                                         try {
                                                             await generateOfferLetter(intern.id);
                                                             addToast('Offer Letter Generated Successfully', 'success');
                                                         } catch (err) {
                                                             const message = err.response?.data?.message || 'Failed to generate Offer Letter';
-                                                            addToast(message, err.response?.status === 400 ? 'info' : 'error');
+                                                            addToast(message, err.response?.status === 403 || err.response?.status === 400 ? 'info' : 'error');
                                                         }
                                                     }}
-                                                    className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors flex items-center gap-2 text-xs font-medium"
-                                                    title="Offer Letter"
+                                                    className={cn(
+                                                        "p-2 rounded-lg transition-colors flex items-center gap-2 text-xs font-medium",
+                                                        intern.loginAccess 
+                                                            ? "text-gray-400 hover:text-blue-600 hover:bg-blue-50" 
+                                                            : "text-gray-300 cursor-not-allowed opacity-50"
+                                                    )}
+                                                    title={intern.loginAccess ? "Offer Letter" : "Login access required"}
                                                 >
                                                     <FileCheck size={16} />
                                                     <span>Offer Letter</span>
@@ -186,16 +205,25 @@ export default function Interns() {
                                             {intern.status === 'Active' && (
                                                 <button
                                                     onClick={async () => {
+                                                        if (!intern.loginAccess) {
+                                                            addToast('Enable login access before generating certificate', 'error');
+                                                            return;
+                                                        }
                                                         try {
                                                             await generateCompletionCertificate(intern.id);
                                                             addToast('Completion Certificate Generated Successfully', 'success');
                                                         } catch (err) {
                                                             const message = err.response?.data?.message || 'Failed to generate Completion Certificate';
-                                                            addToast(message, err.response?.status === 400 ? 'info' : 'error');
+                                                            addToast(message, err.response?.status === 403 || err.response?.status === 400 ? 'info' : 'error');
                                                         }
                                                     }}
-                                                    className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors flex items-center gap-2 text-xs font-medium"
-                                                    title="Completion Certificate"
+                                                    className={cn(
+                                                        "p-2 rounded-lg transition-colors flex items-center gap-2 text-xs font-medium",
+                                                        intern.loginAccess 
+                                                            ? "text-gray-400 hover:text-green-600 hover:bg-green-50" 
+                                                            : "text-gray-300 cursor-not-allowed opacity-50"
+                                                    )}
+                                                    title={intern.loginAccess ? "Completion Certificate" : "Login access required"}
                                                 >
                                                     <FileText size={16} />
                                                     <span>Completion Certificate</span>
@@ -215,7 +243,7 @@ export default function Interns() {
                                                     <Edit2 size={16} />
                                                 </button>
                                                 <button
-                                                    onClick={() => handleDelete(intern.id)}
+                                                    onClick={() => handleDeleteClick(intern.id)}
                                                     className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                                                     title="Delete Intern"
                                                 >
@@ -241,6 +269,17 @@ export default function Interns() {
                 onClose={() => setIsModalOpen(false)}
                 onSubmit={handleSubmitIntern}
                 initialData={editingIntern}
+            />
+
+            <ConfirmModal
+                isOpen={isDeleteModalOpen}
+                onClose={() => setIsDeleteModalOpen(false)}
+                onConfirm={confirmDelete}
+                title="Confirm Intern Deletion"
+                message="Are you sure you want to delete this intern? This will permanently remove their records and all assigned certificates."
+                confirmText="Delete Now"
+                cancelText="Keep Intern"
+                type="danger"
             />
         </div>
     );

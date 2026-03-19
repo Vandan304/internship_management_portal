@@ -48,6 +48,10 @@ const taskSchema = new mongoose.Schema({
         type: mongoose.Schema.ObjectId,
         ref: 'User',
         required: true
+    },
+    pointsAwarded: {
+        type: Boolean,
+        default: false
     }
 }, {
     timestamps: true

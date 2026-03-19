@@ -225,7 +225,7 @@ exports.blockIntern = async (req, res, next) => {
             return res.status(400).json({ success: false, message: 'Can only block interns' });
         }
 
-        intern.loginAllowed = false;
+        intern.loginAccess = false;
         await intern.save();
         console.log('[DB UPDATE SUCCESS] Intern login blocked');
 
@@ -238,7 +238,7 @@ exports.blockIntern = async (req, res, next) => {
 
         req.app.get('io').to(intern._id.toString()).emit('newNotification', notification);
 
-        res.json({ success: true, message: 'Intern blocked successfully', data: { id: intern._id, loginAllowed: intern.loginAllowed } });
+        res.json({ success: true, message: 'Intern blocked successfully', data: { id: intern._id, loginAccess: intern.loginAccess } });
     } catch (error) {
         console.error('[ERROR] blockIntern:', error.message);
         next(error);
@@ -263,7 +263,7 @@ exports.activateIntern = async (req, res, next) => {
             return res.status(400).json({ success: false, message: 'Can only activate interns' });
         }
 
-        intern.loginAllowed = true;
+        intern.loginAccess = true;
         await intern.save();
         console.log('[DB UPDATE SUCCESS] Intern login activated');
 
@@ -276,7 +276,7 @@ exports.activateIntern = async (req, res, next) => {
 
         req.app.get('io').to(intern._id.toString()).emit('newNotification', notification);
 
-        res.json({ success: true, message: 'Intern activated successfully', data: { id: intern._id, loginAllowed: intern.loginAllowed } });
+        res.json({ success: true, message: 'Intern activated successfully', data: { id: intern._id, loginAccess: intern.loginAccess } });
     } catch (error) {
         console.error('[ERROR] activateIntern:', error.message);
         next(error);

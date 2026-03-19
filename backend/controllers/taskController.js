@@ -115,6 +115,23 @@ exports.approveTask = async (req, res, next) => {
         task.reviewedAt = Date.now();
         task.reviewComment = req.body.comment || null;
 
+        // --- LEADERBOARD LOGIC: AWARD POINTS ---
+        if (!task.pointsAwarded) {
+            const intern = await User.findById(task.assignedTo);
+            if (intern) {
+                let pointsToAdd = 10; // Base points for approval
+                
+                // Early submission bonus (+5)
+                if (task.submittedAt && task.deadline && new Date(task.submittedAt) <= new Date(task.deadline)) {
+                    pointsToAdd += 5;
+                }
+                
+                intern.points = (intern.points || 0) + pointsToAdd;
+                await intern.save();
+                task.pointsAwarded = true;
+            }
+        }
+
         await task.save();
 
         res.status(200).json({ success: true, message: 'Task approved successfully', data: task });

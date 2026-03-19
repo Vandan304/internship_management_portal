@@ -20,6 +20,16 @@ const messageSchema = new mongoose.Schema({
         type: String,
         trim: true
     },
+    encryptedMessage: {
+        type: String
+    },
+    iv: {
+        type: String
+    },
+    algorithm: {
+        type: String,
+        default: 'aes-256-cbc'
+    },
     fileUrl: {
         type: String
     },
