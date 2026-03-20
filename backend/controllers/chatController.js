@@ -2,6 +2,9 @@ const Conversation = require('../models/Conversation');
 const Message = require('../models/Message');
 const User = require('../models/User');
 const { encryptMessage, decryptMessage } = require('../utils/encryption');
+const { uploadToS3, deleteFromS3 } = require('../utils/s3Service');
+const fs = require('fs');
+const path = require('path');
 
 // GET /api/chat/users
 exports.getChatUsers = async (req, res, next) => {
@@ -141,7 +144,9 @@ exports.uploadFile = async (req, res, next) => {
             return res.status(400).json({ success: false, message: 'Please upload a file' });
         }
         
-        const fileUrl = `/uploads/chat/${req.file.filename}`;
+        const fileName = `uploads/chat/${Date.now()}-${req.file.originalname.replace(/\s+/g, '_')}`;
+        const fileUrl = await uploadToS3(req.file.buffer, fileName, req.file.mimetype);
+
         res.status(200).json({ success: true, fileUrl });
     } catch (error) {
         next(error);
@@ -163,3 +168,48 @@ exports.markMessagesAsRead = async (req, res, next) => {
         next(error);
     }
 };
+
+// DELETE /api/chat/messages
+exports.deleteMessages = async (req, res, next) => {
+    try {
+        const { messageIds } = req.body;
+        
+        if (!messageIds || !Array.isArray(messageIds) || messageIds.length === 0) {
+            return res.status(400).json({ success: false, message: 'Please provide message IDs to delete' });
+        }
+        
+        const currentUserId = req.user.id;
+        
+        // Fetch the messages
+        const messages = await Message.find({ _id: { $in: messageIds } });
+        
+        if (messages.length === 0) {
+            return res.status(404).json({ success: false, message: 'No messages found' });
+        }
+        
+        // Authorize: Admin can delete any, but user can only delete their own sent messages.
+        const isAuthorized = req.user.role === 'admin' || messages.every(msg => msg.senderId.toString() === currentUserId);
+        
+        if (!isAuthorized) {
+            return res.status(403).json({ success: false, message: 'Not authorized to delete these messages. You can only delete your own.' });
+        }
+        
+        for (const msg of messages) {
+            if (msg.fileUrl) {
+                if (msg.fileUrl.startsWith('http')) {
+                    await deleteFromS3(msg.fileUrl);
+                } else {
+                     const filePath = path.join(__dirname, '..', msg.fileUrl);
+                     if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+                }
+            }
+        }
+        
+        await Message.deleteMany({ _id: { $in: messageIds } });
+        
+        res.status(200).json({ success: true, message: 'Messages deleted successfully' });
+    } catch (error) {
+        next(error);
+    }
+};
+

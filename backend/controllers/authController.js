@@ -59,30 +59,25 @@ const jwt = require('jsonwebtoken');
 exports.login = async (req, res, next) => {
     try {
         const { email, password } = req.body;
+        console.log(`[LOGIN ATTEMPT] Email: ${email}`);
 
         // Validate email and password inputs
         if (!email || !password) {
+            console.log(`[LOGIN REJECTED] Email: ${email} - Reason: Missing credentials`);
             return res.status(400).json({ success: false, message: 'Please provide email and password' });
         }
 
         // Check if user exists
         const user = await User.findOne({ email });
         if (!user) {
+            console.log(`[LOGIN REJECTED] Email: ${email} - Reason: User not found`);
             return res.status(401).json({ success: false, message: 'Invalid credentials' });
-        }
-
-        // Check if isActive and loginAllowed
-        if (!user.isActive) {
-            return res.status(403).json({ success: false, message: 'Account is inactive. Please contact support.' });
-        }
-
-        if (!user.loginAccess) {
-            return res.status(403).json({ success: false, message: 'Login is not allowed for this account.' });
         }
 
         // Verify password
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
+            console.log(`[LOGIN REJECTED] Email: ${user.email} - Reason: Invalid password`);
             return res.status(401).json({ success: false, message: 'Invalid credentials' });
         }
 
@@ -105,6 +100,8 @@ exports.login = async (req, res, next) => {
 
                 // Define redirect URL based on role
                 const redirectTo = user.role === 'admin' ? '/admin' : '/intern';
+
+                console.log(`[LOGIN SUCCESS] Email: ${user.email}, Role: ${user.role}`);
 
                 res.json({
                     success: true,

@@ -1,29 +1,7 @@
 const multer = require('multer');
 const path = require('path');
-const fs = require('fs');
-
-// Ensure the upload directory exists
-const uploadDir = path.join(__dirname, '../uploads/tasks');
-if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true });
-}
-
-// Memory Storage vs Disk Storage
-const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        cb(null, uploadDir);
-    },
-    filename: function (req, file, cb) {
-        // Unique prefix: timestamp + random number
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-
-        // Sanitize the original file name
-        const cleanOriginalName = file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_');
-
-        // Final filename: <unique>-<cleanOriginalName>
-        cb(null, uniqueSuffix + '-' + cleanOriginalName);
-    }
-});
+// Use inline Memory Storage
+const storage = multer.memoryStorage();
 
 // File filter validation to only permit ZIP files
 const fileFilter = (req, file, cb) => {

@@ -79,6 +79,44 @@ class PDFService {
     }
 
     /**
+     * Generate a PDF buffer from HTML content
+     * @param {string} html - The HTML template string
+     * @returns {Promise<Buffer>} - The generated PDF buffer
+     */
+    async generatePDFBuffer(html) {
+        let browser;
+        try {
+            console.log(`[PDF GENERATION START] Generating to Memory Buffer`);
+            browser = await puppeteer.launch({
+                headless: 'new',
+                args: ['--no-sandbox', '--disable-setuid-sandbox']
+            });
+            const page = await browser.newPage();
+            
+            await page.setContent(html, { waitUntil: 'networkidle0' });
+            
+            const pdfBuffer = await page.pdf({
+                format: 'A4',
+                printBackground: true,
+                margin: {
+                    top: '0px',
+                    right: '0px',
+                    bottom: '0px',
+                    left: '0px'
+                }
+            });
+            
+            console.log(`[PDF GENERATION SUCCESS] Buffer produced`);
+            return pdfBuffer;
+        } catch (error) {
+            console.error(`[PDF GENERATION ERROR] ${error.message}`);
+            throw error;
+        } finally {
+            if (browser) await browser.close();
+        }
+    }
+
+    /**
      * Get HTML template for Offer Letter
      */
     // getOfferLetterTemplate(data) {

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Search, Download, CheckCircle, XCircle, Clock, Eye } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
+import { getFileUrl } from '../../utils/urlUtils';
 
 const TaskReview = () => {
     const [tasks, setTasks] = useState([]);
@@ -63,7 +64,7 @@ const TaskReview = () => {
     };
 
     const downloadZip = (url) => {
-        window.open(`http://localhost:5000${url}`, '_blank');
+        window.open(getFileUrl(url), '_blank');
     };
 
     const filteredTasks = tasks.filter(task =>

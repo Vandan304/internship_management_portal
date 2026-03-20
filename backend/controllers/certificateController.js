@@ -5,6 +5,7 @@ const Notification = require('../models/Notification');
 const fs = require('fs');
 const path = require('path');
 const pdfService = require('../services/pdfService');
+const { uploadToS3, deleteFromS3 } = require('../utils/s3Service');
 
 exports.uploadCertificate = async (req, res, next) => {
     console.log('[API START] uploadCertificate');
@@ -27,7 +28,12 @@ exports.uploadCertificate = async (req, res, next) => {
             return res.status(404).json({ success: false, message: 'Intern not found' });
         }
 
-        const fileUrl = `/uploads/certificates/${req.file.filename}`;
+        const timestamp = Date.now();
+        const prefix = (req.file.fieldname === 'certificate' || req.file.fieldname === 'file') ? 'certificate_' : 'offerletter_';
+        const rawFileName = `${prefix}${assignedTo}_${timestamp}${path.extname(req.file.originalname)}`;
+        const s3Key = `uploads/certificates/${rawFileName}`;
+
+        const fileUrl = await uploadToS3(req.file.buffer, s3Key, req.file.mimetype);
 
         // Update Certificate model (legacy support)
         const certificate = await Certificate.create({
@@ -121,8 +127,6 @@ exports.generateCompletionCertificate = async (req, res, next) => {
         const firstName = intern.name.split(' ')[0].replace(/[^a-zA-Z0-9]/g, '');
         const fileName = `${firstName}_Completion_Certificate.pdf`;
         const certificatePath = `uploads/certificates/${fileName}`;
-        const fullPath = path.join(__dirname, '..', certificatePath);
-        const fileUrl = `/${certificatePath}`;
 
         // Format dates from User document or fallbacks
         const sDate = intern.startDate ? new Date(intern.startDate).toLocaleDateString() : 'N/A';
@@ -137,14 +141,13 @@ exports.generateCompletionCertificate = async (req, res, next) => {
         };
 
         const template = pdfService.getCertificateTemplate(templateData);
-        console.log('[FILE GENERATION START] Generating PDF...');
+        console.log('[FILE GENERATION START] Generating PDF Buffer...');
 
-        await pdfService.generatePDF(template, fullPath);
+        const pdfBuffer = await pdfService.generatePDFBuffer(template);
+        const fileSizeInBytes = pdfBuffer.length;
 
-        // Get actual file size
-        const stats = fs.statSync(fullPath);
-        const fileSizeInBytes = stats.size;
-        console.log(`[FILE GENERATION SUCCESS] Certificate stored at ${certificatePath} (${fileSizeInBytes} bytes)`);
+        const fileUrl = await uploadToS3(pdfBuffer, certificatePath, 'application/pdf');
+        console.log(`[FILE GENERATION SUCCESS] Certificate stored at S3 ${fileUrl} (${fileSizeInBytes} bytes)`);
 
         // Removed automatic cleanup to enforce manual deletion flow
 
@@ -226,8 +229,6 @@ exports.generateOfferLetter = async (req, res, next) => {
         const firstName = intern.name.split(' ')[0].replace(/[^a-zA-Z0-9]/g, '');
         const fileName = `${firstName}_Offer_Letter.pdf`;
         const offerLetterPath = `uploads/offerletters/${fileName}`;
-        const fullPath = path.join(__dirname, '..', offerLetterPath);
-        const fileUrl = `/${offerLetterPath}`;
 
         const templateData = {
             internName: intern.name,
@@ -237,14 +238,13 @@ exports.generateOfferLetter = async (req, res, next) => {
         };
 
         const template = pdfService.getOfferLetterTemplate(templateData);
-        console.log('[FILE GENERATION START] Generating PDF...');
+        console.log('[FILE GENERATION START] Generating PDF Buffer...');
 
-        await pdfService.generatePDF(template, fullPath);
-
-        // Get actual file size
-        const stats = fs.statSync(fullPath);
-        const fileSizeInBytes = stats.size;
-        console.log(`[FILE GENERATION SUCCESS] Offer letter stored at ${offerLetterPath} (${fileSizeInBytes} bytes)`);
+        const pdfBuffer = await pdfService.generatePDFBuffer(template);
+        const fileSizeInBytes = pdfBuffer.length;
+        
+        const fileUrl = await uploadToS3(pdfBuffer, offerLetterPath, 'application/pdf');
+        console.log(`[FILE GENERATION SUCCESS] Offer letter stored at S3 ${fileUrl} (${fileSizeInBytes} bytes)`);
 
         // Removed automatic cleanup to enforce manual deletion flow
 
@@ -396,6 +396,11 @@ exports.downloadCertificate = async (req, res, next) => {
             return res.status(403).json({ success: false, message: 'Download is restricted' });
         }
 
+        if (permission.resourcePath.startsWith('http')) {
+            console.log(`[FILE DOWNLOAD] Redirecting to S3 ${permission.resourcePath}`);
+            return res.redirect(permission.resourcePath);
+        }
+
         const filePath = path.join(__dirname, '..', permission.resourcePath);
         if (!fs.existsSync(filePath)) {
             return res.status(404).json({ success: false, message: 'File not found' });
@@ -441,8 +446,13 @@ exports.deleteCertificate = async (req, res, next) => {
     try {
         const certificate = await Certificate.findById(req.params.id);
         if (certificate) {
-            const filePath = path.join(__dirname, '..', certificate.fileUrl);
-            if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+            // Delete physical file or remote S3 object based on path syntax
+            if (certificate.fileUrl.startsWith('http')) {
+                await deleteFromS3(certificate.fileUrl);
+            } else {
+                const filePath = path.join(__dirname, '..', certificate.fileUrl);
+                if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+            }
 
             // Identify document type and reset intern flags for regeneration
             if (certificate.assignedTo) {

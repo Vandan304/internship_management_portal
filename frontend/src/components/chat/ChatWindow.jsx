@@ -1,10 +1,35 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import MessageBubble from './MessageBubble';
 import MessageInput from './MessageInput';
-import { MoreVertical, Phone, Video, ArrowLeft } from 'lucide-react';
+import { MoreVertical, Phone, Video, ArrowLeft, CheckSquare, Trash2, X } from 'lucide-react';
 
-const ChatWindow = ({ activeConversation, currentUserId, messages, onSendMessage, onTyping, isTyping, onBack }) => {
+const ChatWindow = ({ activeConversation, currentUserId, messages, onSendMessage, onTyping, isTyping, onBack, onDeleteMessages }) => {
     const messagesEndRef = useRef(null);
+    const [isSelectMode, setIsSelectMode] = useState(false);
+    const [selectedMessageIds, setSelectedMessageIds] = useState([]);
+
+    const toggleSelectMode = () => {
+        setIsSelectMode(!isSelectMode);
+        setSelectedMessageIds([]);
+    };
+
+    const toggleMessageSelection = (messageId) => {
+        if (!isSelectMode) return;
+        setSelectedMessageIds(prev => 
+            prev.includes(messageId) 
+                ? prev.filter(id => id !== messageId)
+                : [...prev, messageId]
+        );
+    };
+
+    const handleDeleteSelected = async () => {
+        if (selectedMessageIds.length === 0) return;
+        const success = await onDeleteMessages(selectedMessageIds);
+        if (success) {
+            setIsSelectMode(false);
+            setSelectedMessageIds([]);
+        }
+    };
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -50,9 +75,42 @@ const ChatWindow = ({ activeConversation, currentUserId, messages, onSendMessage
                     </div>
                 </div>
                 <div className="flex items-center gap-4 text-gray-400">
-                    <button className="hover:text-brand-600 transition-colors p-2 rounded-full hover:bg-brand-50"><Phone size={20} /></button>
-                    <button className="hover:text-brand-600 transition-colors p-2 rounded-full hover:bg-brand-50"><Video size={20} /></button>
-                    <button className="hover:text-brand-600 transition-colors p-2 rounded-full hover:bg-brand-50"><MoreVertical size={20} /></button>
+                    {isSelectMode ? (
+                        <>
+                            <span className="text-sm font-medium text-brand-600">
+                                {selectedMessageIds.length} selected
+                            </span>
+                            {selectedMessageIds.length > 0 && (
+                                <button 
+                                    onClick={handleDeleteSelected}
+                                    className="hover:text-red-600 transition-colors p-2 rounded-full hover:bg-red-50 text-red-500 shadow-sm"
+                                    title="Delete Selected"
+                                >
+                                    <Trash2 size={20} />
+                                </button>
+                            )}
+                            <button 
+                                onClick={toggleSelectMode}
+                                className="hover:text-gray-600 transition-colors p-2 rounded-full hover:bg-gray-50 flex items-center gap-1 shadow-sm"
+                                title="Cancel Selection"
+                            >
+                                <X size={20} />
+                            </button>
+                        </>
+                    ) : (
+                        <>
+                            <button 
+                                onClick={toggleSelectMode}
+                                className="hover:text-brand-600 transition-colors p-2 rounded-full hover:bg-brand-50"
+                                title="Select Messages"
+                            >
+                                <CheckSquare size={20} />
+                            </button>
+                            <button className="hover:text-brand-600 transition-colors p-2 rounded-full hover:bg-brand-50"><Phone size={20} /></button>
+                            <button className="hover:text-brand-600 transition-colors p-2 rounded-full hover:bg-brand-50"><Video size={20} /></button>
+                            <button className="hover:text-brand-600 transition-colors p-2 rounded-full hover:bg-brand-50"><MoreVertical size={20} /></button>
+                        </>
+                    )}
                 </div>
             </div>
 
@@ -83,6 +141,9 @@ const ChatWindow = ({ activeConversation, currentUserId, messages, onSendMessage
                                     <MessageBubble 
                                         message={msg} 
                                         isOwnMessage={isOwnMsg} 
+                                        isSelectMode={isSelectMode}
+                                        isSelected={selectedMessageIds.includes(msg._id)}
+                                        onSelect={() => toggleMessageSelection(msg._id)}
                                     />
                                 </React.Fragment>
                             );

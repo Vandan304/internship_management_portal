@@ -249,6 +249,23 @@ const ChatPage = () => {
         }
     };
 
+    const handleDeleteMessages = async (messageIds) => {
+        try {
+            const res = await axios.delete('/api/chat/messages', {
+                data: { messageIds }
+            });
+            if (res.data.success) {
+                setMessages(prev => prev.filter(m => !messageIds.includes(m._id)));
+                toast.success('Messages deleted successfully');
+                return true;
+            }
+        } catch (error) {
+            console.error('Failed to delete messages:', error);
+            toast.error(error.response?.data?.message || 'Failed to delete messages');
+            return false;
+        }
+    };
+
     return (
         <div className="flex h-[calc(100vh-140px)] sm:h-[calc(100vh-160px)] overflow-hidden bg-white shadow-soft rounded-2xl border border-gray-100">
             <div className={`w-full sm:w-80 flex-shrink-0 border-r border-gray-100 ${activeConversation ? 'hidden sm:block' : 'block'}`}>
@@ -269,6 +286,7 @@ const ChatPage = () => {
                     onTyping={handleTyping}
                     isTyping={isTyping}
                     onBack={() => setActiveConversation(null)}
+                    onDeleteMessages={handleDeleteMessages}
                 />
             </div>
 

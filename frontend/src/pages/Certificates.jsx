@@ -1,17 +1,19 @@
 import React, { useState, useRef } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
-import { Upload, FileText, Search, Trash2, Download } from 'lucide-react';
+import { Upload, FileText, Search, Trash2, Download, Eye } from 'lucide-react';
 import { cn } from '../utils/cn';
 import { useToast } from '../context/ToastContext';
 import { useData } from '../context/DataContext';
 import ConfirmModal from '../components/ui/ConfirmModal';
+import { getFileUrl } from '../utils/urlUtils';
 
 export default function Certificates() {
     const { certificates, interns, addCertificate, deleteCertificate, downloadCertificate } = useData();
     const [isDragOver, setIsDragOver] = useState(false);
     const [selectedInternId, setSelectedInternId] = useState('');
     const [certNameInput, setCertNameInput] = useState('');
+    const [searchTerm, setSearchTerm] = useState('');
     const fileInputRef = useRef(null);
     const { addToast } = useToast();
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -156,7 +158,13 @@ export default function Certificates() {
                             <CardTitle>All Certificates</CardTitle>
                             <div className="relative w-48 hidden sm:block">
                                 <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                                <input type="text" placeholder="Search..." className="w-full pl-9 pr-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500" />
+                                <input 
+                                    type="text" 
+                                    placeholder="Search..." 
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    className="w-full pl-9 pr-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500" 
+                                />
                             </div>
                         </CardHeader>
                         <CardContent className="p-0 flex-1 overflow-y-auto">
@@ -168,11 +176,15 @@ export default function Certificates() {
                                             <th className="px-6 py-3 font-medium text-nowrap">Uploaded</th>
                                             <th className="px-6 py-3 font-medium text-nowrap">Size</th>
                                             <th className="px-6 py-3 font-medium text-center text-nowrap">Status</th>
+                                            <th className="px-6 py-3 font-medium text-center text-nowrap">View</th>
                                             <th className="px-6 py-3 font-medium text-right text-nowrap">Action</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-100">
-                                        {certificates.map((cert) => (
+                                        {certificates.filter(cert => 
+                                            cert.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                                            cert.assignedTo?.name?.toLowerCase().includes(searchTerm.toLowerCase())
+                                        ).map((cert) => (
                                             <tr key={cert.id} className="hover:bg-gray-50/50 transition-colors">
                                                 <td className="px-6 py-4">
                                                     <div className="flex items-center gap-3">
@@ -198,6 +210,15 @@ export default function Certificates() {
                                                     )}>
                                                         {cert.assignedCount > 0 ? 'Assigned' : 'Draft'}
                                                     </span>
+                                                </td>
+                                                <td className="px-6 py-4 text-center">
+                                                    <button 
+                                                        onClick={() => window.open(getFileUrl(cert.fileUrl || cert.resourcePath), '_blank')}
+                                                        className="p-1.5 text-gray-400 hover:text-brand-600 hover:bg-brand-50 rounded-lg transition-colors inline-block"
+                                                        title="View Certificate"
+                                                    >
+                                                        <Eye size={16} />
+                                                    </button>
                                                 </td>
                                                 <td className="px-6 py-4 text-right">
                                                     <div className="flex items-center justify-end gap-2">
