@@ -32,6 +32,15 @@ const taskSchema = new mongoose.Schema({
         type: String,
         default: null
     },
+    fileName: {
+        type: String,
+        default: null
+    },
+    storageType: {
+        type: String,
+        enum: ['s3', 'local'],
+        default: 's3'
+    },
     submittedAt: {
         type: Date,
         default: null

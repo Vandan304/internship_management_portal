@@ -44,7 +44,6 @@ export const DataProvider = ({ children }) => {
     }, []);
 
     const [certificates, setCertificates] = useState([]);
-
     const fetchCertificatesAdmin = useCallback(async () => {
         try {
             const token = localStorage.getItem('token');
@@ -337,7 +336,7 @@ export const DataProvider = ({ children }) => {
     const downloadCertificate = async (id, fileName) => {
         try {
             const token = localStorage.getItem('token');
-            const res = await axios.get(`http://localhost:5000/api/certificates/download/${id}`, {
+            const res = await axios.get(`http://localhost:5000/api/files/${id}`, {
                 headers: { Authorization: `Bearer ${token}` },
                 responseType: 'blob' // Tell Axios to expect binary data
             });

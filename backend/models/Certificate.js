@@ -32,6 +32,11 @@ const certificateSchema = new mongoose.Schema({
         type: String,
         default: 'application/pdf'
     },
+    storageType: {
+        type: String,
+        enum: ['s3', 'local'],
+        default: 's3'
+    },
     createdAt: {
         type: Date,
         default: Date.now

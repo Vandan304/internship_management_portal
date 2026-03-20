@@ -5,12 +5,12 @@ const protect = async (req, res, next) => {
     let token;
 
     if (
-        req.headers.authorization &&
-        req.headers.authorization.startsWith('Bearer')
+        (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) ||
+        req.query.token
     ) {
         try {
-            // Get token from header
-            token = req.headers.authorization.split(' ')[1];
+            // Get token from header or query
+            token = req.headers.authorization ? req.headers.authorization.split(' ')[1] : req.query.token;
 
             // Verify token
             const decoded = jwt.verify(

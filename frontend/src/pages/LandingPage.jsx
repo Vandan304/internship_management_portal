@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, CheckCircle, Clock, Shield, Search, Award } from 'lucide-react';
+import { ArrowRight, CheckCircle, Shield, BarChart3, Users } from 'lucide-react';
 import logoImage from '../assets/logo1_backup.png';
 
 const LandingPage = () => {

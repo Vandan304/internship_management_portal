@@ -1,6 +1,6 @@
 const Task = require('../models/Task');
 const User = require('../models/User');
-const { uploadToS3, deleteFromS3 } = require('../utils/s3Service');
+const storageService = require('../utils/storageService');
 
 // @desc    Admin creates a new task
 // @route   POST /api/tasks
@@ -85,20 +85,22 @@ exports.submitTask = async (req, res, next) => {
             return res.status(403).json({ success: false, message: 'Not authorized to submit this task' });
         }
 
-        // File path logic mapped up to S3 directly
+        // File path logic mapped up to S3 directly via storageService
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
         const cleanOriginalName = req.file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_');
-        const fileName = `uploads/tasks/${uniqueSuffix}-${cleanOriginalName}`;
+        const finalFileName = `${uniqueSuffix}-${cleanOriginalName}`;
 
-        const fileUrl = await uploadToS3(req.file.buffer, fileName, req.file.mimetype);
+        const uploadResult = await storageService.uploadFile(req.file.buffer, finalFileName, req.file.mimetype, 'tasks');
 
-        // Cleanup pre-existing zipFile physically located in S3
-        if (task.zipFile && task.zipFile.startsWith('http')) {
+        // Cleanup pre-existing zipFile physically located in S3 or Local
+        if (task.zipFile) {
             console.log(`[CLEANUP] Removing old task submission: ${task.zipFile}`);
-            await deleteFromS3(task.zipFile);
+            await storageService.deleteFile(task.zipFile, task.storageType);
         }
 
-        task.zipFile = fileUrl;
+        task.zipFile = uploadResult.fileUrl;
+        task.fileName = finalFileName;
+        task.storageType = uploadResult.storageType;
         task.status = 'submitted';
         task.submittedAt = Date.now();
 

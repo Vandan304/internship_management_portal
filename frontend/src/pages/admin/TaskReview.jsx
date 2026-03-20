@@ -2,9 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Search, Download, CheckCircle, XCircle, Clock, Eye } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
-import { getFileUrl } from '../../utils/urlUtils';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
-
 const TaskReview = () => {
     const [tasks, setTasks] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -62,10 +60,6 @@ const TaskReview = () => {
         setSelectedTask(task);
         setReviewComment(task.reviewComment || '');
         setIsReviewModalOpen(true);
-    };
-
-    const downloadZip = (url) => {
-        window.open(getFileUrl(url), '_blank');
     };
 
     const filteredTasks = tasks.filter(task =>
@@ -178,7 +172,7 @@ const TaskReview = () => {
                                     </div>
                                 </div>
                                 <button
-                                    onClick={() => downloadZip(selectedTask.zipFile)}
+                                    onClick={() => window.open(`http://localhost:5000/api/files/${selectedTask._id}?token=${localStorage.getItem('token')}`, '_blank')}
                                     className="px-4 py-2 text-sm font-medium text-brand-700 bg-brand-50 rounded-lg hover:bg-brand-100 transition-colors"
                                 >
                                     Download

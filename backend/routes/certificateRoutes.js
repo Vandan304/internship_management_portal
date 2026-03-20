@@ -9,6 +9,7 @@ const {
     toggleDownload,
     getMyCertificates,
     downloadCertificate,
+    viewCertificate,
     getCertificatePermissions,
     generateCompletionCertificate,
     generateOfferLetter
@@ -40,7 +41,8 @@ router.post('/generate-offer-letter', authorizeRoles('admin'), generateOfferLett
 
 // Intern-only route
 router.get('/my-certificates', authorizeRoles('intern'), getMyCertificates);
-router.get('/download/:id', validateObjectId, authorizeRoles('intern'), downloadCertificate);
+router.get('/view/:id', validateObjectId, authorizeRoles('admin', 'intern'), viewCertificate);
+router.get('/download/:id', validateObjectId, authorizeRoles('admin', 'intern'), downloadCertificate);
 
 // General Admin Routes (MUST be below specific paths like /my-certificates)
 router.get('/permissions', authorizeRoles('admin'), getCertificatePermissions);

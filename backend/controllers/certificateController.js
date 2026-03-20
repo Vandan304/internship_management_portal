@@ -5,7 +5,8 @@ const Notification = require('../models/Notification');
 const fs = require('fs');
 const path = require('path');
 const pdfService = require('../services/pdfService');
-const { uploadToS3, deleteFromS3 } = require('../utils/s3Service');
+const storageService = require('../utils/storageService');
+const { deleteFromS3 } = require('../utils/s3Service'); // for backward compatibility in some places if needed, but storageService should handle it
 
 exports.uploadCertificate = async (req, res, next) => {
     console.log('[API START] uploadCertificate');
@@ -30,18 +31,24 @@ exports.uploadCertificate = async (req, res, next) => {
 
         const timestamp = Date.now();
         const prefix = (req.file.fieldname === 'certificate' || req.file.fieldname === 'file') ? 'certificate_' : 'offerletter_';
-        const rawFileName = `${prefix}${assignedTo}_${timestamp}${path.extname(req.file.originalname)}`;
-        const s3Key = `uploads/certificates/${rawFileName}`;
+        const fileName = `${prefix}${assignedTo}_${timestamp}${path.extname(req.file.originalname)}`;
 
-        const fileUrl = await uploadToS3(req.file.buffer, s3Key, req.file.mimetype);
+        // Use Storage Service with Fallback
+        const { fileUrl, storageType } = await storageService.uploadFile(
+            req.file.buffer,
+            fileName,
+            req.file.mimetype,
+            'certificates'
+        );
 
-        // Update Certificate model (legacy support)
+        // Update Certificate model
         const certificate = await Certificate.create({
             title: title || 'Manual Certificate',
             fileUrl,
-            fileName: req.file.filename,
+            fileName: fileName,
             fileSize: req.file.size || 0,
             fileType: req.file.mimetype || 'application/pdf',
+            storageType: storageType,
             uploadedBy: req.user.id,
             assignedTo: assignedTo
         });
@@ -59,6 +66,8 @@ exports.uploadCertificate = async (req, res, next) => {
             resourceType: 'certificate',
             resourceName: title || 'Internship Certificate',
             resourcePath: fileUrl,
+            storageType: storageType,
+            certificateId: certificate._id,
             visibilityEnabled: false,
             downloadEnabled: false
         });
@@ -146,8 +155,14 @@ exports.generateCompletionCertificate = async (req, res, next) => {
         const pdfBuffer = await pdfService.generatePDFBuffer(template);
         const fileSizeInBytes = pdfBuffer.length;
 
-        const fileUrl = await uploadToS3(pdfBuffer, certificatePath, 'application/pdf');
-        console.log(`[FILE GENERATION SUCCESS] Certificate stored at S3 ${fileUrl} (${fileSizeInBytes} bytes)`);
+        // Use Storage Service with Fallback
+        const { fileUrl, storageType } = await storageService.uploadFile(
+            pdfBuffer,
+            fileName,
+            'application/pdf',
+            'certificates'
+        );
+        console.log(`[FILE GENERATED] Stored at ${fileUrl} (${storageType})`);
 
         // Removed automatic cleanup to enforce manual deletion flow
 
@@ -158,6 +173,7 @@ exports.generateCompletionCertificate = async (req, res, next) => {
             fileName: fileName,
             fileSize: fileSizeInBytes,
             fileType: 'application/pdf',
+            storageType: storageType,
             uploadedBy: req.user.id,
             assignedTo: internId
         });
@@ -177,6 +193,8 @@ exports.generateCompletionCertificate = async (req, res, next) => {
             resourceType: 'certificate',
             resourceName: `${firstName} Completion Certificate`,
             resourcePath: fileUrl,
+            storageType: storageType,
+            certificateId: certificate._id,
             visibilityEnabled: false,
             downloadEnabled: false
         });
@@ -242,19 +260,24 @@ exports.generateOfferLetter = async (req, res, next) => {
 
         const pdfBuffer = await pdfService.generatePDFBuffer(template);
         const fileSizeInBytes = pdfBuffer.length;
-        
-        const fileUrl = await uploadToS3(pdfBuffer, offerLetterPath, 'application/pdf');
-        console.log(`[FILE GENERATION SUCCESS] Offer letter stored at S3 ${fileUrl} (${fileSizeInBytes} bytes)`);
 
-        // Removed automatic cleanup to enforce manual deletion flow
+        // Use Storage Service with Fallback
+        const { fileUrl, storageType } = await storageService.uploadFile(
+            pdfBuffer,
+            fileName,
+            'application/pdf',
+            'offerletters'
+        );
+        console.log(`[FILE GENERATED] Stored at ${fileUrl} (${storageType})`);
 
-        // Update Certificate model (Same logic as Completion Certificate)
+        // Update Certificate model
         const certificate = await Certificate.create({
             title: `${firstName} Internship Offer Letter`,
             fileUrl,
             fileName: fileName,
             fileSize: fileSizeInBytes,
             fileType: 'application/pdf',
+            storageType: storageType,
             uploadedBy: req.user.id,
             assignedTo: internId
         });
@@ -273,6 +296,8 @@ exports.generateOfferLetter = async (req, res, next) => {
             resourceType: 'offerletter',
             resourceName: `${firstName} Offer Letter`,
             resourcePath: fileUrl,
+            storageType: storageType,
+            certificateId: certificate._id,
             visibilityEnabled: false,
             downloadEnabled: false
         });
@@ -384,15 +409,50 @@ exports.getMyCertificates = async (req, res, next) => {
     }
 };
 
+/**
+ * SECURE FILE ACCESS (S3 Redirect or Local Serve)
+ */
+exports.viewCertificate = async (req, res, next) => {
+    console.log('[API START] viewCertificate');
+    try {
+        const certificate = await Certificate.findById(req.params.id);
+        if (!certificate) return res.status(404).json({ success: false, message: 'File record not found' });
+
+        // Authorization check: Admin or the assigned intern
+        if (req.user.role !== 'admin' && certificate.assignedTo.toString() !== req.user.id) {
+            return res.status(403).json({ success: false, message: 'Not authorized to view this file' });
+        }
+
+        if (certificate.storageType === 's3' || (certificate.fileUrl && certificate.fileUrl.startsWith('http'))) {
+            console.log(`[FILE VIEW] Redirecting to S3 ${certificate.fileUrl}`);
+            return res.redirect(certificate.fileUrl);
+        }
+
+        // Local storage - serve file
+        const filePath = path.join(__dirname, '..', certificate.fileUrl);
+        if (!fs.existsSync(filePath)) {
+            console.error(`[FILE VIEW ERROR] file not found on disk: ${filePath}`);
+            return res.status(404).json({ success: false, message: 'File not found on server' });
+        }
+
+        console.log(`[FILE VIEW] Serving local file: ${filePath}`);
+        res.sendFile(filePath);
+    } catch (error) {
+        console.error('[ERROR] viewCertificate:', error.message);
+        next(error);
+    }
+};
+
 exports.downloadCertificate = async (req, res, next) => {
     console.log('[API START] downloadCertificate');
     try {
         const permission = await Permission.findById(req.params.id);
-        if (!permission || permission.internId.toString() !== req.user.id) {
+        if (!permission) return res.status(404).json({ success: false, message: 'Permission record not found' });
+
+        if (req.user.role !== 'admin' && permission.internId.toString() !== req.user.id) {
             return res.status(403).json({ success: false, message: 'Not authorized' });
         }
-
-        if (!permission.downloadEnabled) {
+        if (req.user.role === 'intern' && !permission.downloadEnabled) {
             return res.status(403).json({ success: false, message: 'Download is restricted' });
         }
 
@@ -403,6 +463,7 @@ exports.downloadCertificate = async (req, res, next) => {
 
         const filePath = path.join(__dirname, '..', permission.resourcePath);
         if (!fs.existsSync(filePath)) {
+            console.error(`[FILE DOWNLOAD ERROR] file not found on disk: ${filePath}`);
             return res.status(404).json({ success: false, message: 'File not found' });
         }
 
@@ -446,13 +507,8 @@ exports.deleteCertificate = async (req, res, next) => {
     try {
         const certificate = await Certificate.findById(req.params.id);
         if (certificate) {
-            // Delete physical file or remote S3 object based on path syntax
-            if (certificate.fileUrl.startsWith('http')) {
-                await deleteFromS3(certificate.fileUrl);
-            } else {
-                const filePath = path.join(__dirname, '..', certificate.fileUrl);
-                if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
-            }
+            // Use Storage Service to delete from either S3 or Local
+            await storageService.deleteFile(certificate.fileUrl, certificate.storageType);
 
             // Identify document type and reset intern flags for regeneration
             if (certificate.assignedTo) {

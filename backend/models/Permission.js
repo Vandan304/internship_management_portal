@@ -27,6 +27,15 @@ const permissionSchema = new mongoose.Schema({
         type: Boolean,
         default: false
     },
+    storageType: {
+        type: String,
+        enum: ['s3', 'local'],
+        default: 's3'
+    },
+    certificateId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Certificate'
+    },
     createdAt: {
         type: Date,
         default: Date.now

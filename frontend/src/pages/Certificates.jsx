@@ -153,20 +153,18 @@ export default function Certificates() {
                         </CardContent>
                     </Card>
                 </div>
-
-                {/* Right Side: List Section (Independently scrollable) */}
                 <div className="flex-1 overflow-hidden flex flex-col">
                     <Card className="flex-1 flex flex-col overflow-hidden">
                         <CardHeader className="flex flex-row items-center justify-between flex-shrink-0">
                             <CardTitle>All Certificates</CardTitle>
                             <div className="relative w-48 hidden sm:block">
                                 <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                                <input 
-                                    type="text" 
-                                    placeholder="Search..." 
+                                <input
+                                    type="text"
+                                    placeholder="Search..."
                                     value={searchTerm}
                                     onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="w-full pl-9 pr-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500" 
+                                    className="w-full pl-9 pr-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
                                 />
                             </div>
                         </CardHeader>
@@ -184,8 +182,8 @@ export default function Certificates() {
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-100">
-                                        {certificates.filter(cert => 
-                                            cert.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                                        {certificates.filter(cert =>
+                                            cert.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                                             cert.assignedTo?.name?.toLowerCase().includes(searchTerm.toLowerCase())
                                         ).map((cert) => (
                                             <tr key={cert.id} className="hover:bg-gray-50/50 transition-colors">
@@ -201,7 +199,7 @@ export default function Certificates() {
                                                 <td className="px-6 py-4 text-gray-600 whitespace-nowrap">{cert.uploadedDate}</td>
                                                 <td className="px-6 py-4 text-gray-600 text-xs whitespace-nowrap">
                                                     {cert.fileSize ? (
-                                                        cert.fileSize > 1024 * 1024 
+                                                        cert.fileSize > 1024 * 1024
                                                             ? (cert.fileSize / (1024 * 1024)).toFixed(1) + ' MB'
                                                             : (cert.fileSize / 1024).toFixed(1) + ' KB'
                                                     ) : 'Unknown'}
@@ -215,8 +213,8 @@ export default function Certificates() {
                                                     </span>
                                                 </td>
                                                 <td className="px-6 py-4 text-center">
-                                                    <button 
-                                                        onClick={() => window.open(getFileUrl(cert.fileUrl || cert.resourcePath), '_blank')}
+                                                    <button
+                                                        onClick={() => window.open(`http://localhost:5000/api/files/${cert.id}?token=${localStorage.getItem('token')}`, '_blank')}
                                                         className="p-1.5 text-gray-400 hover:text-brand-600 hover:bg-brand-50 rounded-lg transition-colors inline-block"
                                                         title="View Certificate"
                                                     >
@@ -225,8 +223,8 @@ export default function Certificates() {
                                                 </td>
                                                 <td className="px-6 py-4 text-right">
                                                     <div className="flex items-center justify-end gap-2">
-                                                        <button 
-                                                            onClick={() => downloadCertificate(cert.id, cert.fileName)} 
+                                                        <button
+                                                            onClick={() => downloadCertificate(cert.id, cert.fileName)}
                                                             className="p-1.5 text-gray-400 hover:text-brand-600 hover:bg-brand-50 rounded-lg transition-colors"
                                                             title="Download"
                                                         >
@@ -247,7 +245,7 @@ export default function Certificates() {
                 </div>
             </div>
 
-            <ConfirmModal 
+            <ConfirmModal
                 isOpen={isDeleteModalOpen}
                 onClose={() => setIsDeleteModalOpen(false)}
                 onConfirm={confirmDelete}

@@ -8,6 +8,11 @@ const authRoutes = require('./routes/authRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const userRoutes = require('./routes/userRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
+const fileRoutes = require('./routes/fileRoutes');
+const certificateRoutes = require('./routes/certificateRoutes');
+const taskRoutes = require('./routes/taskRoutes');
+const chatRoutes = require('./routes/chatRoutes');
+const leaderboardRoutes = require('./routes/leaderboardRoutes');
 const { errorHandler } = require('./middleware/errorMiddleware');
 
 const app = express();
@@ -51,11 +56,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/files', fileRoutes);
 
-const certificateRoutes = require('./routes/certificateRoutes');
-const taskRoutes = require('./routes/taskRoutes');
-const chatRoutes = require('./routes/chatRoutes');
-const leaderboardRoutes = require('./routes/leaderboardRoutes');
 const path = require('path');
 
 app.use('/uploads/certificates', express.static(path.join(__dirname, 'uploads/certificates')));

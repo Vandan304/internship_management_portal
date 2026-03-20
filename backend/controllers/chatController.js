@@ -2,7 +2,7 @@ const Conversation = require('../models/Conversation');
 const Message = require('../models/Message');
 const User = require('../models/User');
 const { encryptMessage, decryptMessage } = require('../utils/encryption');
-const { uploadToS3, deleteFromS3 } = require('../utils/s3Service');
+const storageService = require('../utils/storageService');
 const fs = require('fs');
 const path = require('path');
 
@@ -144,10 +144,10 @@ exports.uploadFile = async (req, res, next) => {
             return res.status(400).json({ success: false, message: 'Please upload a file' });
         }
         
-        const fileName = `uploads/chat/${Date.now()}-${req.file.originalname.replace(/\s+/g, '_')}`;
-        const fileUrl = await uploadToS3(req.file.buffer, fileName, req.file.mimetype);
+        const finalFileName = `${Date.now()}-${req.file.originalname.replace(/\s+/g, '_')}`;
+        const uploadResult = await storageService.uploadFile(req.file.buffer, finalFileName, req.file.mimetype, 'chat');
 
-        res.status(200).json({ success: true, fileUrl });
+        res.status(200).json({ success: true, fileUrl: uploadResult.fileUrl, storageType: uploadResult.storageType });
     } catch (error) {
         next(error);
     }
@@ -196,12 +196,7 @@ exports.deleteMessages = async (req, res, next) => {
         
         for (const msg of messages) {
             if (msg.fileUrl) {
-                if (msg.fileUrl.startsWith('http')) {
-                    await deleteFromS3(msg.fileUrl);
-                } else {
-                     const filePath = path.join(__dirname, '..', msg.fileUrl);
-                     if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
-                }
+                await storageService.deleteFile(msg.fileUrl, msg.storageType);
             }
         }
         

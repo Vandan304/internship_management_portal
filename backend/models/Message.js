@@ -33,6 +33,11 @@ const messageSchema = new mongoose.Schema({
     fileUrl: {
         type: String
     },
+    storageType: {
+        type: String,
+        enum: ['s3', 'local'],
+        default: 's3'
+    },
     isRead: {
         type: Boolean,
         default: false
