@@ -24,7 +24,6 @@ const LandingPage = () => {
                     </div>
                 </div>
             </nav>
-
             {/* Hero Section */}
             <div className="relative pt-20 pb-16 md:pt-32 md:pb-24 overflow-hidden">
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[500px] bg-brand-500/5 blur-[120px] rounded-full pointer-events-none" />
@@ -113,12 +112,9 @@ const LandingPage = () => {
                     </div>
                 </div>
             </div>
-
-            {/* CTA Section */}
             <div className="py-20 bg-brand-900 relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-96 h-96 bg-brand-800 rounded-full blur-[100px] translate-x-1/2 -translate-y-1/2"></div>
                 <div className="absolute bottom-0 left-0 w-64 h-64 bg-brand-600 rounded-full blur-[80px] -translate-x-1/3 translate-y-1/3"></div>
-
                 <div className="max-w-4xl mx-auto px-4 text-center relative z-10">
                     <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">Ready to streamline your workflow?</h2>
                     <p className="text-brand-200 mb-10 text-lg">Join thousands of organizations that trust InternFlow for their management needs.</p>

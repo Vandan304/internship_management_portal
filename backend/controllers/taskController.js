@@ -1,6 +1,7 @@
 const Task = require('../models/Task');
 const User = require('../models/User');
 const storageService = require('../utils/storageService');
+const { sendDeadlineNotification } = require('../utils/notificationService');
 
 // @desc    Admin creates a new task
 // @route   POST /api/tasks
@@ -18,14 +19,28 @@ exports.createTask = async (req, res, next) => {
             return res.status(404).json({ success: false, message: 'Intern not found' });
         }
 
+        const taskDeadline = new Date(deadline);
+        taskDeadline.setHours(23, 59, 59, 999);
+
         const task = await Task.create({
             title,
             description,
             assignedTo,
             weekNumber,
-            deadline,
+            deadline: taskDeadline,
             createdBy: req.user._id
         });
+
+        // Proactive Notification: Send email immediately upon assignment
+        if (intern.email) {
+            await sendDeadlineNotification(
+                intern.email,
+                intern.name,
+                task.title,
+                task.deadline,
+                'assigned' // New type for initial assignment
+            );
+        }
 
         res.status(201).json({ success: true, data: task });
     } catch (error) {

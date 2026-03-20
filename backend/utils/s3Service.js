@@ -12,10 +12,10 @@ const s3Client = new S3Client({
 /**
  * Upload a file memory buffer to AWS S3.
  *
- * @param {Buffer} fileBuffer - The file buffer in memory
- * @param {string} fileName - The exact Key/Path to store at in S3 (e.g., 'uploads/chat/123-img.png')
- * @param {string} mimetype - The standard mime type (e.g., 'image/png')
- * @returns {Promise<string>} - The full S3 URL of the uploaded file
+ * @param {Buffer} fileBuffer 
+ * @param {string} fileName 
+ * @param {string} mimetype 
+ * @returns {Promise<string>} 
  */
 const uploadToS3 = async (fileBuffer, fileName, mimetype) => {
     try {

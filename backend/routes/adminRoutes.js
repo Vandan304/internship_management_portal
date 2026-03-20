@@ -29,4 +29,25 @@ router.delete('/intern/:id', validateObjectId, deleteIntern);
 router.patch('/intern/:id/block', validateObjectId, blockIntern);
 router.patch('/intern/:id/activate', validateObjectId, activateIntern);
 
+const { runDeadlineAudit } = require('../utils/cronJobs');
+
+// Route: /api/admin/trigger-deadline-audit
+router.post('/trigger-deadline-audit', async (req, res) => {
+    try {
+        console.log('[API] Manually triggering deadline audit...');
+        const stats = await runDeadlineAudit();
+        res.status(200).json({
+            success: true,
+            message: 'Deadline audit triggered successfully',
+            stats
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: 'Failed to trigger deadline audit',
+            error: error.message
+        });
+    }
+});
+
 module.exports = router;

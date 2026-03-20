@@ -103,7 +103,7 @@ const MyTasks = () => {
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <div className={`text-sm ${isOverdue ? 'text-red-600 font-semibold' : 'text-gray-900'}`}>
-                                                    {new Date(task.deadline).toLocaleDateString()}
+                                                    {new Date(task.deadline).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })} at 11:59 PM
                                                 </div>
                                                 {isOverdue && <div className="text-xs text-red-500">Overdue</div>}
                                             </td>
