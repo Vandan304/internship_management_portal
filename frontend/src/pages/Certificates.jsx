@@ -7,9 +7,10 @@ import { useToast } from '../context/ToastContext';
 import { useData } from '../context/DataContext';
 import ConfirmModal from '../components/ui/ConfirmModal';
 import { getFileUrl } from '../utils/urlUtils';
+import LoadingSpinner from '../components/common/LoadingSpinner';
 
 export default function Certificates() {
-    const { certificates, interns, addCertificate, deleteCertificate, downloadCertificate } = useData();
+    const { certificates, interns, addCertificate, deleteCertificate, downloadCertificate, isLoading } = useData();
     const [isDragOver, setIsDragOver] = useState(false);
     const [selectedInternId, setSelectedInternId] = useState('');
     const [certNameInput, setCertNameInput] = useState('');
@@ -78,6 +79,8 @@ export default function Certificates() {
             setSelectedCertId(null);
         }
     };
+
+    if (isLoading) return <LoadingSpinner message="Loading certificates..." />;
 
     return (
         <div className="flex flex-col h-[calc(100vh-140px)] sm:h-[calc(100vh-160px)] space-y-4 animate-fade-in-up">

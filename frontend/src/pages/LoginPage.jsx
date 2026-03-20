@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { GraduationCap, Mail, Lock, ArrowRight, Loader2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
+import logoImage from '../assets/logo_trimmed.png';
 import axios from 'axios';
 
 const LoginPage = () => {
@@ -61,18 +62,13 @@ const LoginPage = () => {
             {/* Background Decorations */}
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[500px] bg-brand-500/10 blur-[120px] rounded-full pointer-events-none" />
 
-            <div className="w-full max-w-md relative z-10">
-                <div className="text-center mb-8">
-                    <Link to="/" className="inline-flex items-center gap-2 mb-4 hover:opacity-80 transition-opacity">
-                        <div className="p-2 bg-brand-600 rounded-lg shadow-lg shadow-brand-500/30">
-                            <GraduationCap className="h-6 w-6 text-white" />
-                        </div>
-                        <span className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-brand-700 to-brand-500">
-                            InternSys
-                        </span>
+            <div className="w-full max-w-md relative z-10 -mt-10">
+                <div className="text-center mb-4">
+                    <Link to="/" className="inline-flex items-center justify-center mb-1 hover:opacity-80 transition-opacity w-full">
+                        <img src={logoImage} alt="InternSys Logo" className="h-28 md:h-34 w-auto mx-auto object-contain" />
                     </Link>
                     <h2 className="text-2xl font-bold text-gray-900">Welcome back</h2>
-                    <p className="text-gray-600 mt-2">Sign in to your account to continue</p>
+                    <p className="text-gray-600 mt-1">Sign in to your account to continue</p>
                 </div>
 
                 <div className="bg-white/80 backdrop-blur-xl border border-white/20 shadow-xl rounded-2xl p-8">

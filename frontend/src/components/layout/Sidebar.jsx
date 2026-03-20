@@ -3,6 +3,7 @@ import { NavLink } from 'react-router-dom';
 import { LayoutDashboard, Users, FileText, Download, Settings, LogOut, X, ListTodo, ClipboardCheck, TrendingUp, MessageCircle, Trophy } from 'lucide-react';
 import { cn } from '../../utils/cn';
 import { useAuth } from '../../context/AuthContext';
+import logoImage from '../../assets/logo1_backup.png';
 
 const navItems = [
     { icon: LayoutDashboard, label: 'Dashboard', to: '/admin' },
@@ -37,10 +38,7 @@ export function Sidebar({ isOpen, onClose }) {
             )}>
                 <div className="h-16 flex items-center justify-between px-6 border-b border-gray-50">
                     <div className="flex items-center gap-2 font-bold text-xl text-brand-700">
-                        <div className="w-8 h-8 bg-brand-600 rounded-lg flex items-center justify-center text-white">
-                            <span className="text-lg">I</span>
-                        </div>
-                        <span>InternFlow</span>
+                        <img src={logoImage} alt="InternSys Logo" className="h-8 md:h-10 w-auto object-contain" />
                     </div>
                     <button onClick={onClose} className="lg:hidden text-gray-400 hover:text-gray-600">
                         <X size={20} />
@@ -56,22 +54,26 @@ export function Sidebar({ isOpen, onClose }) {
                             end={item.to === '/admin'} // Exact match for root
                             onClick={onClose}
                             className={({ isActive }) => cn(
-                                "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
+                                "group flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
                                 isActive
-                                    ? "bg-brand-50 text-brand-700 shadow-sm"
-                                    : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                                    ? "bg-sky-50 text-sky-700 shadow-sm ring-1 ring-sky-200"
+                                    : "text-gray-600 hover:bg-sky-50 hover:text-sky-700"
                             )}
                         >
-                            <item.icon size={18} className={cn("transition-colors", ({ isActive }) => isActive ? "text-brand-600" : "text-gray-400")} />
-                            {item.label}
+                            {({ isActive }) => (
+                                <>
+                                    <item.icon size={18} className={`transition-colors ${isActive ? "text-sky-600" : "text-gray-400 group-hover:text-sky-500"}`} />
+                                    {item.label}
+                                </>
+                            )}
                         </NavLink>
                     ))}
                 </nav>
 
                 {/* Footer Actions */}
                 <div className="p-4 border-t border-gray-50">
-                    <button onClick={logout} className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:bg-red-50 hover:text-red-600 w-full transition-colors">
-                        <LogOut size={18} />
+                    <button onClick={logout} className="group flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:bg-red-50 hover:text-red-600 w-full transition-colors">
+                        <LogOut size={18} className="text-gray-400 group-hover:text-red-500 transition-colors" />
                         <span>Sign Out</span>
                     </button>
                 </div>

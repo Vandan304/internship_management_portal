@@ -28,7 +28,6 @@ import ProtectedRoute from './components/layout/ProtectedRoute';
 
 import { DataProvider } from './context/DataContext';
 import ErrorBoundary from './components/ErrorBoundary';
-import { Toaster } from 'react-hot-toast';
 
 function App() {
   return (
@@ -36,7 +35,6 @@ function App() {
       <AuthProvider>
         <DataProvider>
           <ToastProvider>
-            <Toaster position="top-right" />
             <Routes>
               <Route path="/" element={<LandingPage />} />
               <Route path="/verify-otp" element={<VerifyOtp />} />

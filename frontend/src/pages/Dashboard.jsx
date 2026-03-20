@@ -5,10 +5,13 @@ import { Button } from '../components/ui/Button';
 import { useToast } from '../context/ToastContext';
 
 import { useData } from '../context/DataContext';
+import LoadingSpinner from '../components/common/LoadingSpinner';
 
 export default function Dashboard() {
     const { addToast } = useToast();
-    const { interns, certificates } = useData();
+    const { interns, certificates, isLoading } = useData();
+
+    if (isLoading) return <LoadingSpinner message="Loading dashboard data..." />;
 
     const safeInterns = Array.isArray(interns) ? interns : [];
     const safeCertificates = Array.isArray(certificates) ? certificates : [];
@@ -42,10 +45,10 @@ export default function Dashboard() {
                     <h2 className="text-2xl font-bold text-gray-900">Dashboard</h2>
                     <p className="text-gray-500 text-sm mt-1">Overview of your internship program.</p>
                 </div>
-                <Button onClick={handleDownload}>
+                {/* <Button onClick={handleDownload}>
                     <Download size={16} className="mr-2" />
                     Download Report
-                </Button>
+                </Button> */}
             </div>
 
             {/* Stats Grid */}

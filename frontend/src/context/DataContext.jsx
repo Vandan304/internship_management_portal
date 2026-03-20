@@ -20,6 +20,7 @@ export const useData = () => {
 
 export const DataProvider = ({ children }) => {
     const { user, isAuthenticated, socket } = useAuth();
+    const [isLoading, setIsLoading] = useState(true);
     const [interns, setInterns] = useState([]);
 
     const fetchInterns = useCallback(async () => {
@@ -93,13 +94,20 @@ export const DataProvider = ({ children }) => {
 
     useEffect(() => {
         let isMounted = true;
-        if (isAuthenticated && user && isMounted) {
+        const loadInitialData = async () => {
+            setIsLoading(true);
             if (user.role === 'admin') {
-                fetchInterns();
-                fetchCertificatesAdmin();
+                await Promise.all([fetchInterns(), fetchCertificatesAdmin()]);
             } else if (user.role === 'intern') {
-                fetchMyCertificates();
+                await fetchMyCertificates();
             }
+            if (isMounted) setIsLoading(false);
+        };
+
+        if (isAuthenticated && user && isMounted) {
+            loadInitialData();
+        } else if (!isAuthenticated && isMounted) {
+            setIsLoading(false);
         }
         return () => { isMounted = false; };
     }, [isAuthenticated, user, fetchInterns, fetchCertificatesAdmin, fetchMyCertificates]);
@@ -403,7 +411,8 @@ export const DataProvider = ({ children }) => {
             toggleDownloadPermission,
             fetchCertificatesAdmin,
             fetchMyCertificates,
-            downloadCertificate
+            downloadCertificate,
+            isLoading
         }}>
             {children}
         </DataContext.Provider>

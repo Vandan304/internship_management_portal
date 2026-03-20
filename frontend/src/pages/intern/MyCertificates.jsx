@@ -3,10 +3,10 @@ import { Award, Eye, Download, Search, Filter } from 'lucide-react';
 import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
 import { getFileUrl } from '../../utils/urlUtils';
+import LoadingSpinner from '../../components/common/LoadingSpinner';
 
 const MyCertificates = () => {
-    const { certificates, downloadCertificate } = useData();
-    const [isLoading, setIsLoading] = useState(true);
+    const { certificates, downloadCertificate, isLoading } = useData();
     const [searchTerm, setSearchTerm] = useState('');
 
     // The backend `my-certificates` endpoint already strictly filters for:
@@ -15,6 +15,8 @@ const MyCertificates = () => {
     const filteredCertificates = certificates.filter(cert =>
         cert.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
+
+    if (isLoading) return <LoadingSpinner message="Loading your certificates..." />;
 
     return (
         <div className="flex flex-col h-[calc(100vh-140px)] sm:h-[calc(100vh-160px)] space-y-4">
@@ -41,7 +43,7 @@ const MyCertificates = () => {
 
             {/* Certificates Table */}
             <div className="bg-white rounded-xl border border-gray-200 shadow-sm flex-1 overflow-hidden flex flex-col">
-                <div className="overflow-y-auto flex-1">
+                <div className="overflow-auto flex-1">
                     <table className="min-w-full divide-y divide-gray-200 border-collapse">
                         <thead className="bg-gray-50 sticky top-0 z-10">
                             <tr>

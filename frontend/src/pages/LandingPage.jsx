@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, CheckCircle, Shield, Users, BarChart3, GraduationCap } from 'lucide-react';
+import { ArrowRight, CheckCircle, Clock, Shield, Search, Award } from 'lucide-react';
+import logoImage from '../assets/logo1_backup.png';
 
 const LandingPage = () => {
     return (
@@ -10,12 +11,7 @@ const LandingPage = () => {
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex justify-between items-center h-16">
                         <div className="flex items-center gap-2">
-                            <div className="p-2 bg-brand-600 rounded-lg shadow-lg shadow-brand-500/30">
-                                <GraduationCap className="h-6 w-6 text-white" />
-                            </div>
-                            <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-brand-700 to-brand-500">
-                                InternSys
-                            </span>
+                            <img src={logoImage} alt="InternSys Logo" className="h-8 md:h-10 w-auto object-contain" />
                         </div>
                         <div className="flex items-center gap-4">
                             <Link to="/login" className="text-gray-600 hover:text-brand-600 font-medium transition-colors">
@@ -136,8 +132,7 @@ const LandingPage = () => {
             <footer className="bg-gray-900 text-gray-400 py-12 border-t border-gray-800">
                 <div className="max-w-7xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-6">
                     <div className="flex items-center gap-2">
-                        <GraduationCap className="h-6 w-6 text-brand-500" />
-                        <span className="text-white font-bold text-lg">InternSys</span>
+                        <img src={logoImage} alt="InternSys Logo" className="h-8 w-auto object-contain" />
                     </div>
                     <div className="text-sm">
                         &copy; {new Date().getFullYear()} InternSys. All rights reserved.

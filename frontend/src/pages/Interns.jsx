@@ -7,9 +7,10 @@ import { InternModal } from '../components/interns/InternModal';
 import { useToast } from '../context/ToastContext';
 import { useData } from '../context/DataContext';
 import ConfirmModal from '../components/ui/ConfirmModal';
+import LoadingSpinner from '../components/common/LoadingSpinner';
 
 export default function Interns() {
-    const { interns, addIntern, updateIntern, deleteIntern, blockIntern, activateIntern, generateCompletionCertificate, generateOfferLetter } = useData();
+    const { interns, addIntern, updateIntern, deleteIntern, blockIntern, activateIntern, generateCompletionCertificate, generateOfferLetter, isLoading } = useData();
     const [searchQuery, setSearchQuery] = useState('');
     const [filterStatus, setFilterStatus] = useState('All');
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -78,6 +79,8 @@ export default function Interns() {
         }
         setIsModalOpen(false);
     };
+
+    if (isLoading) return <LoadingSpinner message="Loading intern directory..." />;
 
     return (
         <div className="space-y-6 animate-fade-in-up">

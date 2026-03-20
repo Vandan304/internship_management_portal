@@ -9,8 +9,20 @@ export function useToast() {
     return useContext(ToastContext);
 }
 
+let globalAddToast = null;
+
+export const toast = {
+    success: (msg) => globalAddToast?.(msg, 'success'),
+    error: (msg) => globalAddToast?.(msg, 'error'),
+    info: (msg) => globalAddToast?.(msg, 'info'),
+};
+
 export function ToastProvider({ children }) {
     const [toasts, setToasts] = useState([]);
+
+    React.useEffect(() => {
+        globalAddToast = addToast;
+    }, []);
 
     const removeToast = useCallback((id) => {
         setToasts((prev) => prev.filter((toast) => toast.id !== id));
@@ -25,26 +37,26 @@ export function ToastProvider({ children }) {
     return (
         <ToastContext.Provider value={{ addToast }}>
             {children}
-            <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-2">
-                {toasts.map((toast) => (
+            <div className="fixed bottom-4 right-4 z-[9999] flex flex-col gap-2 pointer-events-none">
+                {toasts.map((toastItem) => (
                     <div
-                        key={toast.id}
+                        key={toastItem.id}
                         className={cn(
-                            "flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg min-w-[300px] animate-fade-in-up transition-all",
-                            toast.type === 'success' && "bg-white border-l-4 border-green-500 text-gray-800",
-                            toast.type === 'error' && "bg-white border-l-4 border-red-500 text-gray-800",
-                            toast.type === 'info' && "bg-white border-l-4 border-blue-500 text-gray-800"
+                            "flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg min-w-[300px] animate-fade-in-up transition-all pointer-events-auto",
+                            toastItem.type === 'success' && "bg-white border-l-4 border-green-500 text-gray-800",
+                            toastItem.type === 'error' && "bg-white border-l-4 border-red-500 text-gray-800",
+                            toastItem.type === 'info' && "bg-white border-l-4 border-blue-500 text-gray-800"
                         )}
                     >
-                        {toast.type === 'success' && <CheckCircle size={20} className="text-green-500" />}
-                        {toast.type === 'error' && <AlertCircle size={20} className="text-red-500" />}
-                        {toast.type === 'info' && <Info size={20} className="text-blue-500" />}
+                        {toastItem.type === 'success' && <CheckCircle size={20} className="text-green-500" />}
+                        {toastItem.type === 'error' && <AlertCircle size={20} className="text-red-500" />}
+                        {toastItem.type === 'info' && <Info size={20} className="text-blue-500" />}
 
-                        <p className="text-sm font-medium flex-1">{toast.message}</p>
+                        <p className="text-sm font-medium flex-1">{toastItem.message}</p>
 
                         <button
-                            onClick={() => removeToast(toast.id)}
-                            className="text-gray-400 hover:text-gray-600"
+                            onClick={() => removeToast(toastItem.id)}
+                            className="text-gray-400 hover:text-gray-600 pointer-events-auto"
                         >
                             <X size={16} />
                         </button>

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { GraduationCap, Mail, Lock, User, ArrowRight, Loader2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import logoImage from '../assets/logo1_backup.png';
 
 const RegisterPage = () => {
     const navigate = useNavigate();
@@ -44,13 +45,8 @@ const RegisterPage = () => {
 
             <div className="w-full max-w-md relative z-10">
                 <div className="text-center mb-8">
-                    <Link to="/" className="inline-flex items-center gap-2 mb-4 hover:opacity-80 transition-opacity">
-                        <div className="p-2 bg-brand-600 rounded-lg shadow-lg shadow-brand-500/30">
-                            <GraduationCap className="h-6 w-6 text-white" />
-                        </div>
-                        <span className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-brand-700 to-brand-500">
-                            InternFlow
-                        </span>
+                    <Link to="/" className="inline-flex items-center justify-center gap-2 mb-4 hover:opacity-80 transition-opacity w-full">
+                        <img src={logoImage} alt="InternSys Logo" className="h-12 md:h-16 w-auto mx-auto object-contain" />
                     </Link>
                     <h2 className="text-2xl font-bold text-gray-900">Create an account</h2>
                     <p className="text-gray-600 mt-2">Start managing your internships today</p>

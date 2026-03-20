@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Upload, CheckCircle, Clock, AlertCircle, FileText } from 'lucide-react';
 import axios from 'axios';
 import { SubmitTaskModal } from '../../components/intern/SubmitTaskModal';
+import LoadingSpinner from '../../components/common/LoadingSpinner';
 
 const MyTasks = () => {
     const [tasks, setTasks] = useState([]);
@@ -73,8 +74,8 @@ const MyTasks = () => {
                         <tbody className="bg-white divide-y divide-gray-200">
                             {isLoading ? (
                                 <tr>
-                                    <td colSpan="5" className="px-6 py-8 text-center text-sm text-gray-500">
-                                        Loading tasks...
+                                    <td colSpan="5" className="p-0">
+                                        <LoadingSpinner message="Loading your tasks..." />
                                     </td>
                                 </tr>
                             ) : tasks.length === 0 ? (

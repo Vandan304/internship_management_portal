@@ -14,6 +14,7 @@ import {
     Trophy
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import logoImage from '../../assets/logo1_backup.png';
 
 export function InternSidebar({ isOpen, onClose }) {
     const { logout } = useAuth();
@@ -73,12 +74,7 @@ export function InternSidebar({ isOpen, onClose }) {
                     {/* Logo */}
                     <div className="h-16 flex items-center justify-between px-6 border-b border-gray-100">
                         <div className="flex items-center gap-2">
-                            <div className="p-1.5 bg-brand-600 rounded-lg">
-                                <GraduationCap className="h-5 w-5 text-white" />
-                            </div>
-                            <span className="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-brand-700 to-brand-500">
-                                InternSpace
-                            </span>
+                            <img src={logoImage} alt="InternSys Logo" className="h-8 md:h-10 w-auto object-contain" />
                         </div>
                         <button
                             onClick={onClose}
@@ -100,31 +96,35 @@ export function InternSidebar({ isOpen, onClose }) {
                                 end={item.path === '/intern'}
                                 onClick={() => window.innerWidth < 1024 && onClose()}
                                 className={({ isActive }) => `
-                                    flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200
+                                    group flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200
                                     ${isActive
-                                        ? 'bg-brand-50 text-brand-700 shadow-sm ring-1 ring-brand-200'
-                                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 group'
+                                        ? 'bg-sky-50 text-sky-700 shadow-sm ring-1 ring-sky-200'
+                                        : 'text-gray-600 hover:bg-sky-50 hover:text-sky-700'
                                     }
                                 `}
                             >
-                                <item.icon className="w-5 h-5 opacity-70 group-hover:opacity-100 transition-opacity" />
-                                <span className="flex-1">{item.label}</span>
-                                {item.label === 'Notifications' && unreadCount > 0 && (
-                                    <span className="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
-                                        {unreadCount}
-                                    </span>
+                                {({ isActive }) => (
+                                    <>
+                                        <item.icon className={`w-5 h-5 transition-colors ${isActive ? 'text-sky-600' : 'text-gray-400 group-hover:text-sky-500'}`} />
+                                        <span className="flex-1">{item.label}</span>
+                                        {item.label === 'Notifications' && unreadCount > 0 && (
+                                            <span className="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                                                {unreadCount}
+                                            </span>
+                                        )}
+                                    </>
                                 )}
                             </NavLink>
                         ))}
                     </div>
 
                     {/* User Profile & Logout */}
-                    <div className="p-4 border-t border-gray-100 space-y-2">
+                    <div className="p-4 border-t border-gray-100">
                         <button
                             onClick={logout}
-                            className="flex items-center gap-3 w-full px-3 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            className="group flex items-center gap-3 w-full px-3 py-2.5 text-sm font-medium text-gray-600 hover:bg-red-50 hover:text-red-600 rounded-lg transition-colors"
                         >
-                            <LogOut className="w-5 h-5 opacity-70" />
+                            <LogOut className="w-5 h-5 text-gray-400 group-hover:text-red-500 transition-colors" />
                             Sign Out
                         </button>
                     </div>

@@ -3,6 +3,7 @@ import { Search, Download, CheckCircle, XCircle, Clock, Eye } from 'lucide-react
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import { getFileUrl } from '../../utils/urlUtils';
+import LoadingSpinner from '../../components/common/LoadingSpinner';
 
 const TaskReview = () => {
     const [tasks, setTasks] = useState([]);
@@ -108,7 +109,9 @@ const TaskReview = () => {
                         <tbody className="bg-white divide-y divide-gray-200">
                             {isLoading ? (
                                 <tr>
-                                    <td colSpan="4" className="px-6 py-8 text-center text-sm text-gray-500">Loading submissions...</td>
+                                    <td colSpan="4" className="p-0">
+                                        <LoadingSpinner message="Loading submissions..." />
+                                    </td>
                                 </tr>
                             ) : filteredTasks.length === 0 ? (
                                 <tr>
