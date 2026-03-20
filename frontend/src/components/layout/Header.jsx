@@ -1,18 +1,33 @@
 import React, { useState, useEffect } from 'react';
-import { Bell, Search, Menu, User } from 'lucide-react';
+import { Bell, Search, Menu, User, Trophy, Medal, Award } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
+import { useData } from '../../context/DataContext';
+
+import medal1 from '../../assets/medals/medal_1.png';
+import medal2 from '../../assets/medals/medal_2.png';
+import medal3 from '../../assets/medals/medal_3.png';
+
+const medalMap = {
+    1: medal1,
+    2: medal2,
+    3: medal3
+};
 
 export function Header({ onMenuClick }) {
     const { user } = useAuth();
+    const { leaderboardData } = useData();
     const navigate = useNavigate();
     const [hasUnread, setHasUnread] = useState(false);
+
+    const currentUserRank = leaderboardData?.fullList?.find(
+        (i) => i.id === (user?._id || user?.id) || i.internId === user?.internId
+    );
 
     useEffect(() => {
         const fetchUnread = async () => {
             try {
-                // Only interns have this route in our specific requested app setup
                 if (user?.role !== 'intern') return;
 
                 const res = await axios.get('/api/notifications');
@@ -73,11 +88,24 @@ export function Header({ onMenuClick }) {
                 <div className="flex items-center gap-3 pl-1">
                     <div className="flex flex-col items-end hidden sm:block">
                         <span className="text-sm font-medium text-gray-900 capitalize">{user?.name || 'User'}</span>
-                        <span className="text-xs text-gray-500 uppercase tracking-wider">{user?.role || 'Guest'}</span>
+                        <div className="flex items-center gap-1">
+                            <span className="text-xs text-gray-500 uppercase tracking-wider">{user?.role || 'Guest'}</span>
+                            {user?.role === 'intern' && currentUserRank && currentUserRank.rank <= 3 && (
+                                <span className="flex items-center" title={`Rank #${currentUserRank.rank}`}>
+                                    <img 
+                                        src={medalMap[currentUserRank.rank]} 
+                                        alt={`Rank ${currentUserRank.rank}`} 
+                                        className="w-5 h-5 object-contain"
+                                    />
+                                </span>
+                            )}
+                        </div>
                     </div>
-                    <div className="w-9 h-9 bg-brand-100 rounded-full flex items-center justify-center text-brand-700 font-semibold border border-brand-200 uppercase">
-                        {user?.name ? user.name.charAt(0) : <User size={18} />}
-                    </div>
+                    {user?.role !== 'admin' && (
+                        <div className="w-9 h-9 bg-brand-100 rounded-full flex items-center justify-center text-brand-700 font-semibold border border-brand-200 uppercase overflow-hidden">
+                            {user?.name ? user.name.charAt(0) : <User size={18} />}
+                        </div>
+                    )}
                 </div>
             </div>
         </header>

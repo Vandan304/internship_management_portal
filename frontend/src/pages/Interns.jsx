@@ -1,16 +1,26 @@
 import React, { useState } from 'react';
 import { Card, CardHeader, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
-import { Search, Plus, Filter, Edit2, Trash2, FileText, FileCheck, Shield, ShieldOff } from 'lucide-react';
+import { Search, Plus, Filter, Edit2, Trash2, FileText, FileCheck, Shield, ShieldOff, Trophy, Medal, Award } from 'lucide-react';
 import { cn } from '../utils/cn';
 import { InternModal } from '../components/interns/InternModal';
 import { useToast } from '../context/ToastContext';
 import { useData } from '../context/DataContext';
+
+import medal1 from '../assets/medals/medal_1.png';
+import medal2 from '../assets/medals/medal_2.png';
+import medal3 from '../assets/medals/medal_3.png';
+
+const medalMap = {
+    1: medal1,
+    2: medal2,
+    3: medal3
+};
 import ConfirmModal from '../components/ui/ConfirmModal';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 
 export default function Interns() {
-    const { interns, addIntern, updateIntern, deleteIntern, blockIntern, activateIntern, generateCompletionCertificate, generateOfferLetter, isLoading } = useData();
+    const { interns, leaderboardData, addIntern, updateIntern, deleteIntern, blockIntern, activateIntern, generateCompletionCertificate, generateOfferLetter, isLoading } = useData();
     const [searchQuery, setSearchQuery] = useState('');
     const [filterStatus, setFilterStatus] = useState('All');
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -145,7 +155,22 @@ export default function Interns() {
                                                     {intern.name?.[0]?.toUpperCase() || 'I'}
                                                 </div>
                                                 <div>
-                                                    <div className="text-sm font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">{intern.name}</div>
+                                                    <div className="text-sm font-semibold text-gray-900 group-hover:text-blue-600 transition-colors flex items-center gap-1.5">
+                                                        {intern.name}
+                                                        {(() => {
+                                                            const rankInfo = leaderboardData?.fullList?.find(l => l.id === (intern._id || intern.id) || l.internId === intern.internId);
+                                                            if (rankInfo && rankInfo.rank <= 3) {
+                                                                return (
+                                                                    <img 
+                                                                        src={medalMap[rankInfo.rank]} 
+                                                                        alt={`Rank ${rankInfo.rank}`} 
+                                                                        className="w-4 h-4 object-contain"
+                                                                    />
+                                                                );
+                                                            }
+                                                            return null;
+                                                        })()}
+                                                   </div>
                                                     <div className="text-xs text-gray-500">{intern.email}</div>
                                                 </div>
                                             </div>

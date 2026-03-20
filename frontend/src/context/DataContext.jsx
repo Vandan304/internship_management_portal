@@ -147,6 +147,28 @@ export const DataProvider = ({ children }) => {
         }
     };
 
+    const approveTask = async (id, comment) => {
+        try {
+            const token = localStorage.getItem('token');
+            const res = await axios.patch(`http://localhost:5000/api/tasks/${id}/approve`, 
+                { comment },
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+            
+            if (res.data.success) {
+                // Refresh both tasks and leaderboard to reflect new points/rank
+                await Promise.all([
+                    fetchTasksAdmin(),
+                    fetchLeaderboard()
+                ]);
+                return res.data;
+            }
+        } catch (error) {
+            console.error('Error approving task:', error);
+            throw error;
+        }
+    };
+
     const updateIntern = async (id, updates) => {
         try {
             const token = localStorage.getItem('token');

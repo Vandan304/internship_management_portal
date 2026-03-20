@@ -1,10 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
+import { useData } from '../../context/DataContext';
+
+import medal1 from '../../assets/medals/medal_1.png';
+import medal2 from '../../assets/medals/medal_2.png';
+import medal3 from '../../assets/medals/medal_3.png';
+
+const medalMap = {
+    1: medal1,
+    2: medal2,
+    3: medal3
+};
 
 const InternProgress = () => {
     const [stats, setStats] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
+    const { leaderboardData } = useData();
 
     useEffect(() => {
         const fetchProgressInfo = async () => {
@@ -56,7 +68,6 @@ const InternProgress = () => {
                     <p className="text-gray-500">Track and monitor task completion for all interns.</p>
                 </div>
             </div>
-
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {isLoading ? (
                     <div className="col-span-full py-8 text-center text-sm text-gray-500">Loading progress...</div>
@@ -70,7 +81,23 @@ const InternProgress = () => {
                                     {intern.name.charAt(0)}
                                 </div>
                                 <div>
-                                    <h3 className="font-bold text-gray-900">{intern.name}</h3>
+                                    <div className="flex items-center gap-2">
+                                        <h3 className="font-bold text-gray-900">{intern.name}</h3>
+                                        {(() => {
+                                            const rankInfo = leaderboardData?.fullList?.find(l => l.id === (intern._id || intern.id) || l.internId === intern.internId);
+                                            if (rankInfo && rankInfo.rank <= 3) {
+                                                return (
+                                                    <img 
+                                                        src={medalMap[rankInfo.rank]} 
+                                                        alt={`Rank ${rankInfo.rank}`} 
+                                                        className="w-5 h-5 object-contain"
+                                                        title={`Rank #${rankInfo.rank}`}
+                                                    />
+                                                );
+                                            }
+                                            return null;
+                                        })()}
+                                    </div>
                                     <p className="text-xs text-gray-500">{intern.email}</p>
                                 </div>
                             </div>

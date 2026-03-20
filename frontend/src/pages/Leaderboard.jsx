@@ -5,12 +5,22 @@ import { useData } from '../context/DataContext';
 import { useAuth } from '../context/AuthContext';
 import { cn } from '../utils/cn';
 
+import medal1 from '../assets/medals/medal_1.png';
+import medal2 from '../assets/medals/medal_2.png';
+import medal3 from '../assets/medals/medal_3.png';
+
+const medalMap = {
+    1: medal1,
+    2: medal2,
+    3: medal3
+};
+
 export default function Leaderboard() {
     const { leaderboardData } = useData();
     const { user } = useAuth();
     const { top3, fullList } = leaderboardData;
 
-    const currentUserRank = fullList.find(i => i.id === user?.id || i.internId === user?.internId);
+    const currentUserRank = fullList.find(i => i.id === (user?._id || user?.id) || i.internId === user?.internId);
 
     const isAdmin = user?.role === 'admin';
 
@@ -20,7 +30,7 @@ export default function Leaderboard() {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <h2 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-                        <Trophy className="text-yellow-500" size={32} />
+                        <Trophy size={32} className="text-yellow-500 fill-yellow-500" />
                         Performance Leaderboard
                     </h2>
                     <p className="text-gray-500 mt-1 text-sm">Recognizing our top performing interns based on task excellence.</p>
@@ -30,10 +40,11 @@ export default function Leaderboard() {
                         "px-6 py-3 rounded-2xl flex items-center gap-4 shadow-sm border",
                         currentUserRank.rank <= 3 ? "bg-yellow-50 border-yellow-200" : "bg-brand-50 border-brand-100"
                     )}>
-                        {currentUserRank.rank === 1 ? <Trophy className="text-yellow-600" size={24} /> :
-                            currentUserRank.rank === 2 ? <Medal className="text-slate-400" size={24} /> :
-                                currentUserRank.rank === 3 ? <Award className="text-amber-700" size={24} /> :
-                                    <TrendingUp className="text-brand-600" size={24} />}
+                        {currentUserRank.rank <= 3 ? (
+                            <img src={medalMap[currentUserRank.rank]} alt="Rank Medal" className="w-8 h-8 object-contain" />
+                        ) : (
+                            <TrendingUp className="text-brand-600" size={24} />
+                        )}
                         <div>
                             <p className={cn(
                                 "text-xs font-semibold uppercase tracking-wider",
@@ -63,9 +74,9 @@ export default function Leaderboard() {
                                         intern={top3[1]}
                                         rank={2}
                                         color="text-slate-400"
-                                        bgColor="bg-slate-50"
+                                        bgColor="bg-slate-50/50"
                                         borderColor="border-slate-200"
-                                        icon={<Medal size={32} />}
+                                        icon={<img src={medal2} alt="Silver Medal" className="w-16 h-16 object-contain" />}
                                         height="h-64"
                                     />
                                 </div>
@@ -77,9 +88,9 @@ export default function Leaderboard() {
                                         intern={top3[0]}
                                         rank={1}
                                         color="text-yellow-600"
-                                        bgColor="bg-yellow-50"
+                                        bgColor="bg-yellow-50/50"
                                         borderColor="border-yellow-200"
-                                        icon={<Trophy size={48} />}
+                                        icon={<img src={medal1} alt="Gold Medal" className="w-20 h-20 object-contain" />}
                                         height="h-80"
                                         isLarge
                                     />
@@ -92,9 +103,9 @@ export default function Leaderboard() {
                                         intern={top3[2]}
                                         rank={3}
                                         color="text-amber-700"
-                                        bgColor="bg-amber-50"
+                                        bgColor="bg-amber-50/50"
                                         borderColor="border-amber-200"
-                                        icon={<Award size={32} />}
+                                        icon={<img src={medal3} alt="Bronze Medal" className="w-16 h-16 object-contain" />}
                                         height="h-56"
                                     />
                                 </div>
@@ -104,13 +115,16 @@ export default function Leaderboard() {
 
                     {/* Rankings Table (Admin Only) */}
                     <Card className="border-none shadow-xl overflow-hidden">
-                        <CardHeader className="bg-gray-50/50 border-b border-gray-100">
-                            <CardTitle className="text-lg font-bold text-gray-800">Complete Rankings</CardTitle>
+                        <CardHeader className="bg-brand-50/30 border-b border-brand-100/50">
+                            <CardTitle className="text-lg font-bold text-brand-900 flex items-center gap-2">
+                                <TrendingUp size={20} className="text-brand-600" />
+                                All Intern Rankings
+                            </CardTitle>
                         </CardHeader>
                         <CardContent className="p-0">
                             <div className="overflow-x-auto">
                                 <table className="w-full text-left">
-                                    <thead className="bg-gray-50/30 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                    <thead className="bg-brand-50/20 text-xs font-bold text-brand-700 uppercase tracking-wider">
                                         <tr>
                                             <th className="px-8 py-4">Rank</th>
                                             <th className="px-8 py-4">Intern Details</th>
@@ -131,13 +145,14 @@ export default function Leaderboard() {
                                             >
                                                 <td className="px-8 py-5">
                                                     <div className={cn(
-                                                        "w-10 h-10 rounded-xl flex items-center justify-center font-bold text-sm shadow-sm",
-                                                        intern.rank === 1 ? "bg-yellow-100 text-yellow-700" :
-                                                            intern.rank === 2 ? "bg-slate-100 text-slate-700" :
-                                                                intern.rank === 3 ? "bg-amber-100 text-amber-800" :
-                                                                    "bg-gray-100 text-gray-500"
+                                                        "w-10 h-10 flex items-center justify-center font-bold text-sm",
+                                                        intern.rank <= 3 ? "" : "bg-brand-50 text-brand-400 rounded-xl"
                                                     )}>
-                                                        #{intern.rank}
+                                                        {intern.rank <= 3 ? (
+                                                            <img src={medalMap[intern.rank]} alt={`Rank ${intern.rank}`} className="w-8 h-8 object-contain" />
+                                                        ) : (
+                                                            `#${intern.rank}`
+                                                        )}
                                                     </div>
                                                 </td>
                                                 <td className="px-8 py-5">
@@ -158,7 +173,7 @@ export default function Leaderboard() {
                                                 </td>
                                                 <td className="px-8 py-5 text-right font-bold text-gray-900">
                                                     <span className="text-xl text-brand-600 font-black">{intern.points}</span>
-                                                    <span className="text-[10px] text-gray-400 ml-1 uppercase font-bold tracking-tighter">pts</span>
+                                                    <span className="text-[10px] text-brand-400 ml-1 uppercase font-bold tracking-tighter">pts</span>
                                                 </td>
                                             </tr>
                                         ))}
@@ -172,10 +187,10 @@ export default function Leaderboard() {
                 /* Empty space or additional info for interns if they aren't Top 3 */
                 <div className="pt-8">
                     {currentUserRank?.rank <= 3 ? (
-                        <div className="bg-gradient-to-br from-yellow-500 to-amber-600 p-8 rounded-3xl text-white shadow-2xl shadow-yellow-100">
+                        <div className="bg-gradient-to-br from-brand-500 to-brand-700 p-8 rounded-3xl text-white shadow-2xl shadow-brand-100">
                             <div className="flex items-center gap-6">
                                 <div className="p-4 bg-white/20 rounded-2xl backdrop-blur-md">
-                                    <Trophy size={48} />
+                                    <img src={medalMap[currentUserRank.rank]} alt="Trophy" className="w-16 h-16 object-contain" />
                                 </div>
                                 <div>
                                     <h3 className="text-3xl font-black italic">Congratulations!</h3>
