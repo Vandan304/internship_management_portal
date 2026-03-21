@@ -75,7 +75,7 @@ const InternProfile = () => {
                     <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden p-6 text-center">
                         <div className="relative inline-block">
                             <img
-                                src={user?.avatar || "https://ui-avatars.com/api/?name=User&background=0D8ABC&color=fff"}
+                                src={user?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'User')}&background=0D8ABC&color=fff`}
                                 alt="Profile"
                                 className="w-32 h-32 rounded-full mx-auto border-4 border-white shadow-lg"
                             />

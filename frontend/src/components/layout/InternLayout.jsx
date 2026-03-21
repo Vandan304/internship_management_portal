@@ -7,7 +7,7 @@ export function InternLayout() {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
     return (
-        <div className="flex h-screen bg-gray-50 overflow-hidden font-sans">
+        <div className="flex h-screen bg-slate-100 overflow-hidden font-sans">
             <InternSidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
 
             <div className="flex-1 flex flex-col min-w-0 overflow-hidden">

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import { useData } from '../../context/DataContext';
+import LoadingSpinner from '../../components/common/LoadingSpinner';
 
 import medal1 from '../../assets/medals/medal_1.png';
 import medal2 from '../../assets/medals/medal_2.png';
@@ -70,7 +71,7 @@ const InternProgress = () => {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {isLoading ? (
-                    <div className="col-span-full py-8 text-center text-sm text-gray-500">Loading progress...</div>
+                    <div className="col-span-full py-12 flex justify-center"><LoadingSpinner message="Loading progress..." /></div>
                 ) : stats.length === 0 ? (
                     <div className="col-span-full py-8 text-center text-sm text-gray-500">No interns found.</div>
                 ) : (

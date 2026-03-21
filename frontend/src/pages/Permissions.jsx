@@ -4,6 +4,7 @@ import { Search, Lock, CheckCircle, Eye, EyeOff } from 'lucide-react';
 import { cn } from '../utils/cn';
 import { useToast } from '../context/ToastContext';
 import axios from 'axios';
+import LoadingSpinner from '../components/common/LoadingSpinner';
 
 export default function Permissions() {
     const [permissions, setPermissions] = useState([]);
@@ -102,8 +103,8 @@ export default function Permissions() {
                             <tbody className="divide-y divide-gray-100">
                                 {isLoading ? (
                                     <tr>
-                                        <td colSpan="5" className="px-6 py-12 text-center text-gray-500">
-                                            Loading permissions...
+                                        <td colSpan="5" className="px-6 py-12">
+                                            <LoadingSpinner message="Loading permissions..." />
                                         </td>
                                     </tr>
                                 ) : filteredPermissions.length === 0 ? (

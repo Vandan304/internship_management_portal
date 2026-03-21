@@ -83,7 +83,7 @@ const VerifyOtp = () => {
                             {otp.map((data, index) => {
                                 return (
                                     <input
-                                        className="w-14 h-14 text-center text-2xl font-bold bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all outline-none"
+                                        className="w-14 h-14 text-center text-2xl font-bold bg-gray-50 border border-gray-400 rounded-xl focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all outline-none"
                                         type="text"
                                         name="otp"
                                         maxLength="1"

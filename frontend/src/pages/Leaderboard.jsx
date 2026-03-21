@@ -38,7 +38,7 @@ export default function Leaderboard() {
                 {!isAdmin && currentUserRank && (
                     <div className={cn(
                         "px-6 py-3 rounded-2xl flex items-center gap-4 shadow-sm border",
-                        currentUserRank.rank <= 3 ? "bg-yellow-50 border-yellow-200" : "bg-brand-50 border-brand-100"
+                        currentUserRank.rank <= 3 ? "bg-transparent border-yellow-200" : "bg-brand-50 border-brand-100"
                     )}>
                         {currentUserRank.rank <= 3 ? (
                             <img src={medalMap[currentUserRank.rank]} alt="Rank Medal" className="w-8 h-8 object-contain" />
@@ -74,7 +74,7 @@ export default function Leaderboard() {
                                         intern={top3[1]}
                                         rank={2}
                                         color="text-slate-400"
-                                        bgColor="bg-slate-50/50"
+                                        bgColor="bg-transparent"
                                         borderColor="border-slate-200"
                                         icon={<img src={medal2} alt="Silver Medal" className="w-16 h-16 object-contain" />}
                                         height="h-64"
@@ -88,7 +88,7 @@ export default function Leaderboard() {
                                         intern={top3[0]}
                                         rank={1}
                                         color="text-yellow-600"
-                                        bgColor="bg-yellow-50/50"
+                                        bgColor="bg-transparent"
                                         borderColor="border-yellow-200"
                                         icon={<img src={medal1} alt="Gold Medal" className="w-20 h-20 object-contain" />}
                                         height="h-80"
@@ -103,7 +103,7 @@ export default function Leaderboard() {
                                         intern={top3[2]}
                                         rank={3}
                                         color="text-amber-700"
-                                        bgColor="bg-amber-50/50"
+                                        bgColor="bg-transparent"
                                         borderColor="border-amber-200"
                                         icon={<img src={medal3} alt="Bronze Medal" className="w-16 h-16 object-contain" />}
                                         height="h-56"
@@ -189,7 +189,7 @@ export default function Leaderboard() {
                     {currentUserRank?.rank <= 3 ? (
                         <div className="bg-gradient-to-br from-brand-500 to-brand-700 p-8 rounded-3xl text-white shadow-2xl shadow-brand-100">
                             <div className="flex items-center gap-6">
-                                <div className="p-4 bg-white/20 rounded-2xl backdrop-blur-md">
+                                <div className="p-4 rounded-2xl">
                                     <img src={medalMap[currentUserRank.rank]} alt="Trophy" className="w-16 h-16 object-contain" />
                                 </div>
                                 <div>

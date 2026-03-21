@@ -16,8 +16,8 @@ const getBaseTemplate = (title, content, buttonLabel, buttonLink) => {
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f2f3f3; margin: 0; padding: 0; color: #16191f; }
         .container { max-width: 600px; margin: 40px auto; background-color: #ffffff; border-radius: 2px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.12); border-top: 4px solid #232f3e; }
-        .header { padding: 30px 40px; background-color: #ffffff; }
-        .logo img { height: 80px; display: block; }
+        .header { padding: 30px 40px; background-color: #ffffff; text-align: center; }
+        .logo img { max-height: 120px; max-width: 200px; display: block; margin: 0 auto; object-fit: contain; }
         .content { padding: 40px; border-top: 1px solid #eaeded; }
         .title { font-size: 20px; font-weight: 700; color: #16191f; margin-bottom: 24px; }
         .message { font-size: 16px; line-height: 24px; color: #545b64; margin-bottom: 30px; }
@@ -29,7 +29,7 @@ const getBaseTemplate = (title, content, buttonLabel, buttonLink) => {
     <div class="container">
         <div class="header">
             <div class="logo">
-                <img src="https://res.cloudinary.com/demkiu4xj/image/upload/v1774018072/logo1_m98bgm.png" alt="Appifly Infotech">
+                <img src="cid:applogo" alt="Appifly Infotech">
             </div>
         </div>
         <div class="content">
@@ -64,7 +64,12 @@ const sendInternCredentials = async (email, name, password, internId, role) => {
             from: `"Appifly Intern Portal" <${process.env.EMAIL_USER}>`,
             to: email,
             subject: 'Internship Portal Account Created',
-            html: html
+            html: html,
+            attachments: [{
+                filename: 'logo1_backup.png',
+                path: require('path').join(__dirname, '../../frontend/src/assets/logo1_backup.png'),
+                cid: 'applogo'
+            }]
         };
 
         const info = await transporter.sendMail(mailOptions);
@@ -91,7 +96,12 @@ const sendOTPEmail = async (email, name, otp) => {
             from: `"Appifly Security" <${process.env.EMAIL_USER}>`,
             to: email,
             subject: 'Password Reset OTP - Internship Portal',
-            html: html
+            html: html,
+            attachments: [{
+                filename: 'logo1_backup.png',
+                path: require('path').join(__dirname, '../../frontend/src/assets/logo1_backup.png'),
+                cid: 'applogo'
+            }]
         };
 
         const info = await transporter.sendMail(mailOptions);
