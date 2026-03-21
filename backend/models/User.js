@@ -74,6 +74,10 @@ const userSchema = new mongoose.Schema({
     endDate: {
         type: Date,
         default: null
+    },
+    fcmToken: {
+        type: String,
+        default: null
     }
 }, {
     timestamps: true

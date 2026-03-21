@@ -119,6 +119,15 @@ export const AuthProvider = ({ children }) => {
         setUser(updatedUserData);
     };
 
+    const updateFcmToken = async (fcmToken) => {
+        try {
+            await axios.post('/api/auth/update-fcm-token', { fcmToken });
+            console.log('[FCM] Token updated on server');
+        } catch (error) {
+            console.error('[FCM ERROR] Failed to update token on server', error);
+        }
+    };
+
     const value = {
         user,
         isLoading,
@@ -126,6 +135,7 @@ export const AuthProvider = ({ children }) => {
         register,
         logout,
         updateUser,
+        updateFcmToken,
         isAuthenticated: !!user,
         isAdmin: user?.role === 'admin',
         isIntern: user?.role === 'intern',

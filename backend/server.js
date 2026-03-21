@@ -14,7 +14,7 @@ const taskRoutes = require('./routes/taskRoutes');
 const chatRoutes = require('./routes/chatRoutes');
 const leaderboardRoutes = require('./routes/leaderboardRoutes');
 const { errorHandler } = require('./middleware/errorMiddleware');
-const { initCronJobs } = require('./utils/cronJobs');
+const { initCronJobs, processMissedNotifications } = require('./utils/cronJobs');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -42,9 +42,10 @@ mongoose.connect(process.env.MONGODB_URI)
     .then(() => {
         console.log('Successfully connected to MongoDB.');
 
-        server.listen(PORT, () => {
+        server.listen(PORT, async () => {
             console.log(`Server is running on port: ${PORT}`);
             initCronJobs();
+            await processMissedNotifications();
         });
     })
     .catch((error) => {
@@ -75,4 +76,4 @@ app.get('/', (req, res) => {
 });
 app.use(errorHandler);
 
-initCronJobs();
+// initCronJobs(); // Removed redundant call, it is initialized after DB connection above

@@ -62,8 +62,7 @@ const getEmailTemplate = (title, internName, taskTitle, deadline, type) => {
     <div class="container">
         <div class="header">
             <div class="logo">
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="${accentColor}"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
-                <span>InternPortal</span>
+                <img src="https://res.cloudinary.com/demkiu4xj/image/upload/v1774018072/logo1_m98bgm.png" alt="Appifly Infotech" height="80" style="display: block;">
             </div>
         </div>
         <div class="content">

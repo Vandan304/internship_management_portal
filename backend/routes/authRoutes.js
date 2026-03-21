@@ -40,4 +40,27 @@ router.get('/admin-only', protect, authorizeRoles('admin'), (req, res) => {
     });
 });
 
+// @route POST /api/auth/update-fcm-token
+// @desc  Update user's FCM token for push notifications
+// @access Private
+router.post('/update-fcm-token', protect, async (req, res) => {
+    try {
+        const { fcmToken } = req.body;
+        if (!fcmToken) {
+            return res.status(400).json({ success: false, message: 'FCM token is required' });
+        }
+
+        req.user.fcmToken = fcmToken;
+        await req.user.save();
+
+        res.status(200).json({
+            success: true,
+            message: 'FCM token updated successfully'
+        });
+    } catch (error) {
+        console.error('[AUTH ERROR] Update FCM token failed:', error);
+        res.status(500).json({ success: false, message: 'Internal server error' });
+    }
+});
+
 module.exports = router;

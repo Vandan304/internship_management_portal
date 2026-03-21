@@ -1,0 +1,17 @@
+--- START REPORT ---
+Current Time: 2026-03-21T08:08:41.436Z
+Date Range: 2026-03-20T18:30:00.000Z TO 2026-03-21T18:29:59.999Z
+Count Due Today: 3
+Task 1:
+  Title: baps
+  AssignedTo: 22dce119@charusat.edu.in
+  Deadline: 2026-03-21T18:29:59.999Z
+Task 2:
+  Title: Test Task: Due Tomorrow
+  AssignedTo: baps123@gmail.com
+  Deadline: 2026-03-21T18:29:59.999Z
+Task 3:
+  Title: baps
+  AssignedTo: 22dce119@charusat.edu.in
+  Deadline: 2026-03-21T18:29:59.999Z
+--- END REPORT ---
