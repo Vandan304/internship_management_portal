@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
+import axios from 'axios';
 import { LayoutDashboard, Users, FileText, Download, Settings, LogOut, X, ListTodo, ClipboardCheck, TrendingUp, MessageCircle, Trophy } from 'lucide-react';
 import { cn } from '../../utils/cn';
 import { useAuth } from '../../context/AuthContext';
@@ -19,6 +20,29 @@ const navItems = [
 
 export function Sidebar({ isOpen, onClose }) {
     const { logout } = useAuth();
+    const [unreadChatCount, setUnreadChatCount] = useState(0);
+
+    useEffect(() => {
+        let isMounted = true;
+        const fetchUnreadChat = async () => {
+            try {
+                const res = await axios.get('/api/chat/conversations');
+                if (res.data.success && isMounted) {
+                    const count = res.data.data.reduce((sum, conv) => sum + (conv.unreadCount || 0), 0);
+                    setUnreadChatCount(count);
+                }
+            } catch (error) {
+                console.error('Error fetching unread chat count:', error);
+            }
+        };
+        
+        fetchUnreadChat();
+        const intervalId = setInterval(fetchUnreadChat, 60000);
+        return () => {
+            isMounted = false;
+            clearInterval(intervalId);
+        };
+    }, []);
 
     return (
         <>
@@ -46,7 +70,7 @@ export function Sidebar({ isOpen, onClose }) {
                 </div>
 
                 {/* Navigation */}
-                <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+                <nav className="flex-1 px-4 pb-4 pt-5 sm:pt-6 lg:pt-7 space-y-1 overflow-y-auto">
                     {navItems.map((item) => (
                         <NavLink
                             key={item.to}
@@ -62,8 +86,13 @@ export function Sidebar({ isOpen, onClose }) {
                         >
                             {({ isActive }) => (
                                 <>
-                                    <item.icon size={18} className={`transition-colors ${isActive ? "text-sky-600" : "text-gray-400 group-hover:text-sky-500"}`} />
-                                    {item.label}
+                                    <item.icon size={18} className={`transition-colors flex-shrink-0 ${isActive ? "text-sky-600" : "text-gray-400 group-hover:text-sky-500"}`} />
+                                    <span className="flex-1">{item.label}</span>
+                                    {item.label === 'Chat' && unreadChatCount > 0 && (
+                                        <span className="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full shadow-sm ml-auto">
+                                            {unreadChatCount}
+                                        </span>
+                                    )}
                                 </>
                             )}
                         </NavLink>

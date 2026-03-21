@@ -39,7 +39,7 @@ export default function Dashboard() {
     };
 
     return (
-        <div className="space-y-6 animate-fade-in-up">
+        <div className="space-y-6 animate-fade-in-up overflow-y-auto scrollbar-hide h-full pb-8 pr-2">
             <div className="flex items-center justify-between">
                 <div>
                     <h2 className="text-2xl font-bold text-gray-900">Dashboard</h2>

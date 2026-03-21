@@ -19,6 +19,7 @@ import logoImage from '../../assets/logo1_backup.png';
 export function InternSidebar({ isOpen, onClose }) {
     const { logout } = useAuth();
     const [unreadCount, setUnreadCount] = useState(0);
+    const [unreadChatCount, setUnreadChatCount] = useState(0);
 
     useEffect(() => {
         let isMounted = true;
@@ -35,12 +36,40 @@ export function InternSidebar({ isOpen, onClose }) {
             }
         };
 
+        const fetchUnreadChat = async () => {
+            try {
+                const res = await axios.get('/api/chat/conversations');
+                if (res.data.success && isMounted) {
+                    const count = res.data.data.reduce((sum, conv) => sum + (conv.unreadCount || 0), 0);
+                    setUnreadChatCount(count);
+                }
+            } catch (error) {
+                console.error('Error fetching unread chat count:', error);
+            }
+        };
+
         fetchUnreadCount();
-        const intervalId = setInterval(fetchUnreadCount, 60000); // refresh every minute
+        fetchUnreadChat();
+        
+        const intervalId = setInterval(() => {
+            fetchUnreadCount();
+            fetchUnreadChat();
+        }, 60000); // refresh every minute
+
+        const handleUpdate = (e) => {
+            if (e && e.detail && typeof e.detail.unreadCount !== 'undefined') {
+                setUnreadCount(e.detail.unreadCount);
+            } else if (isMounted) {
+                fetchUnreadCount();
+            }
+        };
+
+        window.addEventListener('notificationsUpdated', handleUpdate);
 
         return () => {
             isMounted = false;
             clearInterval(intervalId);
+            window.removeEventListener('notificationsUpdated', handleUpdate);
         };
     }, []);
 
@@ -85,7 +114,7 @@ export function InternSidebar({ isOpen, onClose }) {
                     </div>
 
                     {/* Nav Items */}
-                    <div className="flex-1 overflow-y-auto py-6 px-3 space-y-1">
+                    <div className="flex-1 overflow-y-auto px-3 pb-6 pt-5 sm:pt-6 lg:pt-7 space-y-1">
 
                         {navItems.map((item) => (
                             <NavLink
@@ -108,6 +137,11 @@ export function InternSidebar({ isOpen, onClose }) {
                                         {item.label === 'Notifications' && unreadCount > 0 && (
                                             <span className="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
                                                 {unreadCount}
+                                            </span>
+                                        )}
+                                        {item.label === 'Chat' && unreadChatCount > 0 && (
+                                            <span className="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full ml-auto">
+                                                {unreadChatCount}
                                             </span>
                                         )}
                                     </>

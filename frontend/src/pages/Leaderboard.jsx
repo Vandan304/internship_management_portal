@@ -25,7 +25,7 @@ export default function Leaderboard() {
     const isAdmin = user?.role === 'admin';
 
     return (
-        <div className="space-y-8 animate-fade-in-up pb-12">
+        <div className="space-y-8 animate-fade-in-up overflow-y-auto scrollbar-hide h-full pb-12 pr-2">
 
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>

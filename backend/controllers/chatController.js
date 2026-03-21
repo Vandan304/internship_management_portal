@@ -43,9 +43,18 @@ exports.getConversations = async (req, res, next) => {
             const unreadCount = await Message.countDocuments({
                 conversationId: conv._id,
                 receiverId: userId,
-                isRead: false
+                isRead: false,
+                deletedBy: { $ne: userId }
             });
             conv.unreadCount = unreadCount;
+
+            // Fetch the actual last message that this user hasn't deleted
+            const lastMsg = await Message.findOne({
+                conversationId: conv._id,
+                deletedBy: { $ne: userId }
+            }).sort({ createdAt: -1 }).lean();
+
+            conv.lastMessage = lastMsg;
 
             // Decrypt last message if it exists
             if (conv.lastMessage && conv.lastMessage.encryptedMessage) {
@@ -66,7 +75,10 @@ exports.getConversations = async (req, res, next) => {
 exports.getMessages = async (req, res, next) => {
     try {
         const { conversationId } = req.params;
-        const messages = await Message.find({ conversationId })
+        const messages = await Message.find({ 
+            conversationId,
+            deletedBy: { $ne: req.user.id }
+        })
             .sort({ createdAt: 1 })
             .lean();
             
@@ -187,20 +199,30 @@ exports.deleteMessages = async (req, res, next) => {
             return res.status(404).json({ success: false, message: 'No messages found' });
         }
         
-        // Authorize: Admin can delete any, but user can only delete their own sent messages.
-        const isAuthorized = req.user.role === 'admin' || messages.every(msg => msg.senderId.toString() === currentUserId);
-        
-        if (!isAuthorized) {
-            return res.status(403).json({ success: false, message: 'Not authorized to delete these messages. You can only delete your own.' });
-        }
-        
+        // Soft delete for the current user
         for (const msg of messages) {
-            if (msg.fileUrl) {
-                await storageService.deleteFile(msg.fileUrl, msg.storageType);
+            if (!msg.deletedBy.includes(currentUserId)) {
+                msg.deletedBy.push(currentUserId);
+            }
+            
+            // Check if BOTH participants have deleted it (sender and receiver)
+            const senderIdStr = msg.senderId.toString();
+            const receiverIdStr = msg.receiverId.toString();
+            const deletedByStrs = msg.deletedBy.map(id => id.toString());
+            
+            const isDeletedByBoth = deletedByStrs.includes(senderIdStr) && deletedByStrs.includes(receiverIdStr);
+            
+            if (isDeletedByBoth) {
+                // Hard delete
+                if (msg.fileUrl) {
+                    await storageService.deleteFile(msg.fileUrl, msg.storageType);
+                }
+                await Message.deleteOne({ _id: msg._id });
+            } else {
+                // Save the soft delete modification
+                await msg.save();
             }
         }
-        
-        await Message.deleteMany({ _id: { $in: messageIds } });
         
         res.status(200).json({ success: true, message: 'Messages deleted successfully' });
     } catch (error) {

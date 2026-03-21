@@ -3,7 +3,18 @@ import { format } from 'date-fns';
 import { Paperclip, Check } from 'lucide-react';
 import { getFileUrl } from '../../utils/urlUtils';
 
+const isEmojiOnly = (text) => {
+    if (!text) return false;
+    const stripped = text.replace(/\s/g, '');
+    if (!stripped) return false;
+    // Basic reliable way: check if it contains NO standard alphanumeric or punctuation chars usually typed.
+    // Emojis often fall outside basic ASCII.
+    return !/[a-zA-Z0-9\.,!?'"()/\\;:{}\[\]<>\-_+=@#$%^&*~`]/.test(stripped) && /^[\p{Emoji}\p{Emoji_Presentation}]+$/u.test(stripped);
+};
+
 const MessageBubble = ({ message, isOwnMessage, isSelectMode, isSelected, onSelect }) => {
+    const emojiOnly = isEmojiOnly(message.messageText) && !message.fileUrl;
+    
     return (
         <div
             className={`flex w-full ${isOwnMessage ? 'justify-end' : 'justify-start'} mb-4 ${isSelectMode ? 'cursor-pointer hover:bg-gray-100/50 p-1 -mx-1 rounded-xl transition-colors' : ''}`}
@@ -16,7 +27,9 @@ const MessageBubble = ({ message, isOwnMessage, isSelectMode, isSelected, onSele
                     </div>
                 </div>
             )}
-            <div className={`max-w-[70%] rounded-2xl px-4 py-2 flex flex-col ${isOwnMessage ? 'bg-brand-600 text-white rounded-br-none' : 'bg-gray-100 text-gray-800 rounded-bl-none'} shadow-sm relative`}>
+            <div className={`max-w-[70%] rounded-2xl px-4 py-2 flex flex-col relative
+                ${emojiOnly ? 'bg-transparent text-gray-800 p-0' : isOwnMessage ? 'bg-brand-600 text-white rounded-br-none shadow-sm' : 'bg-gray-100 text-gray-800 rounded-bl-none shadow-sm'}
+            `}>
 
                 {message.fileUrl && (
                     <a
@@ -31,10 +44,10 @@ const MessageBubble = ({ message, isOwnMessage, isSelectMode, isSelected, onSele
                 )}
 
                 {message.messageText && (
-                    <span className="text-sm whitespace-pre-wrap break-words">{message.messageText}</span>
+                    <span className={`${emojiOnly ? 'text-4xl' : 'text-sm'} whitespace-pre-wrap break-words`}>{message.messageText}</span>
                 )}
 
-                <div className={`text-[10px] mt-1 flex items-center justify-end ${isOwnMessage ? 'text-brand-100' : 'text-gray-500'}`}>
+                <div className={`text-[10px] mt-1 flex items-center justify-end ${emojiOnly ? 'text-gray-400 font-medium' : isOwnMessage ? 'text-brand-100' : 'text-gray-500'}`}>
                     <span>{format(new Date(message.createdAt), 'HH:mm')}</span>
                 </div>
             </div>

@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Plus, Search, Filter, Trash2, Edit2, ListTodo, CheckCircle, Clock } from 'lucide-react';
 import axios from 'axios';
-import { toast } from 'react-hot-toast';
+import { useToast } from '../../context/ToastContext';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 
 const TaskManagement = () => {
+    const { addToast } = useToast();
     const [tasks, setTasks] = useState([]);
     const [interns, setInterns] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -32,7 +34,7 @@ const TaskManagement = () => {
             if (internsRes.data.success) setInterns(internsRes.data.data);
         } catch (error) {
             console.error('Error fetching data:', error);
-            toast.error('Failed to fetch data');
+            addToast('Failed to fetch data', 'error');
         } finally {
             setIsLoading(false);
         }
@@ -49,13 +51,13 @@ const TaskManagement = () => {
             await axios.post('/api/tasks', formData, {
                 headers: { Authorization: `Bearer ${token}` }
             });
-            toast.success('Task created successfully');
+            addToast('Task created successfully', 'success');
             setIsCreateModalOpen(false);
             setFormData({ title: '', description: '', assignedTo: '', weekNumber: '', deadline: '' });
             fetchData();
         } catch (error) {
             console.error('Error creating task:', error);
-            toast.error(error.response?.data?.message || 'Failed to create task');
+            addToast(error.response?.data?.message || 'Failed to create task', 'error');
         }
     };
 
@@ -65,8 +67,8 @@ const TaskManagement = () => {
     );
 
     return (
-        <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="h-full flex flex-col space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 flex-shrink-0">
                 <div>
                     <h1 className="text-2xl font-bold text-gray-900">Task Management</h1>
                     <p className="text-gray-500">Assign and manage intern tasks.</p>
@@ -80,7 +82,7 @@ const TaskManagement = () => {
                 </button>
             </div>
 
-            <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col sm:flex-row gap-4">
+            <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col sm:flex-row gap-4 flex-shrink-0">
                 <div className="relative flex-1">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
                     <input
@@ -93,10 +95,10 @@ const TaskManagement = () => {
                 </div>
             </div>
 
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-                <div className="overflow-x-auto">
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm flex-1 flex flex-col min-h-0 overflow-hidden">
+                <div className="overflow-auto flex-1">
                     <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50">
+                        <thead className="bg-gray-50 sticky top-0 z-10">
                             <tr>
                                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Task Info</th>
                                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Assigned Intern</th>
@@ -146,15 +148,15 @@ const TaskManagement = () => {
                 </div>
             </div>
 
-            {/* Create Task Modal */}
-            {isCreateModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/50 backdrop-blur-sm">
-                    <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
-                        <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+            {/* Create Task Modal - Portaled to document.body */}
+            {isCreateModalOpen && createPortal(
+                <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-gray-900/50 backdrop-blur-sm">
+                    <div className="bg-white rounded-xl shadow-xl w-full max-w-md max-h-[90vh] flex flex-col overflow-hidden">
+                        <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50 flex-shrink-0">
                             <h3 className="text-lg font-semibold text-gray-900">Assign New Task</h3>
                             <button onClick={() => setIsCreateModalOpen(false)} className="text-gray-400 hover:text-gray-600">×</button>
                         </div>
-                        <form onSubmit={handleCreateTask} className="p-6 space-y-4">
+                        <form onSubmit={handleCreateTask} className="p-6 space-y-4 overflow-y-auto">
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
                                 <input type="text" required value={formData.title} onChange={e => setFormData({ ...formData, title: e.target.value })} className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-brand-500 focus:border-brand-500 outline-none" />
@@ -186,7 +188,8 @@ const TaskManagement = () => {
                             </div>
                         </form>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
         </div>
     );

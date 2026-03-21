@@ -7,6 +7,28 @@ const ChatWindow = ({ activeConversation, currentUserId, messages, onSendMessage
     const messagesEndRef = useRef(null);
     const [isSelectMode, setIsSelectMode] = useState(false);
     const [selectedMessageIds, setSelectedMessageIds] = useState([]);
+    const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const menuRef = useRef(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (menuRef.current && !menuRef.current.contains(event.target)) {
+                setIsMenuOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    const handleClearChat = async () => {
+        setIsMenuOpen(false);
+        if (messages.length === 0) return;
+        const success = await onDeleteMessages(messages.map(m => m._id));
+        if (success) {
+            setIsSelectMode(false);
+            setSelectedMessageIds([]);
+        }
+    };
 
     const toggleSelectMode = () => {
         setIsSelectMode(!isSelectMode);
@@ -56,7 +78,7 @@ const ChatWindow = ({ activeConversation, currentUserId, messages, onSendMessage
     return (
         <div className="flex-1 flex flex-col bg-gray-50 h-full overflow-hidden">
             {/* Header */}
-            <div className="h-16 border-b border-gray-100 bg-white flex items-center justify-between px-4 sm:px-6 flex-shrink-0 shadow-sm z-10 w-full">
+            <div className="h-16 border-b border-gray-100 bg-white flex items-center justify-between px-4 sm:px-6 flex-shrink-0 shadow-sm z-[60] w-full">
                 <div className="flex items-center gap-3">
                     {onBack && (
                         <button 
@@ -106,9 +128,26 @@ const ChatWindow = ({ activeConversation, currentUserId, messages, onSendMessage
                             >
                                 <CheckSquare size={20} />
                             </button>
-                            <button className="hover:text-brand-600 transition-colors p-2 rounded-full hover:bg-brand-50"><Phone size={20} /></button>
-                            <button className="hover:text-brand-600 transition-colors p-2 rounded-full hover:bg-brand-50"><Video size={20} /></button>
-                            <button className="hover:text-brand-600 transition-colors p-2 rounded-full hover:bg-brand-50"><MoreVertical size={20} /></button>
+                            <div className="relative" ref={menuRef}>
+                                <button 
+                                    onClick={() => setIsMenuOpen(!isMenuOpen)}
+                                    className="hover:text-brand-600 transition-colors p-2 rounded-full hover:bg-brand-50"
+                                    title="More Options"
+                                >
+                                    <MoreVertical size={20} />
+                                </button>
+                                {isMenuOpen && (
+                                    <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-100 shadow-lg rounded-xl py-1 z-50">
+                                        <button 
+                                            onClick={handleClearChat}
+                                            className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                                        >
+                                            <Trash2 size={16} />
+                                            Clear Chat
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
                         </>
                     )}
                 </div>

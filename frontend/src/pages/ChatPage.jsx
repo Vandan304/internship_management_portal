@@ -256,7 +256,16 @@ const ChatPage = () => {
             });
             if (res.data.success) {
                 setMessages(prev => prev.filter(m => !messageIds.includes(m._id)));
-                toast.success('Messages deleted successfully');
+                
+                // If all current messages were deleted, clear the lastMessage from the conversation list
+                setConversations(prev => prev.map(c => {
+                    if (activeConversation && c._id === activeConversation._id) {
+                        return { ...c, lastMessage: null };
+                    }
+                    return c;
+                }));
+                
+                toast.success('Chat cleared successfully');
                 return true;
             }
         } catch (error) {

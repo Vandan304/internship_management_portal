@@ -93,8 +93,8 @@ export default function Interns() {
     if (isLoading) return <LoadingSpinner message="Loading intern directory..." />;
 
     return (
-        <div className="space-y-6 animate-fade-in-up">
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="h-full flex flex-col space-y-6 animate-fade-in-up">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 flex-shrink-0">
                 <div>
                     <h2 className="text-2xl font-bold text-gray-900">Intern Management</h2>
                     <p className="text-gray-500 text-sm mt-1">Manage intern accounts, access, and details.</p>
@@ -105,8 +105,8 @@ export default function Interns() {
                 </Button>
             </div>
 
-            <Card>
-                <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <Card className="flex-1 flex flex-col min-h-0 overflow-hidden">
+                <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 flex-shrink-0">
                     <div className="relative w-full sm:w-64">
                         <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                         <input
@@ -132,10 +132,10 @@ export default function Interns() {
                         </Button>
                     </div>
                 </CardHeader>
-                <CardContent className="p-0">
-                    <div className="overflow-x-auto">
+                <CardContent className="p-0 overflow-auto flex-1">
+                    <div className="min-w-full">
                         <table className="w-full text-sm text-left">
-                            <thead className="text-xs text-gray-500 uppercase bg-gray-50/50">
+                            <thead className="text-xs text-gray-500 uppercase bg-gray-50 sticky top-0 z-10">
                                 <tr>
                                     <th className="px-6 py-4 font-medium uppercase tracking-wider">Intern Details</th>
                                     <th className="px-6 py-4 font-medium uppercase tracking-wider">Role</th>
@@ -208,7 +208,12 @@ export default function Interns() {
                                                             addToast('Enable login access before generating offer letter', 'error');
                                                             return;
                                                         }
+                                                        if (intern.offerLetterAssigned) {
+                                                            addToast('Offer letter is already generated!', 'info');
+                                                            return;
+                                                        }
                                                         try {
+                                                            addToast('Generating Offer Letter...', 'info');
                                                             await generateOfferLetter(intern.id);
                                                             addToast('Offer Letter Generated Successfully', 'success');
                                                         } catch (err) {
@@ -237,7 +242,12 @@ export default function Interns() {
                                                             addToast('Enable login access before generating certificate', 'error');
                                                             return;
                                                         }
+                                                        if (intern.certificateAssigned) {
+                                                            addToast('Completion certificate is already generated!', 'info');
+                                                            return;
+                                                        }
                                                         try {
+                                                            addToast('Generating Completion Certificate...', 'info');
                                                             await generateCompletionCertificate(intern.id);
                                                             addToast('Completion Certificate Generated Successfully', 'success');
                                                         } catch (err) {

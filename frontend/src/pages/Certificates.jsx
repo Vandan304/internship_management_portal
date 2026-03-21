@@ -83,7 +83,7 @@ export default function Certificates() {
     if (isLoading) return <LoadingSpinner message="Loading certificates..." />;
 
     return (
-        <div className="flex flex-col h-[calc(100vh-140px)] sm:h-[calc(100vh-160px)] space-y-4 animate-fade-in-up">
+        <div className="h-full flex flex-col space-y-4 animate-fade-in-up">
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4 flex-shrink-0">
                 <div>
                     <h2 className="text-2xl font-bold text-gray-900">Certificate Control</h2>
@@ -93,7 +93,7 @@ export default function Certificates() {
 
             <div className="flex flex-1 gap-6 overflow-hidden">
                 {/* Left Side: Upload Section (Fixed on desktop) */}
-                <div className="hidden lg:block w-80 flex-shrink-0 overflow-y-auto pb-4">
+                <div className="hidden lg:block w-80 flex-shrink-0 pb-4 overflow-visible">
                     <Card className="h-fit">
                         <CardHeader>
                             <CardTitle>Upload Certificate</CardTitle>
@@ -168,10 +168,10 @@ export default function Certificates() {
                                 />
                             </div>
                         </CardHeader>
-                        <CardContent className="p-0 flex-1 overflow-y-auto">
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-sm text-left border-collapse">
-                                    <thead className="text-xs text-gray-500 uppercase bg-gray-50/50 sticky top-0 z-10 backdrop-blur-sm">
+                        <CardContent className="p-0 flex-1 flex flex-col min-h-0">
+                            <div className="overflow-auto flex-1">
+                                <table className="w-full text-sm text-left relative">
+                                    <thead className="text-xs text-gray-500 uppercase bg-gray-50 sticky top-0 z-20 shadow-sm">
                                         <tr className="border-b border-gray-100">
                                             <th className="px-6 py-3 font-medium text-nowrap">File Name</th>
                                             <th className="px-6 py-3 font-medium text-nowrap">Uploaded</th>

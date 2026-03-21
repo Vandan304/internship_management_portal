@@ -19,7 +19,7 @@ const MyCertificates = () => {
     if (isLoading) return <LoadingSpinner message="Loading your certificates..." />;
 
     return (
-        <div className="flex flex-col h-[calc(100vh-140px)] sm:h-[calc(100vh-160px)] space-y-4">
+        <div className="h-full flex flex-col space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 flex-shrink-0">
                 <div>
                     <h1 className="text-2xl font-bold text-gray-900">My Certificates</h1>

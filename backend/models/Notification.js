@@ -8,20 +8,29 @@ const notificationSchema = new mongoose.Schema({
     },
     taskId: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Task',
-        required: true
+        ref: 'Task'
+    },
+    certificateId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Certificate'
+    },
+    title: {
+        type: String
     },
     message: {
         type: String,
         required: true
     },
+    isRead: {
+        type: Boolean,
+        default: false
+    },
     scheduledTime: {
-        type: Date,
-        required: true
+        type: Date
     },
     type: {
         type: String,
-        enum: ['today', 'tomorrow', '2day'],
+        enum: ['today', 'tomorrow', '2day', 'certificate', 'system'],
         required: true
     },
     status: {
@@ -35,8 +44,5 @@ const notificationSchema = new mongoose.Schema({
 }, {
     timestamps: true
 });
-
-// Compound index for duplicate prevention: userId + taskId + type + scheduledTime (date part)
-notificationSchema.index({ userId: 1, taskId: 1, type: 1, scheduledTime: 1 }, { unique: true });
 
 module.exports = mongoose.model('Notification', notificationSchema);

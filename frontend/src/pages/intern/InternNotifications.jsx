@@ -5,6 +5,7 @@ import { Bell, Check, CheckCircle2, Clock } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { useToast } from '../../context/ToastContext';
 import { useAuth } from '../../context/AuthContext';
+import LoadingSpinner from '../../components/common/LoadingSpinner';
 
 const InternNotifications = () => {
     const [notifications, setNotifications] = useState([]);
@@ -64,9 +65,12 @@ const InternNotifications = () => {
         try {
             const res = await axios.patch(`/api/notifications/${id}/read`);
             if (res.data.success) {
-                setNotifications(prev =>
-                    prev.map(n => n._id === id ? { ...n, isRead: true } : n)
-                );
+                setNotifications(prev => {
+                    const next = prev.map(n => n._id === id ? { ...n, isRead: true } : n);
+                    const unreadCount = next.filter(n => !n.isRead).length;
+                    window.dispatchEvent(new CustomEvent('notificationsUpdated', { detail: { unreadCount } }));
+                    return next;
+                });
             }
         } catch (error) {
             console.error('Error marking as read:', error);
@@ -79,6 +83,7 @@ const InternNotifications = () => {
             if (res.data.success) {
                 setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
                 addToast('All notifications marked as read', 'success');
+                window.dispatchEvent(new CustomEvent('notificationsUpdated', { detail: { unreadCount: 0 } }));
             }
         } catch (error) {
             console.error('Error marking all as read:', error);
@@ -89,13 +94,10 @@ const InternNotifications = () => {
     const unreadCount = (notifications || []).filter(n => !n.isRead).length;
 
     return (
-        <div className="space-y-6 animate-fade-in-up">
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="h-full flex flex-col space-y-6 animate-fade-in-up">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 flex-shrink-0">
                 <div>
-                    <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                        <Bell className="w-6 h-6 text-brand-600" />
-                        Notifications
-                    </h2>
+                    <h1 className="text-2xl font-bold text-gray-900">Notifications</h1>
                     <p className="text-gray-500 text-sm mt-1">Stay updated on your certificates and profile changes.</p>
                 </div>
                 {unreadCount > 0 && (
@@ -109,10 +111,11 @@ const InternNotifications = () => {
                 )}
             </div>
 
-            <Card>
-                <CardContent className="p-0">
-                    {isLoading ? (
-                        <div className="p-12 text-center text-gray-500">Loading notifications...</div>
+            <div className="flex-1 flex flex-col min-h-0">
+                <Card className="flex-1 flex flex-col overflow-hidden">
+                    <CardContent className="p-0 overflow-y-auto flex-1 scrollbar-hide">
+                        {isLoading ? (
+                        <div className="p-12 flex justify-center"><LoadingSpinner message="Loading notifications..." /></div>
                     ) : (!notifications || notifications.length === 0) ? (
                         <div className="p-12 flex flex-col items-center justify-center text-gray-500">
                             <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-4">
@@ -154,8 +157,9 @@ const InternNotifications = () => {
                             ))}
                         </div>
                     )}
-                </CardContent>
-            </Card>
+                    </CardContent>
+                </Card>
+            </div>
         </div>
     );
 };
