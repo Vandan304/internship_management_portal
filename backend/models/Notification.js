@@ -8,21 +8,32 @@ const notificationSchema = new mongoose.Schema({
     },
     taskId: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'Task',
-        required: true
+        ref: 'Task'
+        // removed required: true
+    },
+    certificateId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Certificate'
+    },
+    title: {
+        type: String
     },
     message: {
         type: String,
         required: true
     },
+    isRead: {
+        type: Boolean,
+        default: false
+    },
     scheduledTime: {
-        type: Date,
-        required: true
+        type: Date
+        // removed required: true
     },
     type: {
         type: String,
-        enum: ['today', 'tomorrow', '2day'],
         required: true
+        // removed enum to allow 'system', 'certificate', 'assigned', etc.
     },
     status: {
         type: String,
@@ -36,7 +47,11 @@ const notificationSchema = new mongoose.Schema({
     timestamps: true
 });
 
-// Compound index for duplicate prevention: userId + taskId + type + scheduledTime (date part)
-notificationSchema.index({ userId: 1, taskId: 1, type: 1, scheduledTime: 1 }, { unique: true });
+const Notification = mongoose.model('Notification', notificationSchema);
 
-module.exports = mongoose.model('Notification', notificationSchema);
+// Drop the old unique index that required scheduledTime and taskId
+Notification.collection.dropIndex('userId_1_taskId_1_type_1_scheduledTime_1').catch(err => {
+    // Ignore error if index doesn't exist
+});
+
+module.exports = Notification;

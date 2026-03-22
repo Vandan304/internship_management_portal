@@ -16,10 +16,10 @@ const medalMap = {
 };
 
 export function Header({ onMenuClick }) {
-    const { user } = useAuth();
+    const { user, socket } = useAuth();
     const { leaderboardData } = useData();
     const navigate = useNavigate();
-    const [hasUnread, setHasUnread] = useState(false);
+    const [unreadCount, setUnreadCount] = useState(0);
 
     const currentUserRank = leaderboardData?.fullList?.find(
         (i) => i.id === (user?._id || user?.id) || i.internId === user?.internId
@@ -32,8 +32,8 @@ export function Header({ onMenuClick }) {
 
                 const res = await axios.get('/api/notifications');
                 if (res.data.success) {
-                    const unread = res.data.data.some(n => !n.isRead);
-                    setHasUnread(unread);
+                    const count = res.data.data.filter(n => !n.isRead).length;
+                    setUnreadCount(count);
                 }
             } catch (error) {
                 console.error('Error fetching notifications:', error);
@@ -41,9 +41,24 @@ export function Header({ onMenuClick }) {
         };
 
         fetchUnread();
-        const intervalId = setInterval(fetchUnread, 60000);
-        return () => clearInterval(intervalId);
+        
+        window.addEventListener('notificationsRead', fetchUnread);
+        return () => window.removeEventListener('notificationsRead', fetchUnread);
     }, [user]);
+
+    useEffect(() => {
+        if (!socket || user?.role !== 'intern') return;
+
+        const handleNewNotification = () => {
+            setUnreadCount(prev => prev + 1);
+        };
+
+        socket.on('newNotification', handleNewNotification);
+
+        return () => {
+            socket.off('newNotification', handleNewNotification);
+        };
+    }, [socket, user]);
 
     return (
         <header className="h-16 bg-white/80 backdrop-blur-md border-b border-gray-100 sticky top-0 z-30 px-4 sm:px-6 flex items-center justify-between">
@@ -77,8 +92,10 @@ export function Header({ onMenuClick }) {
                         className="p-2 text-gray-500 hover:bg-gray-100 hover:text-brand-600 rounded-full transition-colors relative"
                     >
                         <Bell size={20} />
-                        {hasUnread && (
-                            <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
+                        {unreadCount > 0 && (
+                            <span className="absolute top-0 right-0 inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-bold leading-none text-white transform translate-x-1/4 -translate-y-1/4 bg-red-500 rounded-full border-2 border-white">
+                                {unreadCount > 99 ? '99+' : unreadCount}
+                            </span>
                         )}
                     </button>
                 )}

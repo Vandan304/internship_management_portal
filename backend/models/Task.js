@@ -61,6 +61,10 @@ const taskSchema = new mongoose.Schema({
     pointsAwarded: {
         type: Boolean,
         default: false
+    },
+    overdueNotified: {
+        type: Boolean,
+        default: false
     }
 }, {
     timestamps: true

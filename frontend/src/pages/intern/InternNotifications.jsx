@@ -38,16 +38,11 @@ const InternNotifications = () => {
     useEffect(() => {
         fetchNotifications();
 
-        // 1. Back-up Polling (Every 5 seconds)
-        const interval = setInterval(() => {
-            fetchNotifications();
-        }, 5000);
-
-        // 2. Real-time Socket Updates
+        // Real-time Socket Updates
         if (socket) {
             socket.on('newNotification', (newNotification) => {
                 setNotifications(prev => {
-                    // Prevent duplicates if polling/socket arrive at same time
+                    // Prevent duplicates
                     if (prev.some(n => n._id === newNotification._id)) return prev;
                     return [newNotification, ...prev];
                 });
@@ -55,7 +50,6 @@ const InternNotifications = () => {
         }
 
         return () => {
-            clearInterval(interval);
             if (socket) socket.off('newNotification');
         };
     }, [socket]); // Socket dependency attached so it re-binds if socket initializes late
@@ -67,6 +61,7 @@ const InternNotifications = () => {
                 setNotifications(prev =>
                     prev.map(n => n._id === id ? { ...n, isRead: true } : n)
                 );
+                window.dispatchEvent(new CustomEvent('notificationsRead'));
             }
         } catch (error) {
             console.error('Error marking as read:', error);
@@ -79,6 +74,7 @@ const InternNotifications = () => {
             if (res.data.success) {
                 setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
                 addToast('All notifications marked as read', 'success');
+                window.dispatchEvent(new CustomEvent('notificationsRead'));
             }
         } catch (error) {
             console.error('Error marking all as read:', error);

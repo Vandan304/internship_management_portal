@@ -30,7 +30,6 @@ export function Sidebar({ isOpen, onClose }) {
                 )}
                 onClick={onClose}
             />
-
             {/* Sidebar Container */}
             <aside className={cn(
                 "fixed lg:static inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-100 shadow-soft transform transition-transform duration-300 lg:transform-none flex flex-col",
