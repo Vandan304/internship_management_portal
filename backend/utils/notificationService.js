@@ -35,6 +35,10 @@ const getEmailTemplate = (title, internName, taskTitle, deadline, type) => {
         urgencyText = 'NEW ASSIGNMENT';
         accentColor = '#1fb2a6'; // Success Teal
         timingWord = 'by the date shown below';
+    } else if (type === 'overdue') {
+        urgencyText = 'OVERDUE';
+        accentColor = '#d13212'; // AWS Red
+        timingWord = 'in the past and is now overdue';
     }
 
     return `
@@ -45,7 +49,7 @@ const getEmailTemplate = (title, internName, taskTitle, deadline, type) => {
         body { font-family: 'Amazon Ember', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f2f3f3; margin: 0; padding: 0; color: #16191f; }
         .container { max-width: 600px; margin: 40px auto; background-color: #ffffff; border-radius: 2px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.12); border-top: 4px solid ${accentColor}; }
         .header { padding: 30px 40px; background-color: #ffffff; }
-        .logo { font-size: 24px; font-weight: bold; color: #232f3e; display: flex; align-items: center; gap: 8px; }
+        .logo img { height: 120px; display: block; }
         .content { padding: 40px; border-top: 1px solid #eaeded; }
         .title { font-size: 22px; font-weight: 700; color: #16191f; margin-bottom: 24px; line-height: 1.2; }
         .message { font-size: 16px; line-height: 24px; color: #545b64; margin-bottom: 30px; }
@@ -62,7 +66,7 @@ const getEmailTemplate = (title, internName, taskTitle, deadline, type) => {
     <div class="container">
         <div class="header">
             <div class="logo">
-                <img src="https://res.cloudinary.com/demkiu4xj/image/upload/v1774018072/logo1_m98bgm.png" alt="Appifly Infotech" height="80" style="display: block;">
+                <img src="https://res.cloudinary.com/demkiu4xj/image/upload/v1774018072/logo1_m98bgm.png" alt="Appifly Infotech">
             </div>
         </div>
         <div class="content">
@@ -112,6 +116,9 @@ exports.sendDeadlineNotification = async (userEmail, internName, taskTitle, dead
         } else if (type === 'assigned') {
             title = 'New Task Assigned to You';
             subject = `[New Task] ${taskTitle} has been assigned`;
+        } else if (type === 'overdue') {
+            title = 'Action Required: Task Overdue';
+            subject = `[Overdue] ${taskTitle} deadline has passed`;
         }
 
         const html = getEmailTemplate(title, internName, taskTitle, deadline, type);

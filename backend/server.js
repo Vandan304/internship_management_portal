@@ -47,6 +47,13 @@ mongoose.connect(process.env.MONGODB_URI)
             initCronJobs();
             await processMissedNotifications();
         });
+
+        // Graceful shutdown for nodemon restarts
+        process.once('SIGUSR2', function () {
+            server.close(function () {
+                process.kill(process.pid, 'SIGUSR2');
+            });
+        });
     })
     .catch((error) => {
         console.error('Error connecting to MongoDB:', error.message);

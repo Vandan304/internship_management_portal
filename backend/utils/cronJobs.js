@@ -31,7 +31,8 @@ const runDeadlineAudit = async () => {
         const inTwoDays = getDayRange(2);
 
         const auditConfigs = [
-            { start: new Date(0), end: todayEnd, type: 'today', message: 'Task is due today' },
+            { start: new Date(0), end: new Date(todayStart.getTime() - 1), type: 'overdue', message: 'You missed the deadline' },
+            { start: todayStart, end: todayEnd, type: 'today', message: 'Task is due today' },
             { start: tomorrow.start, end: tomorrow.end, type: 'tomorrow', message: 'Task is due tomorrow' },
             { start: inTwoDays.start, end: inTwoDays.end, type: '2day', message: 'Task is due in 2 days' }
         ];
@@ -47,24 +48,52 @@ const runDeadlineAudit = async () => {
             for (const task of tasks) {
                 if (!task.assignedTo) continue;
 
-                // Duplicate Prevention: Check if notification already exists for this task + user + type + date
-                const existing = await Notification.findOne({
-                    userId: task.assignedTo._id,
-                    taskId: task._id,
-                    type: config.type,
-                    scheduledTime: { $gte: todayStart, $lte: todayEnd }
-                });
+                if (config.type === 'overdue') {
+                    // Overdue logic requested by user:
+                    if (task.overdueNotified) continue;
 
-                if (!existing) {
-                    await Notification.create({
+                    // Extra check in Notification collection as requested (optional safety net)
+                    const existing = await Notification.findOne({
                         userId: task.assignedTo._id,
                         taskId: task._id,
-                        message: `${config.message}: ${task.title}`,
-                        type: config.type,
-                        scheduledTime: now, // Set to now for immediate processing eligibility
-                        status: 'pending'
+                        type: 'overdue'
                     });
-                    createdCount++;
+
+                    if (!existing) {
+                        await Notification.create({
+                            userId: task.assignedTo._id,
+                            taskId: task._id,
+                            message: `${config.message}: ${task.title}`,
+                            type: 'overdue',
+                            scheduledTime: now,
+                            status: 'pending'
+                        });
+                        createdCount++;
+                    }
+
+                    // Ensure task flag is set to true immediately
+                    task.overdueNotified = true;
+                    await task.save();
+                } else {
+                    // Duplicate Prevention for standard reminders: check specific day
+                    const existing = await Notification.findOne({
+                        userId: task.assignedTo._id,
+                        taskId: task._id,
+                        type: config.type,
+                        scheduledTime: { $gte: todayStart, $lte: todayEnd }
+                    });
+
+                    if (!existing) {
+                        await Notification.create({
+                            userId: task.assignedTo._id,
+                            taskId: task._id,
+                            message: `${config.message}: ${task.title}`,
+                            type: config.type,
+                            scheduledTime: now,
+                            status: 'pending'
+                        });
+                        createdCount++;
+                    }
                 }
             }
         }

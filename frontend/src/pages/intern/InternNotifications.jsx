@@ -39,16 +39,11 @@ const InternNotifications = () => {
     useEffect(() => {
         fetchNotifications();
 
-        // 1. Back-up Polling (Every 5 seconds)
-        const interval = setInterval(() => {
-            fetchNotifications();
-        }, 5000);
-
-        // 2. Real-time Socket Updates
+        // Real-time Socket Updates
         if (socket) {
             socket.on('newNotification', (newNotification) => {
                 setNotifications(prev => {
-                    // Prevent duplicates if polling/socket arrive at same time
+                    // Prevent duplicates
                     if (prev.some(n => n._id === newNotification._id)) return prev;
                     return [newNotification, ...prev];
                 });
@@ -56,7 +51,6 @@ const InternNotifications = () => {
         }
 
         return () => {
-            clearInterval(interval);
             if (socket) socket.off('newNotification');
         };
     }, [socket]); // Socket dependency attached so it re-binds if socket initializes late
