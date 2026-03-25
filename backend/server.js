@@ -33,7 +33,8 @@ app.use(cors({
 }));
 
 // Explicitly handle OPTIONS preflight (common fix for preflight failures)
-app.options('*', cors());
+// In Express 5, '*' wildcard must be written as (.*)
+app.options('(.*)', cors());
 app.use(express.json());
 
 const http = require('http');
