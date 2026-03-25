@@ -12,5 +12,5 @@ export const getFileUrl = (dbPath) => {
     
     // Fallback: prepend local developmental server route 
     // In production, you might map this dynamically based on env vars
-    return `http://localhost:5000${dbPath}`;
+    return `${import.meta.env.VITE_API_URL}${dbPath}`;
 };

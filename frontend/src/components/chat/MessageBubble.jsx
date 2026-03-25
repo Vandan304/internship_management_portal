@@ -33,7 +33,7 @@ const MessageBubble = ({ message, isOwnMessage, isSelectMode, isSelected, onSele
 
                 {message.fileUrl && (
                     <a
-                        href={`http://localhost:5000/api/files/${message._id}?token=${localStorage.getItem('token')}`}
+                        href={`${import.meta.env.VITE_API_URL}/api/files/${message._id}?token=${localStorage.getItem('token')}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className={`flex items-center gap-2 mb-2 p-2 rounded-lg ${isOwnMessage ? 'bg-brand-700/50 hover:bg-brand-700' : 'bg-white hover:bg-gray-50'} transition-colors mt-1`}

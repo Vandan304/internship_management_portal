@@ -28,7 +28,7 @@ export const DataProvider = ({ children }) => {
             const token = localStorage.getItem('token');
             if (token) {
                 axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-                const res = await axios.get('http://localhost:5000/api/admin/interns');
+                const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/admin/interns`);
                 if (res.data.success) {
                     setInterns(res.data.data.map(i => ({
                         ...i,
@@ -48,7 +48,7 @@ export const DataProvider = ({ children }) => {
         try {
             const token = localStorage.getItem('token');
             if (token) {
-                const res = await axios.get('http://localhost:5000/api/certificates', {
+                const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/certificates`, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
                 if (res.data.success) {
@@ -73,7 +73,7 @@ export const DataProvider = ({ children }) => {
         try {
             const token = localStorage.getItem('token');
             if (token) {
-                const res = await axios.get('http://localhost:5000/api/certificates/my-certificates', {
+                const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/certificates/my-certificates`, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
                 if (res.data.success) {
@@ -135,7 +135,7 @@ export const DataProvider = ({ children }) => {
     const addIntern = async (intern) => {
         try {
             const token = localStorage.getItem('token');
-            const res = await axios.post('http://localhost:5000/api/admin/intern', intern, {
+            const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/admin/intern`, intern, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (res.data.success) {
@@ -150,7 +150,7 @@ export const DataProvider = ({ children }) => {
     const approveTask = async (id, comment) => {
         try {
             const token = localStorage.getItem('token');
-            const res = await axios.patch(`http://localhost:5000/api/tasks/${id}/approve`, 
+            const res = await axios.patch(`${import.meta.env.VITE_API_URL}/api/tasks/${id}/approve`, 
                 { comment },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
@@ -172,7 +172,7 @@ export const DataProvider = ({ children }) => {
     const updateIntern = async (id, updates) => {
         try {
             const token = localStorage.getItem('token');
-            const res = await axios.put(`http://localhost:5000/api/admin/intern/${id}`, updates, {
+            const res = await axios.put(`${import.meta.env.VITE_API_URL}/api/admin/intern/${id}`, updates, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (res.data.success) {
@@ -187,7 +187,7 @@ export const DataProvider = ({ children }) => {
     const deleteIntern = async (id) => {
         try {
             const token = localStorage.getItem('token');
-            const res = await axios.delete(`http://localhost:5000/api/admin/intern/${id}`, {
+            const res = await axios.delete(`${import.meta.env.VITE_API_URL}/api/admin/intern/${id}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
 
@@ -210,7 +210,7 @@ export const DataProvider = ({ children }) => {
     const blockIntern = async (id) => {
         try {
             const token = localStorage.getItem('token');
-            const res = await axios.patch(`http://localhost:5000/api/admin/intern/${id}/block`, {}, {
+            const res = await axios.patch(`${import.meta.env.VITE_API_URL}/api/admin/intern/${id}/block`, {}, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (res.data.success) {
@@ -225,7 +225,7 @@ export const DataProvider = ({ children }) => {
     const activateIntern = async (id) => {
         try {
             const token = localStorage.getItem('token');
-            const res = await axios.patch(`http://localhost:5000/api/admin/intern/${id}/activate`, {}, {
+            const res = await axios.patch(`${import.meta.env.VITE_API_URL}/api/admin/intern/${id}/activate`, {}, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (res.data.success) {
@@ -240,7 +240,7 @@ export const DataProvider = ({ children }) => {
     const generateCompletionCertificate = async (internId) => {
         try {
             const token = localStorage.getItem('token');
-            const res = await axios.post('http://localhost:5000/api/certificates/generate-completion', { internId }, {
+            const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/certificates/generate-completion`, { internId }, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (res.data.success) {
@@ -256,7 +256,7 @@ export const DataProvider = ({ children }) => {
     const generateOfferLetter = async (internId) => {
         try {
             const token = localStorage.getItem('token');
-            const res = await axios.post('http://localhost:5000/api/certificates/generate-offer-letter', { internId }, {
+            const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/certificates/generate-offer-letter`, { internId }, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (res.data.success) {
@@ -274,7 +274,7 @@ export const DataProvider = ({ children }) => {
     const addCertificate = async (formData) => {
         try {
             const token = localStorage.getItem('token');
-            const res = await axios.post('http://localhost:5000/api/certificates/upload', formData, {
+            const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/certificates/upload`, formData, {
                 headers: {
                     Authorization: `Bearer ${token}`,
                     'Content-Type': 'multipart/form-data'
@@ -293,7 +293,7 @@ export const DataProvider = ({ children }) => {
     const deleteCertificate = async (id) => {
         try {
             const token = localStorage.getItem('token');
-            const res = await axios.delete(`http://localhost:5000/api/certificates/${id}`, {
+            const res = await axios.delete(`${import.meta.env.VITE_API_URL}/api/certificates/${id}`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (res.data.success) {
@@ -312,7 +312,7 @@ export const DataProvider = ({ children }) => {
             if (updates.name) apiUpdates.title = updates.name;
             if (updates.visibility) apiUpdates.isVisible = updates.visibility === 'Public';
 
-            const res = await axios.put(`http://localhost:5000/api/certificates/${id}`, apiUpdates, {
+            const res = await axios.put(`${import.meta.env.VITE_API_URL}/api/certificates/${id}`, apiUpdates, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (res.data.success) {
@@ -327,7 +327,7 @@ export const DataProvider = ({ children }) => {
     const toggleCertificateVisibility = async (id) => {
         try {
             const token = localStorage.getItem('token');
-            const res = await axios.patch(`http://localhost:5000/api/certificates/${id}/visibility`, {}, {
+            const res = await axios.patch(`${import.meta.env.VITE_API_URL}/api/certificates/${id}/visibility`, {}, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (res.data.success) {
@@ -342,7 +342,7 @@ export const DataProvider = ({ children }) => {
     const toggleDownloadPermission = async (certId) => {
         try {
             const token = localStorage.getItem('token');
-            const res = await axios.patch(`http://localhost:5000/api/certificates/${certId}/download`, {}, {
+            const res = await axios.patch(`${import.meta.env.VITE_API_URL}/api/certificates/${certId}/download`, {}, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             if (res.data.success) {
@@ -358,7 +358,7 @@ export const DataProvider = ({ children }) => {
     const downloadCertificate = async (id, fileName) => {
         try {
             const token = localStorage.getItem('token');
-            const res = await axios.get(`http://localhost:5000/api/files/${id}`, {
+            const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/files/${id}`, {
                 headers: { Authorization: `Bearer ${token}` },
                 responseType: 'blob' // Tell Axios to expect binary data
             });
@@ -384,7 +384,7 @@ export const DataProvider = ({ children }) => {
         try {
             const token = localStorage.getItem('token');
             if (token) {
-                const res = await axios.get('http://localhost:5000/api/leaderboard', {
+                const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/leaderboard`, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
                 if (res.data.success) {

@@ -15,7 +15,7 @@ export const useAuth = () => {
 };
 
 // Set base URL for all axios requests
-axios.defaults.baseURL = 'http://localhost:5000';
+axios.defaults.baseURL = `${import.meta.env.VITE_API_URL}`;
 
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
@@ -57,7 +57,7 @@ export const AuthProvider = ({ children }) => {
     useEffect(() => {
         let newSocket;
         if (user) {
-            newSocket = io('http://localhost:5000');
+            newSocket = io(`${import.meta.env.VITE_API_URL}`);
             setSocket(newSocket);
             newSocket.emit('join', user._id || user.id);
         }

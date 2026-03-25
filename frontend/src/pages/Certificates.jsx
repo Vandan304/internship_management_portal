@@ -214,7 +214,7 @@ export default function Certificates() {
                                                 </td>
                                                 <td className="px-6 py-4 text-center">
                                                     <button
-                                                        onClick={() => window.open(`http://localhost:5000/api/files/${cert.id}?token=${localStorage.getItem('token')}`, '_blank')}
+                                                        onClick={() => window.open(`${import.meta.env.VITE_API_URL}/api/files/${cert.id}?token=${localStorage.getItem('token')}`, '_blank')}
                                                         className="p-1.5 text-gray-400 hover:text-brand-600 hover:bg-brand-50 rounded-lg transition-colors inline-block"
                                                         title="View Certificate"
                                                     >
