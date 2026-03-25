@@ -19,24 +19,7 @@ const { initCronJobs, processMissedNotifications } = require('./utils/cronJobs')
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// More flexible CORS to allow any Vercel origin during development
-app.use(cors({
-    origin: (origin, callback) => {
-        // Allows both local and any Vercel domain
-        if (!origin || origin.indexOf('vercel.app') !== -1 || origin.indexOf('localhost') !== -1) {
-            callback(null, true);
-        } else {
-            callback(new Error('Not allowed by CORS'));
-        }
-    },
-    methods: ["GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"],
-    credentials: true,
-    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept"]
-}));
-
-// Explicitly handle OPTIONS preflight (common fix for Vercel/Express)
-app.options('*', cors());
-
+app.use(cors());
 app.use(express.json());
 
 const http = require('http');
@@ -55,35 +38,27 @@ app.set('io', io);
 const chatSocket = require('./socket/chatSocket');
 chatSocket(io);
 
-// Database connection - handled asynchronously to not block the function export
-const connectDB = async () => {
-    if (mongoose.connection.readyState >= 1) return;
-    try {
-        await mongoose.connect(process.env.MONGODB_URI);
+mongoose.connect(process.env.MONGODB_URI)
+    .then(() => {
         console.log('Successfully connected to MongoDB.');
-        
-        // Initialize tasks only once
-        initCronJobs();
-        await processMissedNotifications().catch(err => console.error("Cron Error:", err));
-    } catch (error) {
-        console.error('Error connecting to MongoDB:', error.message);
-    }
-};
 
-// For local development
-if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
-    connectDB().then(() => {
-        server.listen(PORT, () => {
+        server.listen(PORT, async () => {
             console.log(`Server is running on port: ${PORT}`);
+            initCronJobs();
+            await processMissedNotifications();
         });
-    });
-}
 
-// Middleware to ensure DB is connected for every request (specific to serverless)
-app.use(async (req, res, next) => {
-    await connectDB();
-    next();
-});
+        // Graceful shutdown for nodemon restarts
+        process.once('SIGUSR2', function () {
+            server.close(function () {
+                process.kill(process.kill, 'SIGUSR2');
+            });
+        });
+    })
+    .catch((error) => {
+        console.error('Error connecting to MongoDB:', error.message);
+        process.exit(1);
+    });
 
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
