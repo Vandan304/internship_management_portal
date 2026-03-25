@@ -82,9 +82,11 @@ const getEmailTemplate = (title, internName, taskTitle, deadline, type) => {
                 <div class="task-label">Submission Deadline</div>
                 <div class="task-value deadline">${new Date(deadline).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })} at 11:59 PM</div>
             </div>
+            ${type !== 'overdue' ? `
             <div style="text-align: center;">
                 <a href="http://localhost:5173/intern/tasks" class="button">Submit Task Now</a>
             </div>
+            ` : ''}
             <p style="font-size: 13px; color: #879596; margin-top: 30px;">
                 Please ensure your work is submitted before the deadline to maintain your leaderboard standing and earn performance badges.
             </p>

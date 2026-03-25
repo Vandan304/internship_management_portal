@@ -88,7 +88,7 @@ const MyTasks = () => {
                                 tasks.map((task) => {
                                     const st = getStatusConfig(task.status);
                                     const StatusIcon = st.icon;
-                                    const isOverdue = new Date(task.deadline) < new Date() && task.status === 'pending';
+                                    const isOverdue = new Date(task.deadline) < new Date();
 
                                     return (
                                         <tr key={task._id} className="hover:bg-gray-50 transition-colors">
@@ -114,7 +114,7 @@ const MyTasks = () => {
                                                 </span>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                                {(task.status === 'pending' || task.status === 'rejected') && (
+                                                {(task.status === 'pending' || task.status === 'rejected') && !isOverdue && (
                                                     <button
                                                         onClick={() => openSubmitModal(task)}
                                                         className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-brand-700 bg-brand-50 rounded-lg hover:bg-brand-100 transition-colors"
@@ -122,6 +122,11 @@ const MyTasks = () => {
                                                         <Upload className="w-4 h-4" />
                                                         {task.status === 'rejected' ? 'Resubmit Task' : 'Submit Task'}
                                                     </button>
+                                                )}
+                                                {(task.status === 'pending' || task.status === 'rejected') && isOverdue && (
+                                                    <span className="text-red-500 text-sm flex items-center justify-end gap-1">
+                                                        <AlertCircle className="w-4 h-4" /> Submission Closed
+                                                    </span>
                                                 )}
                                                 {task.status === 'submitted' && (
                                                     <span className="text-gray-500 text-sm">Awaiting Review</span>

@@ -95,6 +95,10 @@ exports.submitTask = async (req, res, next) => {
             return res.status(404).json({ success: false, message: 'Task not found' });
         }
 
+        if (task.deadline && new Date() > new Date(task.deadline)) {
+            return res.status(400).json({ success: false, message: 'Deadline has passed. You can no longer submit this task.' });
+        }
+
         // Check if the user is the one assigned to the task
         if (task.assignedTo.toString() !== req.user._id.toString()) {
             return res.status(403).json({ success: false, message: 'Not authorized to submit this task' });
