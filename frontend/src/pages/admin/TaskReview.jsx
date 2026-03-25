@@ -155,7 +155,7 @@ const TaskReview = () => {
                     <div className="bg-white rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] flex flex-col overflow-hidden">
                         <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50 flex-shrink-0">
                             <h3 className="text-lg font-semibold text-gray-900">Review Submission</h3>
-                            <button onClick={() => setIsReviewModalOpen(false)} className="text-gray-400 hover:text-gray-600">×</button>
+                            <button onClick={() => setIsReviewModalOpen(false)} className="text-gray-400 hover:text-gray-600 text-2xl p-1 leading-none">&times;</button>
                         </div>
                         <div className="p-6 space-y-6 overflow-y-auto">
                             <div>
