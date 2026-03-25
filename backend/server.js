@@ -19,9 +19,10 @@ const { initCronJobs, processMissedNotifications } = require('./utils/cronJobs')
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// Flexible CORS to handle Vercel subdomains and local development
 app.use(cors({
-    origin: (origin, callback) => {
-        // Allows both local and any Vercel domain
+    origin: function (origin, callback) {
+        // Allows requests with no origin (like mobile apps or curl) or vercel.app/localhost
         if (!origin || origin.indexOf('vercel.app') !== -1 || origin.indexOf('localhost') !== -1) {
             callback(null, true);
         } else {
@@ -29,10 +30,10 @@ app.use(cors({
         }
     },
     methods: ["GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"],
-    credentials: true
+    credentials: true,
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept']
 }));
 
-// Note: CORS preflight is automatically handled by the app.use(cors(...)) middleware above
 app.use(express.json());
 
 const http = require('http');
@@ -41,8 +42,15 @@ const socketIo = require('socket.io');
 const server = http.createServer(app);
 const io = socketIo(server, {
     cors: {
-        origin: "*",
-        methods: ["GET", "POST", "PATCH", "PUT", "DELETE"]
+        origin: (origin, callback) => {
+            if (!origin || origin.indexOf('vercel.app') !== -1 || origin.indexOf('localhost') !== -1) {
+                callback(null, true);
+            } else {
+                callback(new Error('Not allowed by CORS'));
+            }
+        },
+        methods: ["GET", "POST", "PATCH", "PUT", "DELETE"],
+        credentials: true
     }
 });
 
@@ -98,4 +106,4 @@ app.use(errorHandler);
 
 module.exports = app;
 
-// initCronJobs(); // Removed redundant call, it is initialized after DB connection above
+// initCronJobs(); // Removed redundant call, it is initialized after DB connection above
