@@ -41,9 +41,15 @@ class PDFService {
         let browser;
         try {
             console.log(`[PDF GENERATION START] ${outputPath}`);
+            
+            // Check if we are on Vercel and provide a warning
+            if (process.env.VERCEL) {
+                console.warn('[PDF SERVICE] Puppeteer is known to have issues on Vercel Serverless. If this fails, consider using Render or Railway.');
+            }
+
             browser = await puppeteer.launch({
                 headless: 'new',
-                args: ['--no-sandbox', '--disable-setuid-sandbox']
+                args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
             });
             const page = await browser.newPage();
             

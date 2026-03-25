@@ -55,33 +55,35 @@ app.set('io', io);
 const chatSocket = require('./socket/chatSocket');
 chatSocket(io);
 
-mongoose.connect(process.env.MONGODB_URI)
-    .then(() => {
+// Database connection - handled asynchronously to not block the function export
+const connectDB = async () => {
+    if (mongoose.connection.readyState >= 1) return;
+    try {
+        await mongoose.connect(process.env.MONGODB_URI);
         console.log('Successfully connected to MongoDB.');
-
-        if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
-            server.listen(PORT, async () => {
-                console.log(`Server is running on port: ${PORT}`);
-                initCronJobs();
-                await processMissedNotifications();
-            });
-        } else {
-            // In Serverless (Vercel), we can't run persistent cron jobs
-            // but we can still initialize them for the duration of the request if needed
-            initCronJobs();
-        }
-
-        // Graceful shutdown for nodemon restarts
-        process.once('SIGUSR2', function () {
-            server.close(function () {
-                process.kill(process.pid, 'SIGUSR2');
-            });
-        });
-    })
-    .catch((error) => {
+        
+        // Initialize tasks only once
+        initCronJobs();
+        await processMissedNotifications().catch(err => console.error("Cron Error:", err));
+    } catch (error) {
         console.error('Error connecting to MongoDB:', error.message);
-        process.exit(1);
+    }
+};
+
+// For local development
+if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
+    connectDB().then(() => {
+        server.listen(PORT, () => {
+            console.log(`Server is running on port: ${PORT}`);
+        });
     });
+}
+
+// Middleware to ensure DB is connected for every request (specific to serverless)
+app.use(async (req, res, next) => {
+    await connectDB();
+    next();
+});
 
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
