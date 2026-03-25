@@ -19,6 +19,15 @@ const { initCronJobs, processMissedNotifications } = require('./utils/cronJobs')
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// Proper CORS configuration for production
+app.use(cors({
+    origin: ["https://internship-management-portal-welt-at46idyk8-vandan304s-projects.vercel.app", "http://localhost:5173"],
+    methods: ["GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"],
+    credentials: true
+}));
+
+app.use(express.json());
+
 const http = require('http');
 const socketIo = require('socket.io');
 
@@ -35,18 +44,21 @@ app.set('io', io);
 const chatSocket = require('./socket/chatSocket');
 chatSocket(io);
 
-app.use(cors());
-app.use(express.json());
-
 mongoose.connect(process.env.MONGODB_URI)
     .then(() => {
         console.log('Successfully connected to MongoDB.');
 
-        server.listen(PORT, async () => {
-            console.log(`Server is running on port: ${PORT}`);
+        if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
+            server.listen(PORT, async () => {
+                console.log(`Server is running on port: ${PORT}`);
+                initCronJobs();
+                await processMissedNotifications();
+            });
+        } else {
+            // In Serverless (Vercel), we can't run persistent cron jobs
+            // but we can still initialize them for the duration of the request if needed
             initCronJobs();
-            await processMissedNotifications();
-        });
+        }
 
         // Graceful shutdown for nodemon restarts
         process.once('SIGUSR2', function () {
@@ -82,5 +94,7 @@ app.get('/', (req, res) => {
     res.send({ message: 'Backend is running' });
 });
 app.use(errorHandler);
+
+module.exports = app;
 
 // initCronJobs(); // Removed redundant call, it is initialized after DB connection above
