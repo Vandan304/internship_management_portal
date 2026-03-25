@@ -19,12 +19,23 @@ const { initCronJobs, processMissedNotifications } = require('./utils/cronJobs')
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Proper CORS configuration for production
+// More flexible CORS to allow any Vercel origin during development
 app.use(cors({
-    origin: ["https://internship-management-portal-welt-at46idyk8-vandan304s-projects.vercel.app", "http://localhost:5173"],
+    origin: (origin, callback) => {
+        // Allows both local and any Vercel domain
+        if (!origin || origin.indexOf('vercel.app') !== -1 || origin.indexOf('localhost') !== -1) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
     methods: ["GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"],
-    credentials: true
+    credentials: true,
+    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "Accept"]
 }));
+
+// Explicitly handle OPTIONS preflight (common fix for Vercel/Express)
+app.options('*', cors());
 
 app.use(express.json());
 
