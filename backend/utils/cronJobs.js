@@ -10,7 +10,7 @@ const { sendPushNotification } = require('./firebaseService');
  * Scans tasks and creates pending notification records if they don't exist.
  */
 const runDeadlineAudit = async () => {
-    console.log('[CRON] Starting task deadline audit to populate queue...');
+    console.log(`[CRON] ${new Date().toISOString()} - Starting task deadline audit to populate queue...`);
     
     try {
         const now = new Date();
@@ -114,7 +114,7 @@ const runDeadlineAudit = async () => {
  * Sends pending notifications via Email and Push.
  */
 const processPendingNotifications = async () => {
-    console.log('[CRON] Processing pending notifications...');
+    console.log(`[CRON] ${new Date().toISOString()} - Processing pending notifications...`);
     
     try {
         const pending = await Notification.find({
@@ -149,7 +149,8 @@ const processPendingNotifications = async () => {
                         user.name,
                         task.title,
                         task.deadline,
-                        note.type === '2day' ? '2-days' : note.type
+                        note.type === '2day' ? '2-days' : note.type,
+                        { userId: user._id, taskId: task._id } // Pass metadata for logging
                     );
                     emailSent = true;
                 } catch (err) {
@@ -162,7 +163,8 @@ const processPendingNotifications = async () => {
                         await sendPushNotification(
                             user.fcmToken,
                             note.type === 'today' ? '🚨 Task Due Today' : '📅 Task Reminder',
-                            note.message
+                            note.message,
+                            { userId: user._id, taskId: task._id, type: note.type } // Pass metadata for logging
                         );
                     } catch (err) {
                         console.error(`[CRON] Push failed for ${user.email}:`, err.message);
@@ -203,15 +205,17 @@ const processMissedNotifications = async () => {
 const initCronJobs = () => {
     // Schedule daily audit at 09:00 AM
     cron.schedule('0 9 * * *', async () => {
+        console.log(`[CRON TRIGGER] ${new Date().toISOString()} - 9:00 AM Daily Audit trigger`);
         await runDeadlineAudit();
     });
 
     // Optional: Regular check for any pending notifications every 30 minutes
     cron.schedule('*/30 * * * *', async () => {
+        console.log(`[CRON TRIGGER] ${new Date().toISOString()} - 30m Notification Process trigger`);
         await processPendingNotifications();
     });
 
-    console.log('[CRON] Notification queue and deadline service initialized.');
+    console.log(`[CRON] ${new Date().toISOString()} - Notification queue and deadline service initialized.`);
 };
 
 module.exports = { initCronJobs, runDeadlineAudit, processPendingNotifications, processMissedNotifications };

@@ -101,7 +101,18 @@ const getEmailTemplate = (title, internName, taskTitle, deadline, type) => {
     `;
 };
 
-exports.sendDeadlineNotification = async (userEmail, internName, taskTitle, deadline, type) => {
+/**
+ * @param {string} userEmail 
+ * @param {string} internName 
+ * @param {string} taskTitle 
+ * @param {Date} deadline 
+ * @param {string} type 
+ * @param {object} metadata - Optional metadata (userId, taskId) for logging
+ */
+exports.sendDeadlineNotification = async (userEmail, internName, taskTitle, deadline, type, metadata = {}) => {
+    const { userId, taskId } = metadata;
+    const timestamp = new Date().toISOString();
+    
     try {
         let title = 'Task Deadline Reminder';
         let subject = `[Reminder] ${taskTitle} Deadline`;
@@ -132,10 +143,22 @@ exports.sendDeadlineNotification = async (userEmail, internName, taskTitle, dead
             html: html
         };
 
+        console.log(`[EMAIL] ${timestamp} - Attempting to send email:`, {
+            userEmail,
+            taskTitle,
+            type,
+            userId,
+            taskId
+        });
+
         const result = await transporter.sendMail(mailOptions);
-        console.log(`[EMAIL] Notification sent to ${userEmail} for task ${taskTitle} (${type})`);
+        console.log(`[EMAIL SUCCESS] ${timestamp} - Notification sent to ${userEmail} for task ${taskTitle} (${type})`);
         return result;
     } catch (error) {
-        console.error(`[EMAIL ERROR] Failed to send notification to ${userEmail}:`, error);
+        console.error(`[EMAIL ERROR] ${timestamp} - Failed to send notification to ${userEmail}:`, {
+            error: error.message,
+            userId,
+            taskId
+        });
     }
 };

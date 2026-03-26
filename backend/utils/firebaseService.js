@@ -35,34 +35,54 @@ try {
  * @param {string} token - The recipient's FCM token
  * @param {string} title - Notification title
  * @param {string} body - Notification body
- * @param {object} data - Optional data payload
+ * @param {object} metadata - Optional metadata (userId, taskId, type) for logging
  */
-const sendPushNotification = async (token, title, body, data = {}) => {
+const sendPushNotification = async (token, title, body, metadata = {}) => {
+    const { userId, taskId, type } = metadata;
+    const timestamp = new Date().toISOString();
+
     if (!admin.apps.length) {
-        console.warn('[FIREBASE] Push notification skipped: Admin SDK not initialized.');
+        console.warn(`[FIREBASE] ${timestamp} - Push notification skipped (Not Initialized) - User: ${userId || 'N/A'}`);
         return null;
     }
 
     if (!token) {
-        console.warn('[FIREBASE] Push notification skipped: No FCM token provided.');
+        console.warn(`[FIREBASE] ${timestamp} - Push notification skipped (No Token) - User: ${userId || 'N/A'}`);
         return null;
     }
 
     const message = {
-        notification: {
-            title,
-            body
+        notification: { title, body },
+        data: {
+            ...metadata,
+            userId: String(userId || ''),
+            taskId: String(taskId || ''),
+            click_action: 'FLUTTER_NOTIFICATION_CLICK'
         },
-        data: data,
         token: token
     };
 
+    console.log(`[FIREBASE] ${timestamp} - Attempting to send push:`, {
+        userId,
+        taskId,
+        type,
+        token: token.substring(0, 10) + '...'
+    });
+
     try {
         const response = await admin.messaging().send(message);
-        console.log('[FIREBASE] Push notification sent successfully:', response);
+        console.log(`[FIREBASE SUCCESS] ${timestamp} - Push sent:`, {
+            response,
+            userId,
+            taskId
+        });
         return response;
     } catch (error) {
-        console.error('[FIREBASE ERROR] Failed to send push notification:', error);
+        console.error(`[FIREBASE ERROR] ${timestamp} - Push failed:`, {
+            error: error.message,
+            userId,
+            taskId
+        });
         throw error;
     }
 };

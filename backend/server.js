@@ -1,4 +1,5 @@
 require('dotenv').config();
+console.log('[BOOT] Server process started at:', new Date().toISOString());
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
@@ -64,7 +65,7 @@ mongoose.connect(process.env.MONGODB_URI)
         console.log('Successfully connected to MongoDB.');
 
         server.listen(PORT, async () => {
-            console.log(`Server is running on port: ${PORT}`);
+            console.log(`[BOOT] Server is running on port: ${PORT} at ${new Date().toISOString()}`);
             initCronJobs();
             await processMissedNotifications();
         });
@@ -101,6 +102,16 @@ app.use('/api/leaderboard', leaderboardRoutes);
 
 app.get('/', (req, res) => {
     res.send({ message: 'Backend is running' });
+});
+
+// Health check endpoint to monitor Render sleeping/uptime
+app.get('/api/health', (req, res) => {
+    res.status(200).json({
+        status: "ok",
+        uptimeSeconds: Math.floor(process.uptime()),
+        timestamp: new Date().toISOString(),
+        message: "Server is active"
+    });
 });
 app.use(errorHandler);
 
