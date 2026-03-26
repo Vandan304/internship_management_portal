@@ -27,18 +27,22 @@ exports.createIntern = async (req, res, next) => {
         console.log('[PARAMS]', `name: ${name}, email: ${email}, role: ${internRole}, dates: ${startDate} to ${endDate}`);
         
         if (!name || !email || !internRole) {
+            console.warn('[VALIDATION ERROR] Missing required fields:', { name, email, internRole });
             return res.status(400).json({ success: false, message: 'Please provide name, email, and internRole' });
         }
 
-        const validInternRole = internRole.toLowerCase();
+        const trimmedEmail = email.trim().toLowerCase();
+        const validInternRole = internRole.trim().toLowerCase();
 
         const allowedRoles = ['fullstack', 'frontend', 'backend', 'ai', 'ml', 'datascience'];
         if (!allowedRoles.includes(validInternRole)) {
-            return res.status(400).json({ success: false, message: 'Invalid role selected' });
+            console.warn('[VALIDATION ERROR] Invalid role:', validInternRole);
+            return res.status(400).json({ success: false, message: `Invalid role selected. Allowed: ${allowedRoles.join(', ')}` });
         }
 
-        const userExists = await User.findOne({ email });
+        const userExists = await User.findOne({ email: trimmedEmail });
         if (userExists) {
+            console.warn('[VALIDATION ERROR] Intern already exists:', trimmedEmail);
             return res.status(400).json({ success: false, message: 'Intern already exists with this email' });
         }
 
@@ -62,8 +66,8 @@ exports.createIntern = async (req, res, next) => {
         const authInternId = `INT-${currentYear}-${sequenceCount}`;
 
         const intern = await User.create({
-            name,
-            email,
+            name: name.trim(),
+            email: trimmedEmail,
             password: hashedPassword,
             role: 'intern',
             internRole: validInternRole,
@@ -144,12 +148,16 @@ exports.updateIntern = async (req, res, next) => {
             return res.status(400).json({ success: false, message: 'Cannot update non-intern users via this route' });
         }
 
-        if (email && email !== intern.email) {
-            const emailExists = await User.findOne({ email });
-            if (emailExists) {
-                return res.status(400).json({ success: false, message: 'Email is already in use' });
+        if (email) {
+            const trimmedEmail = email.trim().toLowerCase();
+            if (trimmedEmail !== intern.email) {
+                const emailExists = await User.findOne({ email: trimmedEmail });
+                if (emailExists) {
+                    console.warn('[VALIDATION ERROR] Email already in use:', trimmedEmail);
+                    return res.status(400).json({ success: false, message: 'Email is already in use' });
+                }
+                intern.email = trimmedEmail;
             }
-            intern.email = email;
         }
 
         if (name) intern.name = name;

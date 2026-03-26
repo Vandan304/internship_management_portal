@@ -7,16 +7,20 @@ export function InternModal({ isOpen, onClose, onSubmit, initialData }) {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        // In a real app, collect form data
-        onSubmit({
-            id: initialData?.id || Date.now(),
-            name: e.target.name.value,
-            email: e.target.email.value,
-            internRole: e.target.internRole.value,
+        
+        const data = {
+            name: e.target.name.value.trim(),
+            email: e.target.email.value.trim().toLowerCase(),
+            internRole: e.target.internRole.value.trim(),
             startDate: e.target.startDate.value,
             endDate: e.target.endDate.value,
-            password: 'password123'
-        });
+        };
+
+        if (isEdit) {
+            data.id = initialData.id;
+        }
+
+        onSubmit(data);
         onClose();
     };
 

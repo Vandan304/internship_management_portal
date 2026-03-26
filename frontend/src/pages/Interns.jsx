@@ -79,15 +79,20 @@ export default function Interns() {
         setIsModalOpen(true);
     };
 
-    const handleSubmitIntern = (data) => {
-        if (editingIntern) {
-            updateIntern(editingIntern.id, data);
-            addToast('Intern updated successfully', 'success');
-        } else {
-            addIntern(data);
-            addToast('New intern created successfully', 'success');
+    const handleSubmitIntern = async (data) => {
+        try {
+            if (editingIntern) {
+                await updateIntern(editingIntern.id, data);
+                addToast('Intern updated successfully', 'success');
+            } else {
+                await addIntern(data);
+                addToast('New intern created successfully', 'success');
+            }
+            setIsModalOpen(false);
+        } catch (error) {
+            const errorMessage = error.response?.data?.message || 'Failed to process intern data';
+            addToast(errorMessage, 'error');
         }
-        setIsModalOpen(false);
     };
 
     if (isLoading) return <LoadingSpinner message="Loading intern directory..." />;

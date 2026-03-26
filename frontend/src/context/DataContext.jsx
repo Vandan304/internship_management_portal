@@ -140,10 +140,12 @@ export const DataProvider = ({ children }) => {
             });
             if (res.data.success) {
                 fetchInterns(); // Refresh list
+                return res.data;
             }
         } catch (error) {
-            console.error("Error adding intern:", error.response?.data || error);
-            throw error;
+            const errorData = error.response?.data || { message: error.message };
+            console.error("Error adding intern:", errorData);
+            throw error; // Re-throw to be handled by the caller
         }
     };
 
@@ -177,9 +179,11 @@ export const DataProvider = ({ children }) => {
             });
             if (res.data.success) {
                 fetchInterns(); // Refresh list
+                return res.data;
             }
         } catch (error) {
-            console.error("Error updating intern:", error.response?.data || error);
+            const errorData = error.response?.data || { message: error.message };
+            console.error("Error updating intern:", errorData);
             throw error;
         }
     };
