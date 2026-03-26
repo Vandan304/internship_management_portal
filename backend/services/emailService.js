@@ -1,10 +1,29 @@
 const nodemailer = require('nodemailer');
 
 const transporter = nodemailer.createTransport({
-    service: process.env.EMAIL_SERVICE || 'gmail',
+    host: process.env.EMAIL_HOST || 'smtp.gmail.com',
+    port: parseInt(process.env.EMAIL_PORT) || 465,
+    secure: process.env.EMAIL_SECURE === 'true' || true,
     auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS
+    },
+    tls: {
+        rejectUnauthorized: false
+    }
+});
+
+// Verify connection on startup
+transporter.verify((error, success) => {
+    if (error) {
+        console.error('[EMAIL VERIFY ERROR] SMTP Connection failed in emailService:', {
+            message: error.message,
+            code: error.code,
+            command: error.command,
+            response: error.response
+        });
+    } else {
+        console.log('[EMAIL VERIFY SUCCESS] SMTP Server is ready in emailService');
     }
 });
 
@@ -73,10 +92,16 @@ const sendInternCredentials = async (email, name, password, internId, role) => {
         };
 
         const info = await transporter.sendMail(mailOptions);
-        console.log('Email sent: ' + info.response);
+        console.log('[EMAIL SUCCESS] Credentials sent: ' + info.response);
         return true;
     } catch (error) {
-        console.error('Error sending email:', error);
+        console.error('[EMAIL ERROR] Failed to send credentials:', {
+            message: error.message,
+            code: error.code,
+            command: error.command,
+            response: error.response,
+            to: email
+        });
         return false;
     }
 };
@@ -105,10 +130,16 @@ const sendOTPEmail = async (email, name, otp) => {
         };
 
         const info = await transporter.sendMail(mailOptions);
-        console.log('OTP Email sent: ' + info.response);
+        console.log('[EMAIL SUCCESS] OTP sent: ' + info.response);
         return true;
     } catch (error) {
-        console.error('Error sending OTP email:', error);
+        console.error('[EMAIL ERROR] Failed to send OTP:', {
+            message: error.message,
+            code: error.code,
+            command: error.command,
+            response: error.response,
+            to: email
+        });
         return false;
     }
 };
