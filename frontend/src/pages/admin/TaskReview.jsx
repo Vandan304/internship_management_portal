@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { Search, Download, CheckCircle, XCircle, Clock, Eye } from 'lucide-react';
 import axios from 'axios';
 import { useToast } from '../../context/ToastContext';
+import { BASE_URL } from '../../utils/urlUtils';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 const TaskReview = () => {
     const { addToast } = useToast();
@@ -174,7 +175,7 @@ const TaskReview = () => {
                                     </div>
                                 </div>
                                 <button
-                                    onClick={() => window.open(`${import.meta.env.VITE_API_URL}/api/files/${selectedTask._id}?token=${localStorage.getItem('token')}`, '_blank')}
+                                    onClick={() => window.open(`${BASE_URL}/api/files/${selectedTask._id}?token=${localStorage.getItem('token')}`, '_blank')}
                                     className="px-4 py-2 text-sm font-medium text-brand-700 bg-brand-50 rounded-lg hover:bg-brand-100 transition-colors"
                                 >
                                     Download

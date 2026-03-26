@@ -6,7 +6,7 @@ import { cn } from '../utils/cn';
 import { useToast } from '../context/ToastContext';
 import { useData } from '../context/DataContext';
 import ConfirmModal from '../components/ui/ConfirmModal';
-import { getFileUrl } from '../utils/urlUtils';
+import { getFileUrl, BASE_URL } from '../utils/urlUtils';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 
 export default function Certificates() {
@@ -214,7 +214,7 @@ export default function Certificates() {
                                                 </td>
                                                 <td className="px-6 py-4 text-center">
                                                     <button
-                                                        onClick={() => window.open(`${import.meta.env.VITE_API_URL}/api/files/${cert.id}?token=${localStorage.getItem('token')}`, '_blank')}
+                                                        onClick={() => window.open(`${BASE_URL}/api/files/${cert.id}?token=${localStorage.getItem('token')}`, '_blank')}
                                                         className="p-1.5 text-gray-400 hover:text-brand-600 hover:bg-brand-50 rounded-lg transition-colors inline-block"
                                                         title="View Certificate"
                                                     >

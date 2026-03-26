@@ -41,7 +41,7 @@ const VerifyOtp = () => {
 
         try {
             setLoading(true);
-            const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/verify-otp`, { email, otp: otpCode });
+            const res = await axios.post(`/api/auth/verify-otp`, { email, otp: otpCode });
 
             if (res.data.success) {
                 toast.success("OTP verified successfully");
@@ -56,7 +56,7 @@ const VerifyOtp = () => {
 
     const handleResend = async () => {
         try {
-            await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/forgot-password`, { email });
+            await axios.post(`/api/auth/forgot-password`, { email });
             toast.success("A new OTP has been sent to your email");
             setOtp(['', '', '', '']);
         } catch (err) {

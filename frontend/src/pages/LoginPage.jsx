@@ -25,7 +25,7 @@ const LoginPage = () => {
 
         try {
             setLoading(true);
-            const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/forgot-password`, { email });
+            const res = await axios.post(`/api/auth/forgot-password`, { email });
 
             if (res.data.success) {
                 toast.success("OTP has been sent to your email");

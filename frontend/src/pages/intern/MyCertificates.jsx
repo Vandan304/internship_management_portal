@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Award, Eye, Download, Search, Filter } from 'lucide-react';
 import { useData } from '../../context/DataContext';
 import { useAuth } from '../../context/AuthContext';
-import { getFileUrl } from '../../utils/urlUtils';
+import { getFileUrl, BASE_URL } from '../../utils/urlUtils';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 
 const MyCertificates = () => {
@@ -79,7 +79,7 @@ const MyCertificates = () => {
                                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                         <div className="flex items-center justify-end gap-2">
                                             <a
-                                                href={`${import.meta.env.VITE_API_URL}/api/files/${cert.id}?token=${localStorage.getItem('token')}`}
+                                                href={`${BASE_URL}/api/files/${cert.id}?token=${localStorage.getItem('token')}`}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
                                                 className="p-2 text-gray-400 hover:text-brand-600 transition-colors"
