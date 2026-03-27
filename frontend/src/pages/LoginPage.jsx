@@ -12,6 +12,7 @@ const LoginPage = () => {
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [isSendingOtp, setIsSendingOtp] = useState(false);
     const [error, setError] = useState('');
     const { login } = useAuth();
 
@@ -24,7 +25,7 @@ const LoginPage = () => {
         }
 
         try {
-            setLoading(true);
+            setIsSendingOtp(true);
             const res = await axios.post(`/api/auth/forgot-password`, { email });
 
             if (res.data.success) {
@@ -34,7 +35,7 @@ const LoginPage = () => {
         } catch (err) {
             toast.error(err.response?.data?.message || "Something went wrong. Please try again.");
         } finally {
-            setLoading(false);
+            setIsSendingOtp(false);
         }
     };
 
@@ -100,7 +101,14 @@ const LoginPage = () => {
                         <div className="space-y-2">
                             <div className="flex justify-between items-center">
                                 <label className="text-sm font-medium text-gray-700" htmlFor="password">Password</label>
-                                <button type="button" onClick={handleForgotPassword} className="text-sm font-medium text-brand-600 hover:text-brand-700 bg-transparent border-none cursor-pointer">Forgot password?</button>
+                                <button 
+                                    type="button" 
+                                    onClick={handleForgotPassword} 
+                                    className="text-sm font-medium text-brand-600 hover:text-brand-700 bg-transparent border-none cursor-pointer disabled:opacity-50"
+                                    disabled={isSendingOtp}
+                                >
+                                    {isSendingOtp ? 'Sending OTP...' : 'Forgot password?'}
+                                </button>
                             </div>
                             <div className="relative">
                                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">

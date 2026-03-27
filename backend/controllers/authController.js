@@ -77,10 +77,9 @@ exports.login = async (req, res, next) => {
             return res.status(401).json({ success: false, message: 'Invalid credentials' });
         }
 
-        // Check login access
         if (user.loginAccess === false) {
             console.log(`[LOGIN REJECTED] Email: ${email} - Reason: Login access disabled`);
-            return res.status(401).json({ success: false, message: 'Your login access has been restricted. Please contact the administrator.' });
+            return res.status(401).json({ success: false, message: 'Your login access has been disabled by admin.' });
         }
 
         // Verify password

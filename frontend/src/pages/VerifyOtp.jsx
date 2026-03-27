@@ -11,6 +11,7 @@ const VerifyOtp = () => {
 
     const [otp, setOtp] = useState(['', '', '', '']);
     const [loading, setLoading] = useState(false);
+    const [isResending, setIsResending] = useState(false);
 
     useEffect(() => {
         if (!email) {
@@ -56,11 +57,14 @@ const VerifyOtp = () => {
 
     const handleResend = async () => {
         try {
+            setIsResending(true);
             await axios.post(`/api/auth/forgot-password`, { email });
             toast.success("A new OTP has been sent to your email");
             setOtp(['', '', '', '']);
         } catch (err) {
             toast.error("Failed to resend OTP");
+        } finally {
+            setIsResending(false);
         }
     };
 
@@ -101,15 +105,24 @@ const VerifyOtp = () => {
                             disabled={loading}
                             className="w-full flex items-center justify-center gap-2 py-3 bg-brand-600 hover:bg-brand-700 text-white rounded-xl font-medium shadow-lg shadow-brand-500/30 hover:shadow-brand-500/40 transition-all duration-200 disabled:opacity-70"
                         >
-                            {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Verify Code'}
+                            {loading ? (
+                                <>
+                                    <Loader2 className="w-5 h-5 animate-spin" />
+                                    <span>Verifying Code...</span>
+                                </>
+                            ) : 'Verify Code'}
                         </button>
                     </form>
 
                     <div className="mt-6 text-center">
                         <p className="text-sm text-gray-600">
                             Didn't receive code?{' '}
-                            <button onClick={handleResend} className="font-medium text-brand-600 hover:text-brand-700 cursor-pointer border-none bg-transparent">
-                                Resend now
+                            <button 
+                                onClick={handleResend} 
+                                className="font-medium text-brand-600 hover:text-brand-700 cursor-pointer border-none bg-transparent disabled:opacity-50"
+                                disabled={isResending}
+                            >
+                                {isResending ? 'Resending...' : 'Resend now'}
                             </button>
                         </p>
                     </div>

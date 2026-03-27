@@ -247,7 +247,7 @@ export default function Interns() {
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="relative inline-flex items-center">
+                                            <label className="relative inline-flex items-center cursor-pointer">
                                                 <input
                                                     type="checkbox"
                                                     className="sr-only peer"
@@ -262,7 +262,7 @@ export default function Interns() {
                                                 {processingAction.id === intern.id && processingAction.type === 'toggle' && (
                                                     <Loader2 className="w-3 h-3 animate-spin absolute right-[-1.25rem] text-blue-600" />
                                                 )}
-                                            </div>
+                                            </label>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             {intern.status === 'Active' && (
@@ -291,16 +291,22 @@ export default function Interns() {
                                                     }}
                                                     className={cn(
                                                         "p-2 rounded-lg transition-colors flex items-center gap-2 text-xs font-medium",
-                                                        intern.loginAccess 
-                                                            ? "text-gray-400 hover:text-blue-600 hover:bg-blue-50" 
-                                                            : "text-gray-300 cursor-not-allowed opacity-50"
+                                                        !intern.loginAccess 
+                                                            ? "text-gray-300 cursor-not-allowed opacity-50"
+                                                            : intern.offerLetterAssigned
+                                                                ? "text-emerald-600 bg-emerald-50 hover:bg-emerald-100"
+                                                                : "text-gray-400 hover:text-blue-600 hover:bg-blue-50"
                                                     )}
-                                                    title={intern.loginAccess ? "Offer Letter" : "Login access required"}
+                                                    title={!intern.loginAccess ? "Login access required" : intern.offerLetterAssigned ? "Offer Letter Generated" : "Generate Offer Letter"}
                                                 >
                                                     {processingAction.id === intern.id && processingAction.type === 'offer' 
                                                         ? <Loader2 size={16} className="animate-spin" /> 
                                                         : <FileCheck size={16} />}
-                                                    <span>{processingAction.id === intern.id && processingAction.type === 'offer' ? 'Generating...' : 'Offer Letter'}</span>
+                                                    <span>
+                                                        {processingAction.id === intern.id && processingAction.type === 'offer' 
+                                                            ? 'Generating...' 
+                                                            : intern.offerLetterAssigned ? 'Offer Letter Generated' : 'Offer Letter'}
+                                                    </span>
                                                 </button>
                                             )}
                                         </td>
@@ -331,16 +337,22 @@ export default function Interns() {
                                                     }}
                                                     className={cn(
                                                         "p-2 rounded-lg transition-colors flex items-center gap-2 text-xs font-medium",
-                                                        intern.loginAccess 
-                                                            ? "text-gray-400 hover:text-green-600 hover:bg-green-50" 
-                                                            : "text-gray-300 cursor-not-allowed opacity-50"
+                                                        !intern.loginAccess 
+                                                            ? "text-gray-300 cursor-not-allowed opacity-50"
+                                                            : intern.certificateAssigned
+                                                                ? "text-emerald-600 bg-emerald-50 hover:bg-emerald-100"
+                                                                : "text-gray-400 hover:text-green-600 hover:bg-green-50"
                                                     )}
-                                                    title={intern.loginAccess ? "Completion Certificate" : "Login access required"}
+                                                    title={!intern.loginAccess ? "Login access required" : intern.certificateAssigned ? "Certificate Generated" : "Generate Completion Certificate"}
                                                 >
                                                     {processingAction.id === intern.id && processingAction.type === 'cert' 
                                                         ? <Loader2 size={16} className="animate-spin" /> 
                                                         : <FileText size={16} />}
-                                                    <span>{processingAction.id === intern.id && processingAction.type === 'cert' ? 'Generating...' : 'Completion Certificate'}</span>
+                                                    <span>
+                                                        {processingAction.id === intern.id && processingAction.type === 'cert' 
+                                                            ? 'Generating...' 
+                                                            : intern.certificateAssigned ? 'Completion Certificate Generated' : 'Completion Certificate'}
+                                                    </span>
                                                 </button>
                                             )}
                                         </td>

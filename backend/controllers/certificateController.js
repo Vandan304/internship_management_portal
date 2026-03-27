@@ -510,35 +510,26 @@ exports.deleteCertificate = async (req, res, next) => {
             // Use Storage Service to delete from either S3 or Local
             await storageService.deleteFile(certificate.fileUrl, certificate.storageType);
 
-            // Identify document type and reset intern flags for regeneration
-            if (certificate.assignedTo) {
-                const intern = await User.findById(certificate.assignedTo);
-                if (intern) {
-                    let updated = false;
-                    const fileUrl = (certificate.fileUrl || '').replace(/\\/g, '/'); // Normalize slashes
+                    // Identify document type and reset intern flags for regeneration
+                    const fileUrl = (certificate.fileUrl || '').replace(/\\/g, '/');
                     const title = (certificate.title || '').toLowerCase();
-
-                    // Folder-based Detection (Highly Accurate fallback)
+                    
+                    const updates = {};
                     if (fileUrl.includes('/offerletters/') || title.includes('offer letter') || title.includes('offerletter')) {
-                        intern.offerLetterAssigned = false;
-                        intern.offerLetterPath = null;
-                        updated = true;
-                        console.log(`[REGEN ENABLED] Reset offerLetterAssigned for ${intern.name}`);
+                        updates.offerLetterAssigned = false;
+                        updates.offerLetterPath = null;
+                        console.log(`[REGEN ENABLED] Resetting offerLetter flags for ${certificate.assignedTo}`);
                     }
-
+                    
                     if (fileUrl.includes('/certificates/') || title.includes('certificate')) {
-                        intern.certificateAssigned = false;
-                        intern.certificatePath = null;
-                        updated = true;
-                        console.log(`[REGEN ENABLED] Reset certificateAssigned for ${intern.name}`);
+                        updates.certificateAssigned = false;
+                        updates.certificatePath = null;
+                        console.log(`[REGEN ENABLED] Resetting certificate flags for ${certificate.assignedTo}`);
                     }
 
-                    if (updated) {
-                        await intern.save();
-                        console.log(`[DB UPDATE SUCCESS] Flags reset for intern ${intern.name}`);
+                    if (Object.keys(updates).length > 0) {
+                        await User.findByIdAndUpdate(certificate.assignedTo, updates);
                     }
-                }
-            }
 
 
             // Delete related permission

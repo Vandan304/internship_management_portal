@@ -302,6 +302,7 @@ export const DataProvider = ({ children }) => {
             });
             if (res.data.success) {
                 fetchCertificatesAdmin(); // Refresh list
+                fetchInterns(); // Refresh interns to update generate buttons (flags reset in backend)
             }
         } catch (error) {
             console.error("Error deleting certificate:", error.response?.data || error);
