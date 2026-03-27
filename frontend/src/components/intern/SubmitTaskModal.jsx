@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Upload, X, Loader } from 'lucide-react';
+import { Upload, X, Loader2 } from 'lucide-react';
 import axios from 'axios';
 import { useToast } from '../../context/ToastContext';
 
@@ -105,17 +105,17 @@ export const SubmitTaskModal = ({ isOpen, onClose, task, onTaskSubmitted }) => {
                         <button
                             type="submit"
                             disabled={!file || isSubmitting}
-                            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-brand-600 rounded-lg hover:bg-brand-700 transition-colors disabled:opacity-50"
+                            className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-brand-600 rounded-lg hover:bg-brand-700 transition-colors disabled:opacity-50 min-w-[140px] justify-center"
                         >
                             {isSubmitting ? (
                                 <>
-                                    <Loader className="w-4 h-4 animate-spin" />
-                                    Submitting...
+                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                    <span>Submitting...</span>
                                 </>
                             ) : (
                                 <>
                                     <Upload className="w-4 h-4" />
-                                    Submit Task
+                                    <span>Submit Task</span>
                                 </>
                             )}
                         </button>

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Card, CardHeader, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
-import { Search, Plus, Filter, Edit2, Trash2, FileText, FileCheck, Shield, ShieldOff, Trophy, Medal, Award } from 'lucide-react';
+import { Search, Plus, Filter, Edit2, Trash2, FileText, FileCheck, Shield, ShieldOff, Trophy, Medal, Award, Loader2 } from 'lucide-react';
 import { cn } from '../utils/cn';
 import { InternModal } from '../components/interns/InternModal';
 import { useToast } from '../context/ToastContext';
@@ -31,6 +31,9 @@ export default function Interns() {
 
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [internToDelete, setInternToDelete] = useState(null);
+    const [isDeleting, setIsDeleting] = useState(false);
+    const [isSubmittingIntern, setIsSubmittingIntern] = useState(false);
+    const [processingAction, setProcessingAction] = useState({ id: null, type: null }); // { id, type: 'toggle' | 'offer' | 'cert' }
 
     const filteredInterns = interns
         .map(intern => ({
@@ -53,6 +56,7 @@ export default function Interns() {
 
     const toggleLoginStatus = async (id) => {
         const intern = interns.find(i => i.id === id);
+        setProcessingAction({ id, type: 'toggle' });
         try {
             if (intern.loginAccess) {
                 await blockIntern(id);
@@ -63,6 +67,8 @@ export default function Interns() {
             }
         } catch (error) {
             addToast('Failed to update login status', 'error');
+        } finally {
+            setProcessingAction({ id: null, type: null });
         }
     };
 
@@ -80,11 +86,19 @@ export default function Interns() {
         setIsDeleteModalOpen(true);
     };
 
-    const confirmDelete = () => {
+    const confirmDelete = async () => {
         if (internToDelete) {
-            deleteIntern(internToDelete);
-            addToast('Intern deleted successfully', 'error');
-            setInternToDelete(null);
+            setIsDeleting(true);
+            try {
+                await deleteIntern(internToDelete);
+                addToast('Intern deleted successfully', 'error');
+                setIsDeleteModalOpen(false);
+                setInternToDelete(null);
+            } catch (error) {
+                addToast('Failed to delete intern', 'error');
+            } finally {
+                setIsDeleting(false);
+            }
         }
     };
 
@@ -94,6 +108,7 @@ export default function Interns() {
     };
 
     const handleSubmitIntern = async (data) => {
+        setIsSubmittingIntern(true);
         try {
             if (editingIntern) {
                 await updateIntern(editingIntern.id, data);
@@ -106,6 +121,8 @@ export default function Interns() {
         } catch (error) {
             const errorMessage = error.response?.data?.message || 'Failed to process intern data';
             addToast(errorMessage, 'error');
+        } finally {
+            setIsSubmittingIntern(false);
         }
     };
 
@@ -230,19 +247,27 @@ export default function Interns() {
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
-                                            <label className="relative inline-flex items-center cursor-pointer">
+                                            <div className="relative inline-flex items-center">
                                                 <input
                                                     type="checkbox"
                                                     className="sr-only peer"
+                                                    disabled={processingAction.id === intern.id && processingAction.type === 'toggle'}
                                                     checked={intern.loginAccess}
                                                     onChange={() => toggleLoginStatus(intern.id)}
                                                 />
-                                                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none ring-0 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                                            </label>
+                                                <div className={cn(
+                                                    "w-11 h-6 bg-gray-200 peer-focus:outline-none ring-0 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600",
+                                                    processingAction.id === intern.id && processingAction.type === 'toggle' && "opacity-50 cursor-not-allowed"
+                                                )}></div>
+                                                {processingAction.id === intern.id && processingAction.type === 'toggle' && (
+                                                    <Loader2 className="w-3 h-3 animate-spin absolute right-[-1.25rem] text-blue-600" />
+                                                )}
+                                            </div>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             {intern.status === 'Active' && (
                                                 <button
+                                                    disabled={!intern.loginAccess || (processingAction.id === intern.id && processingAction.type === 'offer')}
                                                     onClick={async () => {
                                                         if (!intern.loginAccess) {
                                                             addToast('Enable login access before generating offer letter', 'error');
@@ -252,6 +277,7 @@ export default function Interns() {
                                                             addToast('Offer letter is already generated!', 'info');
                                                             return;
                                                         }
+                                                        setProcessingAction({ id: intern.id, type: 'offer' });
                                                         try {
                                                             addToast('Generating Offer Letter...', 'info');
                                                             await generateOfferLetter(intern.id);
@@ -259,6 +285,8 @@ export default function Interns() {
                                                         } catch (err) {
                                                             const message = err.response?.data?.message || 'Failed to generate Offer Letter';
                                                             addToast(message, err.response?.status === 403 || err.response?.status === 400 ? 'info' : 'error');
+                                                        } finally {
+                                                            setProcessingAction({ id: null, type: null });
                                                         }
                                                     }}
                                                     className={cn(
@@ -269,14 +297,17 @@ export default function Interns() {
                                                     )}
                                                     title={intern.loginAccess ? "Offer Letter" : "Login access required"}
                                                 >
-                                                    <FileCheck size={16} />
-                                                    <span>Offer Letter</span>
+                                                    {processingAction.id === intern.id && processingAction.type === 'offer' 
+                                                        ? <Loader2 size={16} className="animate-spin" /> 
+                                                        : <FileCheck size={16} />}
+                                                    <span>{processingAction.id === intern.id && processingAction.type === 'offer' ? 'Generating...' : 'Offer Letter'}</span>
                                                 </button>
                                             )}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             {intern.status === 'Active' && (
                                                 <button
+                                                    disabled={!intern.loginAccess || (processingAction.id === intern.id && processingAction.type === 'cert')}
                                                     onClick={async () => {
                                                         if (!intern.loginAccess) {
                                                             addToast('Enable login access before generating certificate', 'error');
@@ -286,6 +317,7 @@ export default function Interns() {
                                                             addToast('Completion certificate is already generated!', 'info');
                                                             return;
                                                         }
+                                                        setProcessingAction({ id: intern.id, type: 'cert' });
                                                         try {
                                                             addToast('Generating Completion Certificate...', 'info');
                                                             await generateCompletionCertificate(intern.id);
@@ -293,6 +325,8 @@ export default function Interns() {
                                                         } catch (err) {
                                                             const message = err.response?.data?.message || 'Failed to generate Completion Certificate';
                                                             addToast(message, err.response?.status === 403 || err.response?.status === 400 ? 'info' : 'error');
+                                                        } finally {
+                                                            setProcessingAction({ id: null, type: null });
                                                         }
                                                     }}
                                                     className={cn(
@@ -303,8 +337,10 @@ export default function Interns() {
                                                     )}
                                                     title={intern.loginAccess ? "Completion Certificate" : "Login access required"}
                                                 >
-                                                    <FileText size={16} />
-                                                    <span>Completion Certificate</span>
+                                                    {processingAction.id === intern.id && processingAction.type === 'cert' 
+                                                        ? <Loader2 size={16} className="animate-spin" /> 
+                                                        : <FileText size={16} />}
+                                                    <span>{processingAction.id === intern.id && processingAction.type === 'cert' ? 'Generating...' : 'Completion Certificate'}</span>
                                                 </button>
                                             )}
                                         </td>
@@ -347,6 +383,7 @@ export default function Interns() {
                 onClose={() => setIsModalOpen(false)}
                 onSubmit={handleSubmitIntern}
                 initialData={editingIntern}
+                isLoading={isSubmittingIntern}
             />
 
             <ConfirmModal
@@ -358,6 +395,8 @@ export default function Interns() {
                 confirmText="Delete Now"
                 cancelText="Keep Intern"
                 type="danger"
+                isLoading={isDeleting}
+                loadingText="Deleting..."
             />
         </div>
     );

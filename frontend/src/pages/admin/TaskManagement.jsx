@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Plus, Search, Filter, Trash2, Edit2, ListTodo, CheckCircle, Clock } from 'lucide-react';
+import { Plus, Search, Filter, Trash2, Edit2, ListTodo, CheckCircle, Clock, Loader2 } from 'lucide-react';
 import axios from 'axios';
 import { useToast } from '../../context/ToastContext';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
@@ -14,6 +14,7 @@ const TaskManagement = () => {
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [taskToEdit, setTaskToEdit] = useState(null);
     const [editDeadline, setEditDeadline] = useState('');
+    const [isCreating, setIsCreating] = useState(false);
     const [statusFilter, setStatusFilter] = useState('All');
     const [specificDateFilter, setSpecificDateFilter] = useState('');
 
@@ -82,6 +83,7 @@ const TaskManagement = () => {
 
     const handleCreateTask = async (e) => {
         e.preventDefault();
+        setIsCreating(true);
         try {
             const token = localStorage.getItem('token');
             await axios.post('/api/tasks', formData, {
@@ -94,6 +96,8 @@ const TaskManagement = () => {
         } catch (error) {
             console.error('Error creating task:', error);
             addToast(error.response?.data?.message || 'Failed to create task', 'error');
+        } finally {
+            setIsCreating(false);
         }
     };
 
@@ -315,8 +319,11 @@ const TaskManagement = () => {
                                 </div>
                             </div>
                             <div className="pt-4 flex justify-end gap-3">
-                                <button type="button" onClick={() => setIsCreateModalOpen(false)} className="px-4 py-2 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">Cancel</button>
-                                <button type="submit" className="px-4 py-2 text-sm text-white bg-brand-600 rounded-lg hover:bg-brand-700">Assign Task</button>
+                                <button type="button" disabled={isCreating} onClick={() => setIsCreateModalOpen(false)} className="px-4 py-2 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50">Cancel</button>
+                                <button type="submit" disabled={isCreating} className="px-4 py-2 text-sm text-white bg-brand-600 rounded-lg hover:bg-brand-700 disabled:opacity-50 flex items-center gap-2">
+                                    {isCreating && <Loader2 className="w-4 h-4 animate-spin" />}
+                                    {isCreating ? 'Assigning...' : 'Assign Task'}
+                                </button>
                             </div>
                         </form>
                     </div>
@@ -345,8 +352,9 @@ const TaskManagement = () => {
                                 />
                             </div>
                             <div className="pt-4 flex justify-end gap-3">
-                                <button type="button" onClick={() => setIsEditModalOpen(false)} className="px-4 py-2 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">Cancel</button>
-                                <button type="submit" disabled={isUpdating} className="px-4 py-2 text-sm text-white bg-brand-600 rounded-lg hover:bg-brand-700 disabled:opacity-50">
+                                <button type="button" disabled={isUpdating} onClick={() => setIsEditModalOpen(false)} className="px-4 py-2 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50">Cancel</button>
+                                <button type="submit" disabled={isUpdating} className="px-4 py-2 text-sm text-white bg-brand-600 rounded-lg hover:bg-brand-700 disabled:opacity-50 flex items-center gap-2">
+                                    {isUpdating && <Loader2 className="w-4 h-4 animate-spin" />}
                                     {isUpdating ? 'Updating...' : 'Update Deadline'}
                                 </button>
                             </div>

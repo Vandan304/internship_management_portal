@@ -104,7 +104,14 @@ const ResetPassword = () => {
                             disabled={loading}
                             className="w-full flex items-center justify-center gap-2 py-3 bg-brand-600 hover:bg-brand-700 text-white rounded-xl font-medium shadow-lg shadow-brand-500/30 hover:shadow-brand-500/40 transition-all duration-200 disabled:opacity-70 disabled:cursor-not-allowed"
                         >
-                            {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Confirm Reset'}
+                            {loading ? (
+                                <>
+                                    <Loader2 className="w-5 h-5 animate-spin" />
+                                    <span>Verifying...</span>
+                                </>
+                            ) : (
+                                'Confirm Reset'
+                            )}
                         </button>
                     </form>
                 </div>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { User, Mail, Calendar, Hash, Save, Camera } from 'lucide-react';
+import { User, Mail, Calendar, Hash, Save, Camera, Loader2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import axios from 'axios';
@@ -181,7 +181,7 @@ const InternProfile = () => {
                                         disabled={isSaving}
                                         className="flex items-center gap-2 px-6 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors shadow-lg shadow-brand-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
-                                        <Save className="w-4 h-4" />
+                                        {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                                         {isSaving ? 'Saving...' : 'Save Changes'}
                                     </button>
                                 </div>

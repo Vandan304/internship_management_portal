@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Search, Download, CheckCircle, XCircle, Clock, Eye } from 'lucide-react';
+import { Search, Download, CheckCircle, XCircle, Clock, Eye, Loader2 } from 'lucide-react';
 import axios from 'axios';
 import { useToast } from '../../context/ToastContext';
 import { BASE_URL } from '../../utils/urlUtils';
@@ -13,6 +13,7 @@ const TaskReview = () => {
     const [selectedTask, setSelectedTask] = useState(null);
     const [reviewComment, setReviewComment] = useState('');
     const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+    const [isReviewing, setIsReviewing] = useState(false);
 
     const fetchTasks = async () => {
         try {
@@ -42,6 +43,7 @@ const TaskReview = () => {
             return;
         }
 
+        setIsReviewing(true);
         try {
             const token = localStorage.getItem('token');
             await axios.patch(`/api/tasks/${selectedTask._id}/${status}`, { comment: reviewComment }, {
@@ -55,6 +57,8 @@ const TaskReview = () => {
         } catch (error) {
             console.error(`Error ${status} task:`, error);
             addToast(error.response?.data?.message || `Failed to ${status} task`, 'error');
+        } finally {
+            setIsReviewing(false);
         }
     };
 
@@ -213,16 +217,20 @@ const TaskReview = () => {
                             {selectedTask.status === 'submitted' ? (
                                 <div className="flex gap-3 pt-2">
                                     <button
+                                        disabled={isReviewing}
                                         onClick={() => handleReviewSubmit('reject')}
-                                        className="flex-1 flex justify-center items-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors"
+                                        className="flex-1 flex justify-center items-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
                                     >
-                                        <XCircle className="w-4 h-4" /> Reject
+                                        {isReviewing ? <Loader2 className="w-4 h-4 animate-spin" /> : <XCircle className="w-4 h-4" />}
+                                        {isReviewing ? 'Processing...' : 'Reject'}
                                     </button>
                                     <button
+                                        disabled={isReviewing}
                                         onClick={() => handleReviewSubmit('approve')}
-                                        className="flex-1 flex justify-center items-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors"
+                                        className="flex-1 flex justify-center items-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
                                     >
-                                        <CheckCircle className="w-4 h-4" /> Approve
+                                        {isReviewing ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
+                                        {isReviewing ? 'Processing...' : 'Approve'}
                                     </button>
                                 </div>
                             ) : (

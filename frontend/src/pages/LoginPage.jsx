@@ -133,23 +133,17 @@ const LoginPage = () => {
                             className="w-full flex items-center justify-center gap-2 py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl font-medium shadow-lg shadow-brand-500/30 hover:shadow-brand-500/40 transition-all duration-200 disabled:opacity-70 disabled:cursor-not-allowed"
                         >
                             {loading ? (
-                                <Loader2 className="w-5 h-5 animate-spin" />
+                                <>
+                                    <Loader2 className="w-5 h-5 animate-spin" />
+                                    <span>Signing In...</span>
+                                </>
                             ) : (
                                 <>
-                                    Sign In <ArrowRight className="w-4 h-4" />
+                                    <span>Sign In</span> <ArrowRight className="w-4 h-4" />
                                 </>
                             )}
                         </button>
                     </form>
-
-                    {/* <div className="mt-8 pt-6 border-t border-gray-100 text-center">
-                        <p className="text-sm text-gray-600">
-                            Don't have an account?{' '}
-                            <Link to="/register" className="font-medium text-brand-600 hover:text-brand-700">
-                                Create an account
-                            </Link>
-                        </p>
-                    </div> */}
                 </div>
             </div>
         </div>

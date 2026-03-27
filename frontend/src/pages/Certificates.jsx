@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '../components/ui/Card';
 import { Button } from '../components/ui/Button';
-import { Upload, FileText, Search, Trash2, Download, Eye } from 'lucide-react';
+import { Upload, FileText, Search, Trash2, Download, Eye, Loader2 } from 'lucide-react';
 import { cn } from '../utils/cn';
 import { useToast } from '../context/ToastContext';
 import { useData } from '../context/DataContext';
@@ -19,6 +19,8 @@ export default function Certificates() {
     const { addToast } = useToast();
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [selectedCertId, setSelectedCertId] = useState(null);
+    const [isUploading, setIsUploading] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     const handleDragOver = (e) => {
         e.preventDefault();
@@ -48,6 +50,7 @@ export default function Certificates() {
         // The backend `uploadCertificate` will handle default visibility/download if assigned
         formData.append('file', file);
 
+        setIsUploading(true);
         try {
             await addCertificate(formData);
             setCertNameInput('');
@@ -55,6 +58,8 @@ export default function Certificates() {
             addToast(`Uploaded successfully`, 'success');
         } catch (e) {
             addToast('Upload failed', 'error');
+        } finally {
+            setIsUploading(false);
         }
     };
 
@@ -72,11 +77,19 @@ export default function Certificates() {
         setIsDeleteModalOpen(true);
     };
 
-    const confirmDelete = () => {
+    const confirmDelete = async () => {
         if (selectedCertId) {
-            deleteCertificate(selectedCertId);
-            addToast('Certificate deleted', 'error');
-            setSelectedCertId(null);
+            setIsDeleting(true);
+            try {
+                await deleteCertificate(selectedCertId);
+                addToast('Certificate deleted', 'error');
+                setIsDeleteModalOpen(false);
+                setSelectedCertId(null);
+            } catch (error) {
+                addToast('Failed to delete certificate', 'error');
+            } finally {
+                setIsDeleting(false);
+            }
         }
     };
 
@@ -148,7 +161,14 @@ export default function Certificates() {
                                         ))}
                                     </select>
                                 </div>
-                                <Button className="w-full" onClick={() => fileInputRef.current?.click()}>Upload Now</Button>
+                                <Button 
+                                    className="w-full flex items-center justify-center gap-2" 
+                                    onClick={() => fileInputRef.current?.click()}
+                                    disabled={isUploading}
+                                >
+                                    {isUploading && <Loader2 className="w-4 h-4 animate-spin" />}
+                                    {isUploading ? 'Uploading...' : 'Upload Now'}
+                                </Button>
                             </div>
                         </CardContent>
                     </Card>
@@ -254,6 +274,8 @@ export default function Certificates() {
                 confirmText="Delete"
                 cancelText="Cancel"
                 type="danger"
+                isLoading={isDeleting}
+                loadingText="Deleting..."
             />
         </div>
     );

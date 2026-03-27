@@ -1,8 +1,9 @@
 import React from 'react';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
+import { Loader2 } from 'lucide-react';
 
-export function InternModal({ isOpen, onClose, onSubmit, initialData }) {
+export function InternModal({ isOpen, onClose, onSubmit, initialData, isLoading }) {
     const isEdit = !!initialData;
 
     const handleSubmit = (e) => {
@@ -21,7 +22,6 @@ export function InternModal({ isOpen, onClose, onSubmit, initialData }) {
         }
 
         onSubmit(data);
-        onClose();
     };
 
     return (
@@ -114,8 +114,11 @@ export function InternModal({ isOpen, onClose, onSubmit, initialData }) {
                 )}
 
                 <div className="flex justify-end gap-3 mt-6">
-                    <Button type="button" variant="ghost" onClick={onClose}>Cancel</Button>
-                    <Button type="submit">{isEdit ? 'Save Changes' : 'Create Intern'}</Button>
+                    <Button type="button" variant="ghost" onClick={onClose} disabled={isLoading}>Cancel</Button>
+                    <Button type="submit" disabled={isLoading} className="flex items-center gap-2">
+                        {isLoading && <Loader2 size={16} className="animate-spin" />}
+                        {isLoading ? (isEdit ? 'Saving...' : 'Creating...') : (isEdit ? 'Save Changes' : 'Create Intern')}
+                    </Button>
                 </div>
             </form>
         </Modal>
