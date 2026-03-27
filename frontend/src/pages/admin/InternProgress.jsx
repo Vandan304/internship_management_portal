@@ -83,7 +83,7 @@ const InternProgress = () => {
                                 </div>
                                 <div>
                                     <div className="flex items-center gap-2">
-                                        <h3 className="font-bold text-gray-900">{intern.name}</h3>
+                                        <h3 className="font-bold text-gray-900">{intern.name}{intern.internId ? ` (${intern.internId})` : ''}</h3>
                                         {(() => {
                                             const rankInfo = leaderboardData?.fullList?.find(l => l.id === (intern._id || intern.id) || l.internId === intern.internId);
                                             if (rankInfo && rankInfo.rank <= 3) {

@@ -59,7 +59,8 @@ exports.updateProfile = async (req, res, next) => {
                 id: user._id,  // keep id for backward compatibility
                 name: user.name,
                 email: user.email,
-                role: user.role
+                role: user.role,
+                internId: user.internId
             }
         });
 

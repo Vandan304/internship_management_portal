@@ -92,7 +92,9 @@ const ChatWindow = ({ activeConversation, currentUserId, messages, onSendMessage
                         {otherUser?.name.charAt(0).toUpperCase()}
                     </div>
                     <div className="min-w-0">
-                        <h3 className="font-semibold text-gray-800 leading-tight truncate">{otherUser?.name}</h3>
+                        <h3 className="font-semibold text-gray-800 leading-tight truncate">
+                            {otherUser?.name}{otherUser?.internId ? ` (${otherUser.internId})` : ''}
+                        </h3>
                         <p className="text-xs text-gray-500 truncate">{otherUser?.role === 'admin' ? 'Administrator' : 'Intern'}</p>
                     </div>
                 </div>

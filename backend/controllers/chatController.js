@@ -131,8 +131,8 @@ exports.sendMessage = async (req, res, next) => {
         
         // Populate the sender details to return to the client
         const populatedMessage = await Message.findById(message._id)
-            .populate('senderId', 'name')
-            .populate('receiverId', 'name')
+            .populate('senderId', 'name internId')
+            .populate('receiverId', 'name internId')
             .lean();
 
         // Decrypt for the response

@@ -2,6 +2,8 @@ const Task = require('../models/Task');
 const User = require('../models/User');
 const storageService = require('../utils/storageService');
 const { sendDeadlineNotification } = require('../utils/notificationService');
+const { sendPushNotification } = require('../utils/firebaseService');
+const Notification = require('../models/Notification');
 
 // @desc    Admin creates a new task
 // @route   POST /api/tasks
@@ -195,6 +197,70 @@ exports.rejectTask = async (req, res, next) => {
         await task.save();
 
         res.status(200).json({ success: true, message: 'Task rejected', data: task });
+    } catch (error) {
+        next(error);
+    }
+};
+// @desc    Admin updates a task deadline
+// @route   PATCH /api/tasks/:id/deadline
+// @access  Private/Admin
+exports.updateTaskDeadline = async (req, res, next) => {
+    try {
+        const { deadline } = req.body;
+        if (!deadline) {
+            return res.status(400).json({ success: false, message: 'Please provide a new deadline' });
+        }
+
+        const task = await Task.findById(req.params.id).populate('assignedTo');
+        if (!task) {
+            return res.status(404).json({ success: false, message: 'Task not found' });
+        }
+
+        const oldDeadline = new Date(task.deadline);
+        const newDeadline = new Date(deadline);
+        newDeadline.setHours(23, 59, 59, 999);
+
+        const isIncreased = newDeadline > oldDeadline;
+        
+        // 1. Update Task in DB
+        task.deadline = newDeadline;
+        task.overdueNotified = false; // Reset if it was overdue
+        await task.save();
+
+        // 2. Clear stale pending notifications for this task
+        await Notification.deleteMany({ taskId: task._id, status: 'pending' });
+
+        // 3. Send immediate notifications (Email + Push)
+        const intern = task.assignedTo;
+        if (intern) {
+            // A) Email
+            if (intern.email) {
+                await sendDeadlineNotification(
+                    intern.email,
+                    intern.name,
+                    task.title,
+                    { date: newDeadline, isIncreased }, 
+                    'deadline_updated',
+                    { userId: intern._id, taskId: task._id }
+                );
+            }
+
+            // B) Push Notification
+            if (intern.fcmToken) {
+                await sendPushNotification(
+                    intern.fcmToken,
+                    isIncreased ? '📅 Deadline Extended' : '📅 Deadline Decreased',
+                    `The deadline for "${task.title}" has been ${isIncreased ? 'extended' : 'decreased'} to ${newDeadline.toLocaleDateString()}.`,
+                    { userId: intern._id, taskId: task._id, type: 'deadline_updated' }
+                );
+            }
+        }
+
+        res.status(200).json({ 
+            success: true, 
+            message: `Deadline ${isIncreased ? 'increased' : 'decreased'} successfully`, 
+            data: task 
+        });
     } catch (error) {
         next(error);
     }

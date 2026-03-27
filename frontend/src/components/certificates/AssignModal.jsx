@@ -35,7 +35,7 @@ export function AssignModal({ isOpen, onClose, onAssign, certificateName }) {
                     >
                         <option value="">Choose an intern...</option>
                         {interns.map(intern => (
-                            <option key={intern.id} value={intern.id}>{intern.name}</option>
+                            <option key={intern.id} value={intern.id}>{intern.name}{intern.internId ? ` (${intern.internId})` : ''}</option>
                         ))}
                     </select>
                 </div>

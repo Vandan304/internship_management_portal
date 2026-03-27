@@ -28,7 +28,9 @@ exports.register = async (req, res, next) => {
             name,
             email,
             password: hashedPassword,
-            role: role || 'intern' // Default to intern if not provided
+            role: role || 'intern', // Default to intern if not provided
+            loginAccess: true,
+            isActive: true
         });
 
         await user.save();
@@ -42,7 +44,8 @@ exports.register = async (req, res, next) => {
                 id: user._id,
                 name: user.name,
                 email: user.email,
-                role: user.role
+                role: user.role,
+                internId: user.internId
             }
         });
 
@@ -72,6 +75,12 @@ exports.login = async (req, res, next) => {
         if (!user) {
             console.log(`[LOGIN REJECTED] Email: ${email} - Reason: User not found`);
             return res.status(401).json({ success: false, message: 'Invalid credentials' });
+        }
+
+        // Check login access
+        if (user.loginAccess === false) {
+            console.log(`[LOGIN REJECTED] Email: ${email} - Reason: Login access disabled`);
+            return res.status(401).json({ success: false, message: 'Your login access has been restricted. Please contact the administrator.' });
         }
 
         // Verify password
@@ -110,7 +119,8 @@ exports.login = async (req, res, next) => {
                         id: user._id,
                         name: user.name,
                         email: user.email,
-                        role: user.role
+                        role: user.role,
+                        internId: user.internId
                     },
                     redirectTo
                 });

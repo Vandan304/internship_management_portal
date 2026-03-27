@@ -36,7 +36,6 @@ const TaskReview = () => {
     useEffect(() => {
         fetchTasks();
     }, []);
-
     const handleReviewSubmit = async (status) => {
         if (status === 'reject' && !reviewComment) {
             addToast('Please provide a comment for rejection', 'error');
@@ -119,19 +118,26 @@ const TaskReview = () => {
                                     <tr key={task._id} className="hover:bg-gray-50">
                                         <td className="px-6 py-4">
                                             <div className="text-sm font-medium text-gray-900">{task.title} (Week {task.weekNumber})</div>
-                                            <div className="text-xs text-gray-500">{task.assignedTo?.name}</div>
+                                            <div className="text-xs text-gray-500">{task.assignedTo?.name}{task.assignedTo?.internId ? ` (${task.assignedTo.internId})` : ''}</div>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <div className="text-sm text-gray-900">{task.submittedAt ? new Date(task.submittedAt).toLocaleDateString() : '-'}</div>
                                             <div className="text-xs text-gray-500">{task.submittedAt ? new Date(task.submittedAt).toLocaleTimeString() : ''}</div>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
-                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize 
-                                                ${task.status === 'approved' ? 'bg-green-100 text-green-800' :
-                                                    task.status === 'rejected' ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800'}`}
-                                            >
-                                                {task.status}
-                                            </span>
+                                            {(() => {
+                                                const isOverdue = task.status === 'pending' && new Date(task.deadline) < new Date();
+                                                const statusLabel = isOverdue ? 'Not Submitted' : task.status;
+                                                const statusColor = isOverdue ? 'bg-red-100 text-red-800' :
+                                                                  task.status === 'approved' ? 'bg-green-100 text-green-800' :
+                                                                  task.status === 'submitted' ? 'bg-blue-100 text-blue-800' : 'bg-yellow-100 text-yellow-800';
+                                                
+                                                return (
+                                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${statusColor}`}>
+                                                        {statusLabel}
+                                                    </span>
+                                                );
+                                            })()}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                             <button
@@ -161,7 +167,7 @@ const TaskReview = () => {
                         <div className="p-6 space-y-6 overflow-y-auto">
                             <div>
                                 <h4 className="text-md font-bold text-gray-900">{selectedTask.title}</h4>
-                                <p className="text-sm text-gray-500">Submitted by: {selectedTask.assignedTo?.name}</p>
+                                <p className="text-sm text-gray-500">Submitted by: {selectedTask.assignedTo?.name}{selectedTask.assignedTo?.internId ? ` (${selectedTask.assignedTo.internId})` : ''}</p>
                             </div>
 
                             <div className="bg-gray-50 p-4 rounded-lg flex items-center justify-between border border-gray-200">

@@ -23,6 +23,8 @@ export default function Interns() {
     const { interns, leaderboardData, addIntern, updateIntern, deleteIntern, blockIntern, activateIntern, generateCompletionCertificate, generateOfferLetter, isLoading } = useData();
     const [searchQuery, setSearchQuery] = useState('');
     const [filterStatus, setFilterStatus] = useState('All');
+    const [filterRole, setFilterRole] = useState('All');
+    const [sortOrder, setSortOrder] = useState('Name A-Z');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingIntern, setEditingIntern] = useState(null);
     const { addToast } = useToast();
@@ -30,12 +32,24 @@ export default function Interns() {
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [internToDelete, setInternToDelete] = useState(null);
 
-    const filteredInterns = interns.filter(intern => {
-        const matchesSearch = intern.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            intern.email.toLowerCase().includes(searchQuery.toLowerCase());
-        const matchesFilter = filterStatus === 'All' || intern.status === filterStatus;
-        return matchesSearch && matchesFilter;
-    });
+    const filteredInterns = interns
+        .map(intern => ({
+            ...intern,
+            status: intern.status || (intern.isActive ? 'Active' : 'Inactive')
+        }))
+        .filter(intern => {
+            const matchesSearch = intern.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                intern.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                (intern.internId || '').toLowerCase().includes(searchQuery.toLowerCase());
+            const matchesStatus = filterStatus === 'All' || intern.status === filterStatus;
+            const matchesRole = filterRole === 'All' || intern.internRole === filterRole;
+            return matchesSearch && matchesStatus && matchesRole;
+        })
+        .sort((a, b) => {
+            if (sortOrder === 'Name A-Z') return a.name.localeCompare(b.name);
+            if (sortOrder === 'Name Z-A') return b.name.localeCompare(a.name);
+            return 0;
+        });
 
     const toggleLoginStatus = async (id) => {
         const intern = interns.find(i => i.id === id);
@@ -129,8 +143,29 @@ export default function Interns() {
                             onChange={(e) => setFilterStatus(e.target.value)}
                         >
                             <option value="All">All Status</option>
-                            <option value="Active">Active</option>
-                            <option value="Inactive">Inactive</option>
+                            <option value="Active">Active Only</option>
+                            <option value="Inactive">Inactive Only</option>
+                        </select>
+                        <select
+                            className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white"
+                            value={filterRole}
+                            onChange={(e) => setFilterRole(e.target.value)}
+                        >
+                            <option value="All">All Roles</option>
+                            <option value="fullstack">Fullstack</option>
+                            <option value="frontend">Frontend</option>
+                            <option value="backend">Backend</option>
+                            <option value="ai">AI</option>
+                            <option value="ml">ML</option>
+                            <option value="datascience">Data Science</option>
+                        </select>
+                        <select
+                            className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white"
+                            value={sortOrder}
+                            onChange={(e) => setSortOrder(e.target.value)}
+                        >
+                            <option value="Name A-Z">Name A-Z</option>
+                            <option value="Name Z-A">Name Z-A</option>
                         </select>
                         <Button variant="secondary" size="sm" className="hidden sm:flex">
                             <Filter size={16} className="mr-2" /> Filter
@@ -161,7 +196,7 @@ export default function Interns() {
                                                 </div>
                                                 <div>
                                                     <div className="text-sm font-semibold text-gray-900 group-hover:text-blue-600 transition-colors flex items-center gap-1.5">
-                                                        {intern.name}
+                                                        {intern.name}{intern.internId ? ` (${intern.internId})` : ''}
                                                         {(() => {
                                                             const rankInfo = leaderboardData?.fullList?.find(l => l.id === (intern._id || intern.id) || l.internId === intern.internId);
                                                             if (rankInfo && rankInfo.rank <= 3) {

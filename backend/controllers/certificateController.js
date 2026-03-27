@@ -317,7 +317,7 @@ exports.getCertificatePermissions = async (req, res, next) => {
     console.log('[API START] getCertificatePermissions');
     try {
         const permissions = await Permission.find()
-            .populate('internId', 'name email')
+            .populate('internId', 'name email internId')
             .sort({ createdAt: -1 });
 
         console.log(`[DB QUERY SUCCESS] Fetched ${permissions.length} permissions`);
@@ -494,7 +494,7 @@ exports.updateCertificate = async (req, res, next) => {
 exports.getAllCertificates = async (req, res, next) => {
     console.log('[API START] getAllCertificates');
     try {
-        const certificates = await Certificate.find().populate('assignedTo', 'name email').sort({ createdAt: -1 });
+        const certificates = await Certificate.find().populate('assignedTo', 'name email internId').sort({ createdAt: -1 });
         console.log(`[DB QUERY SUCCESS] Fetched ${certificates.length} certificates`);
         res.json({ success: true, data: certificates });
     } catch (error) {

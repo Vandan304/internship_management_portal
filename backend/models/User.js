@@ -45,7 +45,7 @@ const userSchema = new mongoose.Schema({
     },
     loginAccess: {
         type: Boolean,
-        default: false
+        default: true
     },
     points: {
         type: Number,

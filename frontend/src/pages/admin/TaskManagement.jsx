@@ -10,7 +10,43 @@ const TaskManagement = () => {
     const [tasks, setTasks] = useState([]);
     const [interns, setInterns] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [isUpdating, setIsUpdating] = useState(false);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [taskToEdit, setTaskToEdit] = useState(null);
+    const [editDeadline, setEditDeadline] = useState('');
+    const [statusFilter, setStatusFilter] = useState('All');
+    const [specificDateFilter, setSpecificDateFilter] = useState('');
+
+    const openEditModal = (task) => {
+        setTaskToEdit(task);
+        setEditDeadline(new Date(task.deadline).toISOString().split('T')[0]);
+        setIsEditModalOpen(true);
+    };
+
+    const handleUpdateDeadline = async (e) => {
+        e.preventDefault();
+        if (!taskToEdit || !editDeadline) return;
+
+        try {
+            setIsUpdating(true);
+            const token = localStorage.getItem('token');
+            const res = await axios.patch(`/api/tasks/${taskToEdit._id}/deadline`, { deadline: editDeadline }, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            
+            if (res.data.success) {
+                addToast(res.data.message, 'success');
+                setTasks(prev => prev.map(t => t._id === taskToEdit._id ? res.data.data : t));
+                setIsEditModalOpen(false);
+            }
+        } catch (error) {
+            addToast(error.response?.data?.message || "Failed to update deadline", 'error');
+        } finally {
+            setIsUpdating(false);
+        }
+    };
     const [searchTerm, setSearchTerm] = useState('');
+    const [deadlineFilter, setDeadlineFilter] = useState('All');
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
     // Form states
@@ -61,10 +97,37 @@ const TaskManagement = () => {
         }
     };
 
-    const filteredTasks = tasks.filter(task =>
-        task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        task.assignedTo?.name?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const filteredTasks = tasks.filter(task => {
+        const matchesSearch = task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            task.assignedTo?.name?.toLowerCase().includes(searchTerm.toLowerCase());
+        
+        let matchesDeadline = true;
+        if (specificDateFilter) {
+            const selectedDate = new Date(specificDateFilter);
+            selectedDate.setHours(0, 0, 0, 0);
+            const taskDate = new Date(task.deadline);
+            taskDate.setHours(0, 0, 0, 0);
+            matchesDeadline = taskDate.getTime() === selectedDate.getTime();
+        } else if (deadlineFilter !== 'All') {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            
+            const taskDate = new Date(task.deadline);
+            taskDate.setHours(0, 0, 0, 0);
+
+            if (deadlineFilter === 'Today') {
+                matchesDeadline = taskDate.getTime() === today.getTime();
+            } else if (deadlineFilter === '1-Day') {
+                const tomorrow = new Date(today);
+                tomorrow.setDate(today.getDate() + 1);
+                matchesDeadline = taskDate.getTime() >= today.getTime() && taskDate.getTime() <= tomorrow.getTime();
+            }
+        }
+
+        const matchesStatus = statusFilter === 'All' || task.status === statusFilter;
+
+        return matchesSearch && matchesDeadline && matchesStatus;
+    });
 
     return (
         <div className="h-full flex flex-col space-y-6">
@@ -93,6 +156,54 @@ const TaskManagement = () => {
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
                 </div>
+                <div className="flex items-center gap-2">
+                    <select
+                        className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white"
+                        value={deadlineFilter}
+                        onChange={(e) => setDeadlineFilter(e.target.value)}
+                    >
+                        <option value="All">All Deadlines</option>
+                        <option value="Today">Today</option>
+                        <option value="1-Day">Within 1 Day</option>
+                    </select>
+                </div>
+                <div className="flex items-center gap-2">
+                    <select
+                        className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white"
+                        value={statusFilter}
+                        onChange={(e) => setStatusFilter(e.target.value)}
+                    >
+                        <option value="All">All Statuses</option>
+                        <option value="pending">Pending / Not Submitted</option>
+                        <option value="submitted">Submitted</option>
+                        <option value="approved">Approved</option>
+                        <option value="rejected">Rejected</option>
+                    </select>
+                </div>
+                <div className="flex items-center gap-2">
+                    <input
+                        type="date"
+                        className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white"
+                        value={specificDateFilter}
+                        onChange={(e) => {
+                            setSpecificDateFilter(e.target.value);
+                            setDeadlineFilter('All'); // Priority to specific date
+                        }}
+                    />
+                </div>
+                {(searchTerm || statusFilter !== 'All' || deadlineFilter !== 'All' || specificDateFilter) && (
+                    <button
+                        onClick={() => {
+                            setSearchTerm('');
+                            setStatusFilter('All');
+                            setDeadlineFilter('All');
+                            setSpecificDateFilter('');
+                        }}
+                        className="text-sm text-brand-600 hover:text-brand-700 font-medium px-2"
+                    >
+                        Reset Filters
+                    </button>
+                )}
             </div>
 
             <div className="bg-white rounded-xl border border-gray-200 shadow-sm flex-1 flex flex-col min-h-0 overflow-hidden">
@@ -102,20 +213,22 @@ const TaskManagement = () => {
                             <tr>
                                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Task Info</th>
                                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Assigned Intern</th>
-                                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Week / Deadline</th>
+                                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Week</th>
+                                <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Deadline</th>
                                 <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
+                                <th className="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
                             {isLoading ? (
                                 <tr>
-                                    <td colSpan="4" className="p-0">
+                                    <td colSpan="6" className="p-0">
                                         <LoadingSpinner message="Loading tasks..." />
                                     </td>
                                 </tr>
                             ) : filteredTasks.length === 0 ? (
                                 <tr>
-                                    <td colSpan="4" className="px-6 py-8 text-center text-sm text-gray-500">No tasks found.</td>
+                                    <td colSpan="6" className="px-6 py-8 text-center text-sm text-gray-500">No tasks found.</td>
                                 </tr>
                             ) : (
                                 filteredTasks.map((task) => (
@@ -125,20 +238,39 @@ const TaskManagement = () => {
                                             <div className="text-xs text-gray-500 truncate max-w-xs">{task.description}</div>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="text-sm font-medium text-gray-900">{task.assignedTo?.name}</div>
+                                            <div className="text-sm font-medium text-gray-900">{task.assignedTo?.name}{task.assignedTo?.internId ? ` (${task.assignedTo.internId})` : ''}</div>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <div className="text-sm text-gray-900">Week {task.weekNumber}</div>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
                                             <div className="text-xs text-gray-500">{new Date(task.deadline).toLocaleDateString()}</div>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
-                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize 
-                                                ${task.status === 'approved' ? 'bg-green-100 text-green-800' :
-                                                    task.status === 'rejected' ? 'bg-red-100 text-red-800' :
-                                                        task.status === 'submitted' ? 'bg-blue-100 text-blue-800' : 'bg-yellow-100 text-yellow-800'}`}
+                                            {(() => {
+                                                const isOverdue = task.status === 'pending' && new Date(task.deadline) < new Date();
+                                                const statusLabel = isOverdue ? 'Not Submitted' : task.status;
+                                                const statusColor = isOverdue ? 'bg-red-100 text-red-800' :
+                                                                  task.status === 'approved' ? 'bg-green-100 text-green-800' :
+                                                                  task.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                                                                  task.status === 'submitted' ? 'bg-blue-100 text-blue-800' : 'bg-yellow-100 text-yellow-800';
+                                                
+                                                return (
+                                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${statusColor}`}>
+                                                        {statusLabel}
+                                                    </span>
+                                                );
+                                            })()}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                            <button
+                                                onClick={() => openEditModal(task)}
+                                                className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-brand-700 bg-brand-50 rounded-lg hover:bg-brand-100 transition-colors"
+                                                disabled={isUpdating}
                                             >
-                                                {task.status}
-                                            </span>
+                                                <Clock className="w-4 h-4" />
+                                                Edit Deadline
+                                            </button>
                                         </td>
                                     </tr>
                                 ))
@@ -169,7 +301,7 @@ const TaskManagement = () => {
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Assign To</label>
                                 <select required value={formData.assignedTo} onChange={e => setFormData({ ...formData, assignedTo: e.target.value })} className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-brand-500 focus:border-brand-500 outline-none">
                                     <option value="">Select Intern</option>
-                                    {interns.map(i => <option key={i._id} value={i._id}>{i.name}</option>)}
+                                    {interns.map(i => <option key={i._id} value={i._id}>{i.name}{i.internId ? ` (${i.internId})` : ''}</option>)}
                                 </select>
                             </div>
                             <div className="grid grid-cols-2 gap-4">
@@ -185,6 +317,38 @@ const TaskManagement = () => {
                             <div className="pt-4 flex justify-end gap-3">
                                 <button type="button" onClick={() => setIsCreateModalOpen(false)} className="px-4 py-2 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">Cancel</button>
                                 <button type="submit" className="px-4 py-2 text-sm text-white bg-brand-600 rounded-lg hover:bg-brand-700">Assign Task</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>,
+                document.body
+            )}
+
+            {/* Edit Deadline Modal - Portaled to document.body */}
+            {isEditModalOpen && createPortal(
+                <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-gray-900/50 backdrop-blur-sm">
+                    <div className="bg-white rounded-xl shadow-xl w-full max-w-sm flex flex-col overflow-hidden text-left">
+                        <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50 flex-shrink-0">
+                            <h3 className="text-lg font-semibold text-gray-900 text-left w-full">Update Deadline</h3>
+                            <button onClick={() => setIsEditModalOpen(false)} className="text-gray-400 hover:text-gray-600 text-3xl">&times;</button>
+                        </div>
+                        <form onSubmit={handleUpdateDeadline} className="p-6 space-y-4">
+                            <div>
+                                <p className="text-sm font-medium text-gray-700 mb-2 truncate">Task: {taskToEdit?.title}</p>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">New Deadline</label>
+                                <input 
+                                    type="date" 
+                                    required 
+                                    value={editDeadline} 
+                                    onChange={e => setEditDeadline(e.target.value)} 
+                                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-brand-500 focus:border-brand-500 outline-none" 
+                                />
+                            </div>
+                            <div className="pt-4 flex justify-end gap-3">
+                                <button type="button" onClick={() => setIsEditModalOpen(false)} className="px-4 py-2 text-sm text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">Cancel</button>
+                                <button type="submit" disabled={isUpdating} className="px-4 py-2 text-sm text-white bg-brand-600 rounded-lg hover:bg-brand-700 disabled:opacity-50">
+                                    {isUpdating ? 'Updating...' : 'Update Deadline'}
+                                </button>
                             </div>
                         </form>
                     </div>

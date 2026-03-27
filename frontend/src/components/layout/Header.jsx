@@ -104,7 +104,7 @@ export function Header({ onMenuClick }) {
 
                 <div className="flex items-center gap-3 pl-1">
                     <div className="flex flex-col items-end hidden sm:block">
-                        <span className="text-sm font-medium text-gray-900 capitalize">{user?.name || 'User'}</span>
+                        <span className="text-sm font-medium text-gray-900 capitalize">{user?.role === 'intern' ? `${user.name}${user.internId ? ` (${user.internId})` : ''}` : (user?.name || 'User')}</span>
                         <div className="flex items-center gap-1">
                             <span className="text-xs text-gray-500 uppercase tracking-wider">{user?.role || 'Guest'}</span>
                             {user?.role === 'intern' && currentUserRank && currentUserRank.rank <= 3 && (

@@ -117,7 +117,7 @@ export default function Permissions() {
                                     filteredPermissions.map((item) => (
                                         <tr key={item._id} className="hover:bg-gray-50/50 transition-colors">
                                             <td className="px-6 py-4 font-medium text-gray-900">
-                                                {item.intern ? item.intern.name : 'Unassigned'}
+                                                {item.intern ? `${item.intern.name}${item.intern.internId ? ` (${item.intern.internId})` : ''}` : 'Unassigned'}
                                             </td>
                                             <td className="px-6 py-4 text-gray-600">{item.title}</td>
 

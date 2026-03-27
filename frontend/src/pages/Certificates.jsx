@@ -144,7 +144,7 @@ export default function Certificates() {
                                     >
                                         <option value="">-- Select Intern --</option>
                                         {interns.filter(i => i.status === 'Active').map(intern => (
-                                            <option key={intern.id} value={intern.id}>{intern.name}</option>
+                                            <option key={intern.id} value={intern.id}>{intern.name}{intern.internId ? ` (${intern.internId})` : ''}</option>
                                         ))}
                                     </select>
                                 </div>
@@ -192,7 +192,7 @@ export default function Certificates() {
                                                         <FileText size={20} className="text-red-500 flex-shrink-0" />
                                                         <div className="min-w-0">
                                                             <p className="font-medium text-gray-900 truncate">{cert.name}</p>
-                                                            <p className="text-[10px] text-brand-600 mt-0.5 truncate">To: {cert.assignedTo?.name || 'Unknown'}</p>
+                                                            <p className="text-[10px] text-brand-600 mt-0.5 truncate">To: {cert.assignedTo?.name ? `${cert.assignedTo.name}${cert.assignedTo.internId ? ` (${cert.assignedTo.internId})` : ''}` : 'Unknown'}</p>
                                                         </div>
                                                     </div>
                                                 </td>

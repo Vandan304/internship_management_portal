@@ -87,12 +87,14 @@ const InternProfile = () => {
                             )}
                         </div>
 
-                        <h2 className="mt-4 text-xl font-bold text-gray-900">{user?.name || 'Intern Name'}</h2>
+                        <h2 className="mt-4 text-xl font-bold text-gray-900">{user?.name}{user?.internId ? ` (${user.internId})` : ''}</h2>
                         <p className="text-gray-500">{user?.email || 'intern@example.com'}</p>
 
                         <div className="mt-6 flex justify-center gap-2">
-                            <span className="px-3 py-1 bg-brand-50 text-brand-700 text-xs font-semibold rounded-full uppercase tracking-wide">
-                                Active Intern
+                            <span className={`px-3 py-1 text-xs font-semibold rounded-full uppercase tracking-wide ${
+                                user?.isActive ? 'bg-brand-50 text-brand-700' : 'bg-amber-50 text-amber-700'
+                            }`}>
+                                {user?.isActive ? 'Active Intern' : 'Inactive Intern'}
                             </span>
                         </div>
                     </div>
@@ -150,7 +152,7 @@ const InternProfile = () => {
                                         <input
                                             type="text"
                                             disabled
-                                            defaultValue={`INT-${user?.id?.slice(-4) || '001'}`}
+                                            defaultValue={user?.internId || 'APPI001'}
                                             className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 outline-none disabled:bg-gray-50 disabled:text-gray-500"
                                         />
                                     </div>

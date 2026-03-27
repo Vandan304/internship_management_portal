@@ -161,8 +161,7 @@ export default function Leaderboard() {
                                                             <UserIcon size={20} />
                                                         </div>
                                                         <div>
-                                                            <p className="font-bold">{intern.name}</p>
-                                                            <p className="text-xs text-gray-400 font-normal uppercase">{intern.internId}</p>
+                                                            <p className="font-bold">{intern.name}{intern.internId ? ` (${intern.internId})` : ''}</p>
                                                         </div>
                                                     </div>
                                                 </td>

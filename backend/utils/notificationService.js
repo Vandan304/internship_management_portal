@@ -53,10 +53,11 @@ const getEmailTemplate = (title, internName, taskTitle, deadline, type) => {
         urgencyText = 'NEW ASSIGNMENT';
         accentColor = '#1fb2a6'; // Success Teal
         timingWord = 'by the date shown below';
-    } else if (type === 'overdue') {
-        urgencyText = 'OVERDUE';
-        accentColor = '#d13212'; // AWS Red
-        timingWord = 'in the past and is now overdue';
+    } else if (type === 'deadline_updated') {
+        const isIncreased = deadline.isIncreased;
+        urgencyText = isIncreased ? 'DEADLINE EXTENDED' : 'DEADLINE DECREASED';
+        accentColor = isIncreased ? '#1fb2a6' : '#ec7211';
+        timingWord = isIncreased ? 'extended' : 'decreased (tightened)';
     }
 
     return `
@@ -97,8 +98,8 @@ const getEmailTemplate = (title, internName, taskTitle, deadline, type) => {
             <div class="task-box">
                 <div class="task-label">Assigned Task</div>
                 <div class="task-value">${taskTitle}</div>
-                <div class="task-label">Submission Deadline</div>
-                <div class="task-value deadline">${new Date(deadline).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })} at 11:59 PM</div>
+                <div class="task-label">${type === 'deadline_updated' ? 'New Submission Deadline' : 'Submission Deadline'}</div>
+                <div class="task-value deadline">${new Date(deadline.date || deadline).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })} at 11:59 PM</div>
             </div>
             ${type !== 'overdue' ? `
             <div style="text-align: center;">
@@ -150,6 +151,10 @@ exports.sendDeadlineNotification = async (userEmail, internName, taskTitle, dead
         } else if (type === 'overdue') {
             title = 'Action Required: Task Overdue';
             subject = `[Overdue] ${taskTitle} deadline has passed`;
+        } else if (type === 'deadline_updated') {
+            const isIncreased = deadline.isIncreased;
+            title = isIncreased ? 'Task Deadline Extended' : 'Task Deadline Decreased';
+            subject = isIncreased ? `[Extended] ${taskTitle} deadline increase` : `[Decreased] ${taskTitle} deadline decrease`;
         }
 
         const html = getEmailTemplate(title, internName, taskTitle, deadline, type);

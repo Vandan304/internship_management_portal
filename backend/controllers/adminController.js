@@ -51,19 +51,20 @@ exports.createIntern = async (req, res, next) => {
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(generatedPassword, salt);
 
-        const currentYear = new Date().getFullYear();
-        const lastIntern = await User.findOne({
-            internId: new RegExp(`^INT-${currentYear}-`)
-        }).sort({ createdAt: -1 });
+        // New Intern ID Format: APPI001, APPI002...
+        const lastIntern = await User.findOne({ 
+            internId: /^APPI/ 
+        }).sort({ internId: -1 });
 
         let sequenceCount = '001';
         if (lastIntern && lastIntern.internId) {
-            const lastSequence = parseInt(lastIntern.internId.split('-')[2]);
-            if (!isNaN(lastSequence)) {
+            const lastSequenceMatch = lastIntern.internId.match(/APPI(\d+)/);
+            if (lastSequenceMatch) {
+                const lastSequence = parseInt(lastSequenceMatch[1]);
                 sequenceCount = (lastSequence + 1).toString().padStart(3, '0');
             }
         }
-        const authInternId = `INT-${currentYear}-${sequenceCount}`;
+        const authInternId = `APPI${sequenceCount}`;
 
         const intern = await User.create({
             name: name.trim(),
@@ -72,6 +73,8 @@ exports.createIntern = async (req, res, next) => {
             role: 'intern',
             internRole: validInternRole,
             internId: authInternId,
+            loginAccess: true,
+            isActive: true,
             startDate: startDate || null,
             endDate: endDate || null
         });
@@ -164,8 +167,12 @@ exports.updateIntern = async (req, res, next) => {
         if (internRole) intern.internRole = internRole.toLowerCase();
         if (startDate) intern.startDate = startDate;
         if (endDate) intern.endDate = endDate;
-        if (req.body.isActive !== undefined) {
+        if (req.body.loginAccess !== undefined) {
+            intern.loginAccess = req.body.loginAccess;
+            intern.isActive = req.body.loginAccess;
+        } else if (req.body.isActive !== undefined) {
             intern.isActive = req.body.isActive;
+            intern.loginAccess = req.body.isActive;
         }
 
         await intern.save();
@@ -173,6 +180,7 @@ exports.updateIntern = async (req, res, next) => {
 
         const internResponse = intern.toObject();
         delete internResponse.password;
+        internResponse.status = internResponse.isActive ? 'Active' : 'Inactive';
 
         res.json({ success: true, data: internResponse });
     } catch (error) {
@@ -234,6 +242,7 @@ exports.blockIntern = async (req, res, next) => {
         }
 
         intern.loginAccess = false;
+        intern.isActive = false;
         await intern.save();
         console.log('[DB UPDATE SUCCESS] Intern login blocked');
 
@@ -272,6 +281,7 @@ exports.activateIntern = async (req, res, next) => {
         }
 
         intern.loginAccess = true;
+        intern.isActive = true;
         await intern.save();
         console.log('[DB UPDATE SUCCESS] Intern login activated');
 

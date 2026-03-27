@@ -63,7 +63,9 @@ const ChatSidebar = ({ conversations, currentUserId, activeConversation, onSelec
                                 </div>
                                 <div className="flex-1 min-w-0">
                                     <div className="flex justify-between items-baseline mb-1">
-                                        <h3 className="font-semibold text-gray-800 truncate pr-2">{otherUser?.name}</h3>
+                                        <h3 className="font-semibold text-gray-800 truncate pr-2">
+                                            {otherUser?.name}{otherUser?.internId ? ` (${otherUser.internId})` : ''}
+                                        </h3>
                                         <div className="flex flex-col items-end gap-1 flex-shrink-0">
                                             {conv.lastMessage && (
                                                 <span className="text-[10px] font-medium text-gray-400">
