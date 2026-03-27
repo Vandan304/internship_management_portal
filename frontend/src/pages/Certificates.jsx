@@ -104,9 +104,9 @@ export default function Certificates() {
                 </div>
             </div>
 
-            <div className="flex flex-1 gap-6 overflow-hidden">
-                {/* Left Side: Upload Section (Fixed on desktop) */}
-                <div className="hidden lg:block w-80 flex-shrink-0 pb-4 overflow-visible">
+            <div className="flex flex-col lg:flex-row flex-1 gap-6 overflow-hidden">
+                {/* Left Side: Upload Section (Responsive) */}
+                <div className="w-full lg:w-80 flex-shrink-0 pb-4 overflow-visible">
                     <Card className="h-fit">
                         <CardHeader>
                             <CardTitle>Upload Certificate</CardTitle>
@@ -173,11 +173,12 @@ export default function Certificates() {
                         </CardContent>
                     </Card>
                 </div>
-                <div className="flex-1 overflow-hidden flex flex-col">
+                {/* Right Side: List Section */}
+                <div className="flex-1 overflow-hidden flex flex-col min-h-[400px]">
                     <Card className="flex-1 flex flex-col overflow-hidden">
                         <CardHeader className="flex flex-row items-center justify-between flex-shrink-0">
                             <CardTitle>All Certificates</CardTitle>
-                            <div className="relative w-48 hidden sm:block">
+                            <div className="relative w-full sm:w-48">
                                 <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                                 <input
                                     type="text"
@@ -189,8 +190,9 @@ export default function Certificates() {
                             </div>
                         </CardHeader>
                         <CardContent className="p-0 flex-1 flex flex-col min-h-0">
-                            <div className="overflow-auto flex-1">
-                                <table className="w-full text-sm text-left relative">
+                            <div className="flex-1 overflow-auto">
+                                {/* Desktop Table View */}
+                                <table className="w-full text-sm text-left relative hidden lg:table">
                                     <thead className="text-xs text-gray-500 uppercase bg-gray-50 sticky top-0 z-20 shadow-sm">
                                         <tr className="border-b border-gray-100">
                                             <th className="px-6 py-3 font-medium text-nowrap">File Name</th>
@@ -259,6 +261,62 @@ export default function Certificates() {
                                         ))}
                                     </tbody>
                                 </table>
+
+                                {/* Mobile Card View */}
+                                <div className="grid grid-cols-1 gap-4 p-4 lg:hidden">
+                                    {certificates.filter(cert =>
+                                        cert.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                        cert.assignedTo?.name?.toLowerCase().includes(searchTerm.toLowerCase())
+                                    ).map((cert) => (
+                                        <div key={cert.id} className="bg-white border border-gray-100 rounded-xl p-4 shadow-sm hover:border-brand-200 transition-all">
+                                            <div className="flex items-start justify-between mb-3">
+                                                <div className="flex items-center gap-3 min-w-0">
+                                                    <div className="w-10 h-10 bg-red-50 rounded-lg flex items-center justify-center text-red-500 shrink-0">
+                                                        <FileText size={20} />
+                                                    </div>
+                                                    <div className="min-w-0">
+                                                        <h4 className="font-semibold text-gray-900 truncate">{cert.name}</h4>
+                                                        <p className="text-xs text-brand-600 truncate">
+                                                            To: {cert.assignedTo?.name ? `${cert.assignedTo.name}` : 'Unknown'}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                <span className={cn(
+                                                    "px-2 py-0.5 rounded-full text-[10px] font-medium shrink-0",
+                                                    cert.assignedCount > 0 ? "bg-blue-50 text-blue-700" : "bg-gray-100 text-gray-700"
+                                                )}>
+                                                    {cert.assignedCount > 0 ? 'Assigned' : 'Draft'}
+                                                </span>
+                                            </div>
+                                            
+                                            <div className="flex items-center justify-between text-[11px] text-gray-500 mb-4 px-1">
+                                                <span>{cert.uploadedDate}</span>
+                                                <span>{cert.fileSize ? (cert.fileSize / 1024).toFixed(0) + ' KB' : ''}</span>
+                                            </div>
+
+                                            <div className="grid grid-cols-3 gap-2">
+                                                <button
+                                                    onClick={() => window.open(`${BASE_URL}/api/files/${cert.id}?token=${localStorage.getItem('token')}`, '_blank')}
+                                                    className="flex items-center justify-center gap-2 py-2 bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors text-xs font-medium"
+                                                >
+                                                    <Eye size={14} /> View
+                                                </button>
+                                                <button
+                                                    onClick={() => downloadCertificate(cert.id, cert.fileName)}
+                                                    className="flex items-center justify-center gap-2 py-2 bg-brand-50 text-brand-700 rounded-lg hover:bg-brand-100 transition-colors text-xs font-medium"
+                                                >
+                                                    <Download size={14} /> Save
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDeleteClick(cert.id)}
+                                                    className="flex items-center justify-center gap-2 py-2 bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition-colors text-xs font-medium"
+                                                >
+                                                    <Trash2 size={14} /> Del
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
                         </CardContent>
                     </Card>

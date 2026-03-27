@@ -189,9 +189,9 @@ export default function Interns() {
                         </Button>
                     </div>
                 </CardHeader>
-                <CardContent className="p-0 overflow-auto flex-1">
+                <CardContent className="p-0 overflow-x-auto flex-1">
                     <div className="min-w-full">
-                        <table className="w-full text-sm text-left">
+                        <table className="min-w-[1000px] w-full text-sm text-left">
                             <thead className="text-xs text-gray-500 uppercase bg-gray-50 sticky top-0 z-10">
                                 <tr>
                                     <th className="px-6 py-4 font-medium uppercase tracking-wider">Intern Details</th>
