@@ -325,7 +325,7 @@ const ChatPage = () => {
                                             {u.name.charAt(0).toUpperCase()}
                                         </div>
                                         <div>
-                                            <div className="font-medium text-gray-800">{u.name}</div>
+                                            <div className="font-medium text-gray-800">{u.name}{u.internId ? ` (${u.internId})` : ''}</div>
                                             <div className="text-xs text-gray-500 capitalize">{u.role}</div>
                                         </div>
                                     </div>
