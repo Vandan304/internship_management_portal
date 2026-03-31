@@ -194,40 +194,46 @@ export default function Interns() {
                         <table className="min-w-[1000px] w-full text-sm text-left">
                             <thead className="text-xs text-gray-500 uppercase bg-gray-50 sticky top-0 z-10">
                                 <tr>
-                                    <th className="px-6 py-4 font-medium uppercase tracking-wider">Intern Details</th>
-                                    <th className="px-6 py-4 font-medium uppercase tracking-wider">Role</th>
-                                    <th className="px-6 py-4 font-medium uppercase tracking-wider">Status</th>
-                                    <th className="px-6 py-4 font-medium uppercase tracking-wider">Login Access</th>
-                                    <th className="px-6 py-4 font-medium uppercase tracking-wider">Offer Letter</th>
-                                    <th className="px-6 py-4 font-medium uppercase tracking-wider">Completion Certificate</th>
-                                    <th className="px-6 py-4 font-medium uppercase tracking-wider text-right">Actions</th>
+                                    <th className="px-4 py-4 font-medium uppercase tracking-wider w-20">ID</th>
+                                    <th className="px-4 py-4 font-medium uppercase tracking-wider">Intern Details</th>
+                                    <th className="px-4 py-4 font-medium uppercase tracking-wider">Role</th>
+                                    <th className="px-4 py-4 font-medium uppercase tracking-wider">Status</th>
+                                    <th className="px-4 py-4 font-medium uppercase tracking-wider">Login Access</th>
+                                    <th className="px-4 py-4 font-medium uppercase tracking-wider">Offer Letter</th>
+                                    <th className="px-4 py-4 font-medium uppercase tracking-wider">Completion Certificate</th>
+                                    <th className="px-4 py-4 font-medium uppercase tracking-wider text-right">Actions</th>
                                 </tr>
                             </thead>
                             <tbody className="bg-white divide-y divide-gray-100">
                                 {filteredInterns.map((intern) => (
                                     <tr key={intern.id} className="hover:bg-gray-50/50 transition-colors group">
-                                        <td className="px-6 py-4 whitespace-nowrap">
+                                        <td className="px-4 py-4 whitespace-nowrap">
+                                            <span className="text-xs font-mono font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded">
+                                                {intern.internId || 'N/A'}
+                                            </span>
+                                        </td>
+                                        <td className="px-4 py-4 whitespace-nowrap">
                                             <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-50 to-indigo-50 flex items-center justify-center text-blue-600 font-bold border border-blue-100/50">
-                                                    {intern.name?.[0]?.toUpperCase() || 'I'}
-                                                </div>
+                                                    {/* <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-50 to-indigo-50 flex items-center justify-center text-blue-600 font-bold border border-blue-100/50">
+                                                        {intern.name?.[0]?.toUpperCase() || 'I'}
+                                                    </div> */}
                                                 <div>
                                                     <div className="text-sm font-semibold text-gray-900 group-hover:text-blue-600 transition-colors flex items-center gap-1.5">
-                                                        {intern.name}{intern.internId ? ` (${intern.internId})` : ''}
+                                                        {intern.name}
                                                         {(() => {
                                                             const rankInfo = leaderboardData?.fullList?.find(l => l.id === (intern._id || intern.id) || l.internId === intern.internId);
                                                             if (rankInfo && rankInfo.rank <= 3) {
                                                                 return (
-                                                                    <img 
-                                                                        src={medalMap[rankInfo.rank]} 
-                                                                        alt={`Rank ${rankInfo.rank}`} 
+                                                                    <img
+                                                                        src={medalMap[rankInfo.rank]}
+                                                                        alt={`Rank ${rankInfo.rank}`}
                                                                         className="w-4 h-4 object-contain"
                                                                     />
                                                                 );
                                                             }
                                                             return null;
                                                         })()}
-                                                   </div>
+                                                    </div>
                                                     <div className="text-xs text-gray-500">{intern.email}</div>
                                                 </div>
                                             </div>
@@ -237,7 +243,7 @@ export default function Interns() {
                                                 {intern.internRole}
                                             </span>
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
+                                        <td className="px-4 py-4 whitespace-nowrap">
                                             <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${intern.status === 'Active'
                                                 ? 'bg-emerald-50 text-emerald-700 border-emerald-100'
                                                 : 'bg-amber-50 text-amber-700 border-amber-100'
@@ -246,7 +252,7 @@ export default function Interns() {
                                                 {intern.status}
                                             </span>
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
+                                        <td className="px-4 py-4 whitespace-nowrap">
                                             <label className="relative inline-flex items-center cursor-pointer">
                                                 <input
                                                     type="checkbox"
@@ -264,7 +270,7 @@ export default function Interns() {
                                                 )}
                                             </label>
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
+                                        <td className="px-4 py-4 whitespace-nowrap">
                                             {intern.status === 'Active' && (
                                                 <button
                                                     disabled={!intern.loginAccess || (processingAction.id === intern.id && processingAction.type === 'offer')}
@@ -291,7 +297,7 @@ export default function Interns() {
                                                     }}
                                                     className={cn(
                                                         "p-2 rounded-lg transition-colors flex items-center gap-2 text-xs font-medium",
-                                                        !intern.loginAccess 
+                                                        !intern.loginAccess
                                                             ? "text-gray-300 cursor-not-allowed opacity-50"
                                                             : intern.offerLetterAssigned
                                                                 ? "text-emerald-600 bg-emerald-50 hover:bg-emerald-100"
@@ -299,18 +305,18 @@ export default function Interns() {
                                                     )}
                                                     title={!intern.loginAccess ? "Login access required" : intern.offerLetterAssigned ? "Offer Letter Generated" : "Generate Offer Letter"}
                                                 >
-                                                    {processingAction.id === intern.id && processingAction.type === 'offer' 
-                                                        ? <Loader2 size={16} className="animate-spin" /> 
+                                                    {processingAction.id === intern.id && processingAction.type === 'offer'
+                                                        ? <Loader2 size={16} className="animate-spin" />
                                                         : <FileCheck size={16} />}
                                                     <span>
-                                                        {processingAction.id === intern.id && processingAction.type === 'offer' 
-                                                            ? 'Generating...' 
+                                                        {processingAction.id === intern.id && processingAction.type === 'offer'
+                                                            ? 'Generating...'
                                                             : intern.offerLetterAssigned ? 'Offer Letter Generated' : 'Offer Letter'}
                                                     </span>
                                                 </button>
                                             )}
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
+                                        <td className="px-4 py-4 whitespace-nowrap">
                                             {intern.status === 'Active' && (
                                                 <button
                                                     disabled={!intern.loginAccess || (processingAction.id === intern.id && processingAction.type === 'cert')}
@@ -337,7 +343,7 @@ export default function Interns() {
                                                     }}
                                                     className={cn(
                                                         "p-2 rounded-lg transition-colors flex items-center gap-2 text-xs font-medium",
-                                                        !intern.loginAccess 
+                                                        !intern.loginAccess
                                                             ? "text-gray-300 cursor-not-allowed opacity-50"
                                                             : intern.certificateAssigned
                                                                 ? "text-emerald-600 bg-emerald-50 hover:bg-emerald-100"
@@ -345,18 +351,18 @@ export default function Interns() {
                                                     )}
                                                     title={!intern.loginAccess ? "Login access required" : intern.certificateAssigned ? "Certificate Generated" : "Generate Completion Certificate"}
                                                 >
-                                                    {processingAction.id === intern.id && processingAction.type === 'cert' 
-                                                        ? <Loader2 size={16} className="animate-spin" /> 
+                                                    {processingAction.id === intern.id && processingAction.type === 'cert'
+                                                        ? <Loader2 size={16} className="animate-spin" />
                                                         : <FileText size={16} />}
                                                     <span>
-                                                        {processingAction.id === intern.id && processingAction.type === 'cert' 
-                                                            ? 'Generating...' 
+                                                        {processingAction.id === intern.id && processingAction.type === 'cert'
+                                                            ? 'Generating...'
                                                             : intern.certificateAssigned ? 'Completion Certificate Generated' : 'Completion Certificate'}
                                                     </span>
                                                 </button>
                                             )}
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                        <td className="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
                                             <div className="flex items-center gap-1 justify-end">
                                                 <button
                                                     onClick={() => {
