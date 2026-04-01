@@ -16,6 +16,7 @@ const navItems = [
     { icon: FileText, label: 'Certificates', to: '/admin/certificates' },
     { icon: Download, label: 'Permissions', to: '/admin/permissions' },
     { icon: MessageCircle, label: 'Chat', to: '/admin/chat' },
+    { icon: Users, label: 'All Interns', to: '/admin/all-interns' },
 ];
 
 export function Sidebar({ isOpen, onClose }) {

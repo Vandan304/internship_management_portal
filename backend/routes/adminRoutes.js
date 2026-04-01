@@ -6,7 +6,8 @@ const {
     updateIntern,
     deleteIntern,
     blockIntern,
-    activateIntern
+    activateIntern,
+    getInternRoles
 } = require('../controllers/adminController');
 const { protect, authorizeRoles } = require('../middleware/authMiddleware');
 const { validateObjectId } = require('../middleware/errorMiddleware');
@@ -17,6 +18,9 @@ router.use(authorizeRoles('admin'));
 
 // Route: /api/admin/interns
 router.get('/interns', getInterns);
+
+// Route: /api/admin/intern-roles
+router.get('/intern-roles', getInternRoles);
 
 // Route: /api/admin/intern
 router.post('/intern', createIntern);

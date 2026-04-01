@@ -11,9 +11,7 @@ async function migrateInternIds() {
         const interns = await User.find({ role: 'intern' }).sort({ createdAt: 1 });
         console.log(`Found ${interns.length} interns.`);
 
-        // Step 1: Temporarily clear existing internId to avoid unique constraint issues during migration
-        // Or just update them one by one. 
-        // A safer way is to prefix them with TEMP_ first.
+        
         
         console.log('Step 1: Assigning temporary IDs to avoid clashing during transition...');
         for (let i = 0; i < interns.length; i++) {

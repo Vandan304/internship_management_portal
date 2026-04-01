@@ -13,6 +13,7 @@ import RegisterPage from './pages/RegisterPage';
 import VerifyOtp from './pages/VerifyOtp';
 import ResetPassword from './pages/ResetPassword';
 import ChatPage from './pages/ChatPage';
+import AllInterns from './pages/AllInterns';
 
 import Interns from './pages/Interns';
 import Certificates from './pages/Certificates';
@@ -81,6 +82,7 @@ function App() {
         <Route path="certificates" element={<Certificates />} />
         <Route path="permissions" element={<Permissions />} />
         <Route path="chat" element={<ChatPage />} />
+        <Route path="all-interns" element={<AllInterns />} />
       </Route>
 
       {/* Intern Routes */}

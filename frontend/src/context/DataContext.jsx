@@ -152,11 +152,11 @@ export const DataProvider = ({ children }) => {
     const approveTask = async (id, comment) => {
         try {
             const token = localStorage.getItem('token');
-            const res = await axios.patch(`/api/tasks/${id}/approve`, 
+            const res = await axios.patch(`/api/tasks/${id}/approve`,
                 { comment },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
-            
+
             if (res.data.success) {
                 // Refresh both tasks and leaderboard to reflect new points/rank
                 await Promise.all([

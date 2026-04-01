@@ -16,6 +16,21 @@ exports.getInterns = async (req, res, next) => {
     }
 };
 
+// @route   GET /api/admin/intern-roles
+// @desc    Get all allowed intern roles from User model
+// @access  Private/Admin
+exports.getInternRoles = async (req, res, next) => {
+    console.log('[API START] getInternRoles');
+    try {
+        // Fetch the enum array from the User schema for internRole
+        const roles = User.schema.path('internRole').enumValues;
+        res.json({ success: true, data: roles });
+    } catch (error) {
+        console.error('[ERROR] getInternRoles:', error.message);
+        next(error);
+    }
+};
+
 // @route   POST /api/admin/intern
 // @desc    Create a new intern
 // @access  Private/Admin
