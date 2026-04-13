@@ -12,6 +12,7 @@ export function InternModal({ isOpen, onClose, onSubmit, initialData, isLoading 
         const data = {
             name: e.target.name.value.trim(),
             email: e.target.email.value.trim().toLowerCase(),
+            mobileNumber: e.target.mobileNumber?.value.trim() || null,
             internRole: e.target.internRole.value.trim(),
             startDate: e.target.startDate.value,
             endDate: e.target.endDate.value,
@@ -39,16 +40,31 @@ export function InternModal({ isOpen, onClose, onSubmit, initialData, isLoading 
                     />
                 </div>
 
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
-                    <input
-                        name="email"
-                        defaultValue={initialData?.email}
-                        type="email"
-                        required
-                        className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
-                        placeholder="e.g. rahul@example.com"
-                    />
+                <div className="grid grid-cols-2 gap-4">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                        <input
+                            name="email"
+                            defaultValue={initialData?.email}
+                            type="email"
+                            required
+                            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                            placeholder="e.g. rahul@example.com"
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Mobile Number</label>
+                        <input
+                            name="mobileNumber"
+                            defaultValue={initialData?.mobileNumber}
+                            type="text"
+                            required
+                            pattern="[0-9]{10}"
+                            title="Please enter a 10-digit mobile number"
+                            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+                            placeholder="e.g. 9876543210"
+                        />
+                    </div>
                 </div>
 
                 <div>

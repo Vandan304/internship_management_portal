@@ -85,7 +85,7 @@ const getEmailTemplate = (title, internName, taskTitle, deadline, type) => {
     <div class="container">
         <div class="header">
             <div class="logo">
-                <img src="https://res.cloudinary.com/demkiu4xj/image/upload/v1774018072/logo1_m98bgm.png" alt="Appifly Infotech">
+                <img src="cid:applogo" alt="Appilfy Infotech">
             </div>
         </div>
         <div class="content">
@@ -160,10 +160,15 @@ exports.sendDeadlineNotification = async (userEmail, internName, taskTitle, dead
         const html = getEmailTemplate(title, internName, taskTitle, deadline, type);
 
         const mailOptions = {
-            from: `"InternPortal Notifications" <${process.env.EMAIL_USER}>`,
+            from: `"Appilfy Infotech" <${process.env.EMAIL_USER}>`,
             to: userEmail,
             subject: subject,
-            html: html
+            html: html,
+            attachments: [{
+                filename: 'logo1_backup.png',
+                path: require('path').join(__dirname, '../../frontend/src/assets/logo1_backup.png'),
+                cid: 'applogo'
+            }]
         };
 
         console.log(`[EMAIL] ${timestamp} - Attempting to send email:`, {

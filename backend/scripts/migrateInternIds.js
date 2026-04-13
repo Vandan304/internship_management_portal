@@ -34,5 +34,4 @@ async function migrateInternIds() {
         process.exit(1);
     }
 }
-
 migrateInternIds();

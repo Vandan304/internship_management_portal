@@ -48,7 +48,7 @@ const getBaseTemplate = (title, content, buttonLabel, buttonLink) => {
     <div class="container">
         <div class="header">
             <div class="logo">
-                <img src="cid:applogo" alt="Appifly Infotech">
+                <img src="cid:applogo" alt="Appilfy Infotech">
             </div>
         </div>
         <div class="content">
@@ -57,7 +57,7 @@ const getBaseTemplate = (title, content, buttonLabel, buttonLink) => {
             ${buttonLabel ? `<div style="text-align: center;"><a href="${buttonLink}" class="button">${buttonLabel}</a></div>` : ''}
         </div>
         <div class="footer">
-            © ${new Date().getFullYear()} appifly Infotech - Internship Management Portal.<br>
+            © ${new Date().getFullYear()} Appilfy Infotech - Internship Management Portal.<br>
             This is an automated notification. Please do not reply directly to this email.
         </div>
     </div>
@@ -80,7 +80,7 @@ const sendInternCredentials = async (email, name, password, internId, role) => {
         const html = getBaseTemplate('Portal Account Created', content, 'Login to Portal', 'http://localhost:5173/login');
 
         const mailOptions = {
-            from: `"Appifly Intern Portal" <${process.env.EMAIL_USER}>`,
+            from: `"Appilfy Infotech" <${process.env.EMAIL_USER}>`,
             to: email,
             subject: 'Internship Portal Account Created',
             html: html,
@@ -118,7 +118,7 @@ const sendOTPEmail = async (email, name, otp) => {
         const html = getBaseTemplate('Verification Code', content);
 
         const mailOptions = {
-            from: `"Appifly Security" <${process.env.EMAIL_USER}>`,
+            from: `"Appilfy Infotech Security" <${process.env.EMAIL_USER}>`,
             to: email,
             subject: 'Password Reset OTP - Internship Portal',
             html: html,

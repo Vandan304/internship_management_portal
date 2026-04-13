@@ -38,8 +38,8 @@ exports.createIntern = async (req, res, next) => {
     console.log('[API START] createIntern');
     console.log('[BODY]', JSON.stringify(req.body));
     try {
-        const { name, email, internRole, startDate, endDate } = req.body;
-        console.log('[PARAMS]', `name: ${name}, email: ${email}, role: ${internRole}, dates: ${startDate} to ${endDate}`);
+        const { name, email, internRole, startDate, endDate, mobileNumber } = req.body;
+        console.log('[PARAMS]', `name: ${name}, email: ${email}, role: ${internRole}, dates: ${startDate} to ${endDate}, mobile: ${mobileNumber}`);
         
         if (!name || !email || !internRole) {
             console.warn('[VALIDATION ERROR] Missing required fields:', { name, email, internRole });
@@ -84,6 +84,7 @@ exports.createIntern = async (req, res, next) => {
         const intern = await User.create({
             name: name.trim(),
             email: trimmedEmail,
+            mobileNumber: mobileNumber || null,
             password: hashedPassword,
             role: 'intern',
             internRole: validInternRole,
@@ -153,7 +154,7 @@ exports.updateIntern = async (req, res, next) => {
     console.log('[PARAMS]', JSON.stringify(req.params));
     console.log('[BODY]', JSON.stringify(req.body));
     try {
-        const { name, email, internRole, startDate, endDate } = req.body;
+        const { name, email, internRole, startDate, endDate, mobileNumber } = req.body;
 
         let intern = await User.findById(req.params.id);
 
@@ -182,6 +183,7 @@ exports.updateIntern = async (req, res, next) => {
         if (internRole) intern.internRole = internRole.toLowerCase();
         if (startDate) intern.startDate = startDate;
         if (endDate) intern.endDate = endDate;
+        if (mobileNumber !== undefined) intern.mobileNumber = mobileNumber;
         if (req.body.loginAccess !== undefined) {
             intern.loginAccess = req.body.loginAccess;
             intern.isActive = req.body.loginAccess;

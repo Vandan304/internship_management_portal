@@ -16,13 +16,14 @@ function walk(dir) {
     return results;
 }
 
-const files = walk('c:/Users/manav/Music/Academic/8th sem/Internship/Projects/internship_management_portal/frontend/src');
+const srcDir = __dirname;
+const contextDir = path.join(srcDir, 'context');
+const files = walk(srcDir);
 
 files.forEach(file => {
     let content = fs.readFileSync(file, 'utf8');
     let original = content;
 
-    const contextDir = 'c:/Users/manav/Music/Academic/8th sem/Internship/Projects/internship_management_portal/frontend/src/context';
     let relPath = path.relative(path.dirname(file), contextDir).replace(/\\/g, '/');
     if (!relPath.startsWith('.')) relPath = './' + relPath;
     const importPath = `${relPath}/ToastContext`;

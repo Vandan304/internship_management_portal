@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { ShieldCheck, ArrowRight, Loader2 } from 'lucide-react';
-import toast from 'react-hot-toast';
+import { toast } from '../context/ToastContext';
 import axios from 'axios';
 
 const VerifyOtp = () => {
@@ -32,7 +32,7 @@ const VerifyOtp = () => {
     };
 
     const handleVerifyParams = async (e) => {
-        e.preventDefault();
+        if (e) e.preventDefault();
         const otpCode = otp.join('');
 
         if (otpCode.length !== 4) {
@@ -54,6 +54,13 @@ const VerifyOtp = () => {
             setLoading(false);
         }
     };
+
+    useEffect(() => {
+        const otpCode = otp.join('');
+        if (otpCode.length === 4 && !loading) {
+            handleVerifyParams();
+        }
+    }, [otp]);
 
     const handleResend = async () => {
         try {

@@ -3,7 +3,7 @@ import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import ChatSidebar from '../components/chat/ChatSidebar';
 import ChatWindow from '../components/chat/ChatWindow';
-import toast from 'react-hot-toast';
+import { toast } from '../context/ToastContext';
 
 const ChatPage = () => {
     const { user, socket } = useAuth();

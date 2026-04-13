@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { toast } from 'react-hot-toast';
+import { toast } from '../../context/ToastContext';
 import { useData } from '../../context/DataContext';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 

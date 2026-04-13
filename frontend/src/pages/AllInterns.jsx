@@ -9,6 +9,7 @@ import LoadingSpinner from '../components/common/LoadingSpinner';
 import axios from 'axios';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import logoImage from '../assets/logo1_backup.png';
 
 export default function AllInterns() {
     const { interns, updateIntern, isLoading } = useData();
@@ -120,48 +121,85 @@ export default function AllInterns() {
             return;
         }
 
-        try {
-            const doc = new jsPDF({ orientation: 'portrait' });
-            const title = getDynamicTitle();
-            const fileName = title.toLowerCase().replace(/\s+/g, '-') + '.pdf';
+        const img = new Image();
+        img.src = logoImage;
+        img.onload = () => {
+            try {
+                const doc = new jsPDF({ orientation: 'landscape', format: 'a4' });
+                const title = getDynamicTitle();
+                const fileName = title.toLowerCase().replace(/\s+/g, '-') + '.pdf';
+                const pageWidth = doc.internal.pageSize.getWidth();
 
-            // Layout & Styling
-            doc.setFontSize(18);
-            doc.setTextColor(33, 33, 33);
-            doc.text(title, 14, 22);
+                // Layout & Styling - Title Left
+                doc.setFontSize(22);
+                doc.setTextColor(14, 165, 233); // Sky-500
+                doc.text("Appilfy Infotech", 14, 18); 
 
-            doc.setFontSize(11);
-            doc.setTextColor(100, 100, 100);
-            doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 30);
+                doc.setFontSize(14);
+                doc.setTextColor(33, 33, 33);
+                doc.text(title, 14, 26);
 
-            // Table mapping
-            const tableColumn = ["Name", "Email", "Intern ID", "Role", "Start Date", "End Date", "Status"];
-            const tableRows = filteredInterns.map(intern => [
-                intern.name || 'N/A',
-                intern.email || 'N/A',
-                intern.internId || 'N/A',
-                intern.internRole || 'N/A',
-                formatDate(intern.startDate),
-                formatDate(intern.endDate),
-                intern.internshipStatus
-            ]);
+                doc.setFontSize(9);
+                doc.setTextColor(120, 120, 120);
+                doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 32);
 
-            autoTable(doc, {
-                head: [tableColumn],
-                body: tableRows,
-                startY: 40,
-                styles: { fontSize: 9, cellPadding: 4 },
-                headStyles: { fillColor: [14, 165, 233], textColor: 255 }, // matches brand-500 (sky-500)
-                alternateRowStyles: { fillColor: [249, 250, 251] }, // gray-50
-                margin: { top: 40 }
-            });
+                // Add Logo - Right Side
+                // Calculate position: right margin - width of logo
+                doc.addImage(img, 'PNG', pageWidth - 14 - 35, 12, 35, 12); 
 
-            doc.save(fileName);
-            addToast('Intern data exported successfully', 'success');
-        } catch (error) {
-            console.error('PDF Export error:', error);
-            addToast('Failed to export PDF data', 'error');
-        }
+                // Table mapping
+                const tableColumn = ["Name", "Email", "Mobile", "Intern ID", "Role", "Start Date", "End Date", "Status"];
+                const tableRows = filteredInterns.map(intern => [
+                    intern.name || 'N/A',
+                    intern.email || 'N/A',
+                    intern.mobileNumber || 'N/A',
+                    intern.internId || 'N/A',
+                    (intern.internRole || 'N/A').toUpperCase(),
+                    formatDate(intern.startDate),
+                    formatDate(intern.endDate),
+                    intern.internshipStatus
+                ]);
+
+                autoTable(doc, {
+                    head: [tableColumn],
+                    body: tableRows,
+                    startY: 40,
+                    styles: { fontSize: 8.5, cellPadding: 3, textColor: [50, 50, 50], fontStyle: 'normal' },
+                    headStyles: { fontSize: 9, fillColor: [14, 165, 233], textColor: 255, fontStyle: 'bold', halign: 'center' }, 
+                    alternateRowStyles: { fillColor: [248, 250, 252] }, // Slate-50
+                    columnStyles: {
+                        0: { halign: 'left' },
+                        1: { halign: 'left' },
+                        2: { halign: 'center' },
+                        3: { halign: 'center' },
+                        4: { halign: 'center' },
+                        5: { halign: 'center' },
+                        6: { halign: 'center' },
+                        7: { halign: 'center' }
+                    },
+                    margin: { top: 40, left: 14, right: 14 },
+                    didDrawPage: function (data) {
+                        // Footer
+                        const str = "Page " + doc.internal.getNumberOfPages();
+                        doc.setFontSize(8);
+                        doc.setTextColor(150);
+                        const pageSize = doc.internal.pageSize;
+                        const pageHeight = pageSize.height ? pageSize.height : pageSize.getHeight();
+                        doc.text(str, data.settings.margin.left, pageHeight - 10);
+                    }
+                });
+
+                doc.save(fileName);
+                addToast('Intern data exported successfully', 'success');
+            } catch (error) {
+                console.error('PDF Export error:', error);
+                addToast('Failed to export PDF data', 'error');
+            }
+        };
+        img.onerror = () => {
+            console.error('Error loading logo image');
+            addToast('Failed to load logo for PDF export', 'error');
+        };
     };
 
     const handleEditClick = (intern) => {
@@ -248,6 +286,7 @@ export default function AllInterns() {
                             <thead className="text-xs text-gray-500 uppercase bg-gray-50 sticky top-0 z-10">
                                 <tr>
                                     <th className="px-4 py-4 font-medium tracking-wider">Intern</th>
+                                    <th className="px-4 py-4 font-medium tracking-wider">Mobile</th>
                                     <th className="px-4 py-4 font-medium tracking-wider">Intern ID</th>
                                     <th className="px-4 py-4 font-medium tracking-wider">Role</th>
                                     <th className="px-4 py-4 font-medium tracking-wider">Start Date</th>
@@ -266,6 +305,9 @@ export default function AllInterns() {
                                                 </div>
                                                 <div className="text-xs text-gray-500 mt-0.5">{intern.email || 'N/A'}</div>
                                             </div>
+                                        </td>
+                                        <td className="px-4 py-4 whitespace-nowrap text-gray-600">
+                                            {intern.mobileNumber || 'N/A'}
                                         </td>
                                         <td className="px-4 py-4 whitespace-nowrap">
                                             <span className="text-xs font-mono font-medium text-sky-700 bg-sky-50 px-2.5 py-1 rounded border border-sky-100">

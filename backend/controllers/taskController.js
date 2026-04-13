@@ -194,9 +194,19 @@ exports.rejectTask = async (req, res, next) => {
         task.reviewedAt = Date.now();
         task.reviewComment = comment;
 
+        // --- PENALTY LOGIC: DEDUCT POINTS ---
+        const intern = await User.findById(task.assignedTo);
+        if (intern) {
+            intern.points = (intern.points || 0) - 5;
+            if (intern.points < 0) {
+                intern.points = 0; // Prevent score from going below 0
+            }
+            await intern.save();
+        }
+
         await task.save();
 
-        res.status(200).json({ success: true, message: 'Task rejected', data: task });
+        res.status(200).json({ success: true, message: 'Task rejected and 5 points deducted', data: task });
     } catch (error) {
         next(error);
     }

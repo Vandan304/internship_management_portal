@@ -5,6 +5,7 @@ import { LayoutDashboard, Users, FileText, Download, Settings, LogOut, X, ListTo
 import { cn } from '../../utils/cn';
 import { useAuth } from '../../context/AuthContext';
 import logoImage from '../../assets/logo1_backup.png';
+import ConfirmModal from '../ui/ConfirmModal';
 
 const navItems = [
     { icon: LayoutDashboard, label: 'Dashboard', to: '/admin' },
@@ -22,6 +23,7 @@ const navItems = [
 export function Sidebar({ isOpen, onClose }) {
     const { logout } = useAuth();
     const [unreadChatCount, setUnreadChatCount] = useState(0);
+    const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
 
     useEffect(() => {
         let isMounted = true;
@@ -101,12 +103,23 @@ export function Sidebar({ isOpen, onClose }) {
 
                 {/* Footer Actions */}
                 <div className="p-4 border-t border-gray-50">
-                    <button onClick={logout} className="group flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:bg-red-50 hover:text-red-600 w-full transition-colors">
+                    <button onClick={() => setIsLogoutModalOpen(true)} className="group flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:bg-red-50 hover:text-red-600 w-full transition-colors">
                         <LogOut size={18} className="text-gray-400 group-hover:text-red-500 transition-colors" />
                         <span>Sign Out</span>
                     </button>
                 </div>
             </aside>
+
+            <ConfirmModal
+                isOpen={isLogoutModalOpen}
+                onClose={() => setIsLogoutModalOpen(false)}
+                onConfirm={logout}
+                title="Confirm Sign Out"
+                message="Are you sure you want to sign out? You will need to log back in to access the portal."
+                confirmText="Sign Out"
+                cancelText="Cancel"
+                type="danger"
+            />
         </>
     );
 }

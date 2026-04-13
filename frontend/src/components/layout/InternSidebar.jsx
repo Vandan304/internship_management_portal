@@ -15,11 +15,13 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import logoImage from '../../assets/logo1_backup.png';
+import ConfirmModal from '../ui/ConfirmModal';
 
 export function InternSidebar({ isOpen, onClose }) {
     const { logout } = useAuth();
     const [unreadCount, setUnreadCount] = useState(0);
     const [unreadChatCount, setUnreadChatCount] = useState(0);
+    const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
 
     useEffect(() => {
         let isMounted = true;
@@ -153,7 +155,7 @@ export function InternSidebar({ isOpen, onClose }) {
                     {/* User Profile & Logout */}
                     <div className="p-4 border-t border-gray-100">
                         <button
-                            onClick={logout}
+                            onClick={() => setIsLogoutModalOpen(true)}
                             className="group flex items-center gap-3 w-full px-3 py-2.5 text-sm font-medium text-gray-600 hover:bg-red-50 hover:text-red-600 rounded-lg transition-colors"
                         >
                             <LogOut className="w-5 h-5 text-gray-400 group-hover:text-red-500 transition-colors" />
@@ -162,6 +164,17 @@ export function InternSidebar({ isOpen, onClose }) {
                     </div>
                 </div>
             </aside>
+
+            <ConfirmModal
+                isOpen={isLogoutModalOpen}
+                onClose={() => setIsLogoutModalOpen(false)}
+                onConfirm={logout}
+                title="Confirm Sign Out"
+                message="Are you sure you want to sign out? You will need to log back in to access the portal."
+                confirmText="Sign Out"
+                cancelText="Cancel"
+                type="danger"
+            />
         </>
     );
 }

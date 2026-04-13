@@ -33,6 +33,11 @@ const userSchema = new mongoose.Schema({
         unique: true,
         sparse: true
     },
+    mobileNumber: {
+        type: String,
+        trim: true,
+        default: null
+    },
     resetPasswordOtp: {
         type: String
     },

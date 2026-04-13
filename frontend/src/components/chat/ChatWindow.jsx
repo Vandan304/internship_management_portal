@@ -2,12 +2,15 @@ import React, { useState, useEffect, useRef } from 'react';
 import MessageBubble from './MessageBubble';
 import MessageInput from './MessageInput';
 import { MoreVertical, Phone, Video, ArrowLeft, CheckSquare, Trash2, X } from 'lucide-react';
+import ConfirmModal from '../ui/ConfirmModal';
 
 const ChatWindow = ({ activeConversation, currentUserId, messages, onSendMessage, onTyping, isTyping, onBack, onDeleteMessages }) => {
     const messagesEndRef = useRef(null);
     const [isSelectMode, setIsSelectMode] = useState(false);
     const [selectedMessageIds, setSelectedMessageIds] = useState([]);
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [deleteType, setDeleteType] = useState(null);
     const menuRef = useRef(null);
 
     useEffect(() => {
@@ -23,11 +26,8 @@ const ChatWindow = ({ activeConversation, currentUserId, messages, onSendMessage
     const handleClearChat = async () => {
         setIsMenuOpen(false);
         if (messages.length === 0) return;
-        const success = await onDeleteMessages(messages.map(m => m._id));
-        if (success) {
-            setIsSelectMode(false);
-            setSelectedMessageIds([]);
-        }
+        setDeleteType('clear');
+        setIsDeleteModalOpen(true);
     };
 
     const toggleSelectMode = () => {
@@ -46,11 +46,24 @@ const ChatWindow = ({ activeConversation, currentUserId, messages, onSendMessage
 
     const handleDeleteSelected = async () => {
         if (selectedMessageIds.length === 0) return;
-        const success = await onDeleteMessages(selectedMessageIds);
+        setDeleteType('selected');
+        setIsDeleteModalOpen(true);
+    };
+
+    const confirmDelete = async () => {
+        let success = false;
+        if (deleteType === 'clear') {
+            success = await onDeleteMessages(messages.map(m => m._id));
+        } else if (deleteType === 'selected') {
+            success = await onDeleteMessages(selectedMessageIds);
+        }
+        
         if (success) {
             setIsSelectMode(false);
             setSelectedMessageIds([]);
         }
+        setIsDeleteModalOpen(false);
+        setDeleteType(null);
     };
 
     const scrollToBottom = () => {
@@ -205,6 +218,19 @@ const ChatWindow = ({ activeConversation, currentUserId, messages, onSendMessage
 
             {/* Input Area */}
             <MessageInput onSendMessage={onSendMessage} onTyping={onTyping} />
+
+            <ConfirmModal
+                isOpen={isDeleteModalOpen}
+                onClose={() => setIsDeleteModalOpen(false)}
+                onConfirm={confirmDelete}
+                title={deleteType === 'clear' ? "Clear Chat" : "Delete Selected Messages"}
+                message={deleteType === 'clear' 
+                    ? "Are you sure you want to delete all messages in this chat? This action cannot be undone." 
+                    : "Are you sure you want to delete the selected messages? This action cannot be undone."}
+                confirmText="Delete"
+                cancelText="Cancel"
+                type="danger"
+            />
         </div>
     );
 };

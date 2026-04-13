@@ -26,7 +26,7 @@ import ProtectedRoute from './components/layout/ProtectedRoute';
 import { useEffect } from 'react';
 import { useAuth } from './context/AuthContext';
 import { requestForToken, onMessageListener } from './utils/firebase-config';
-import { toast } from 'react-hot-toast';
+import { toast } from './context/ToastContext';
 
 function App() {
   const { user, updateFcmToken } = useAuth();

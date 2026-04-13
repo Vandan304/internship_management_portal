@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Lock, ArrowRight, Loader2, KeyRound, Eye, EyeOff } from 'lucide-react';
-import toast from 'react-hot-toast';
+import { toast } from '../context/ToastContext';
 import axios from 'axios';
 
 const ResetPassword = () => {

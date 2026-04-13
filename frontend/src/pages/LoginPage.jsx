@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { GraduationCap, Mail, Lock, ArrowRight, Loader2, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import toast from 'react-hot-toast';
+import { toast } from '../context/ToastContext';
 import logoImage from '../assets/logo_trimmed.png';
 import axios from 'axios';
 
