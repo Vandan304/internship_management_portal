@@ -89,6 +89,7 @@ const MyTasks = () => {
                                     const st = getStatusConfig(task.status);
                                     const StatusIcon = st.icon;
                                     const isOverdue = new Date(task.deadline) < new Date();
+                                    const showOverdueWarning = isOverdue && (task.status === 'pending' || task.status === 'rejected');
 
                                     return (
                                         <tr key={task._id} className="hover:bg-gray-50 transition-colors">
@@ -102,10 +103,10 @@ const MyTasks = () => {
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
-                                                <div className={`text-sm ${isOverdue ? 'text-red-600 font-semibold' : 'text-gray-900'}`}>
+                                                <div className={`text-sm ${showOverdueWarning ? 'text-red-600 font-semibold' : 'text-gray-900'}`}>
                                                     {new Date(task.deadline).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })} at 11:59 PM
                                                 </div>
-                                                {isOverdue && <div className="text-xs text-red-500">Overdue</div>}
+                                                {showOverdueWarning && <div className="text-xs text-red-500">Overdue</div>}
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <span className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-medium ${st.bg} ${st.color}`}>

@@ -266,12 +266,41 @@ exports.updateTaskDeadline = async (req, res, next) => {
             }
         }
 
-        res.status(200).json({ 
-            success: true, 
-            message: `Deadline ${isIncreased ? 'increased' : 'decreased'} successfully`, 
-            data: task 
-        });
-    } catch (error) {
-        next(error);
-    }
-};
+            res.status(200).json({ 
+                success: true, 
+                message: `Deadline ${isIncreased ? 'increased' : 'decreased'} successfully`, 
+                data: task 
+            });
+        } catch (error) {
+            next(error);
+        }
+    };
+
+    // @desc    Admin deletes a task
+    // @route   DELETE /api/tasks/:id
+    // @access  Private/Admin
+    exports.deleteTask = async (req, res, next) => {
+        try {
+            const task = await Task.findById(req.params.id);
+
+            if (!task) {
+                return res.status(404).json({ success: false, message: 'Task not found' });
+            }
+
+            // Clean up file if exists
+            if (task.zipFile) {
+                try {
+                    await storageService.deleteFile(task.zipFile, task.storageType);
+                } catch (err) {
+                    console.error('Failed to delete file from storage during task deletion', err);
+                }
+            }
+
+            await Task.findByIdAndDelete(req.params.id);
+            await Notification.deleteMany({ taskId: req.params.id });
+
+            res.status(200).json({ success: true, message: 'Task deleted successfully' });
+        } catch (error) {
+            next(error);
+        }
+    };

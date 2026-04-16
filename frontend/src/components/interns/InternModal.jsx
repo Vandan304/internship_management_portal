@@ -92,6 +92,7 @@ export function InternModal({ isOpen, onClose, onSubmit, initialData, isLoading 
                             type="date"
                             required
                             className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white"
+                            min={!isEdit ? new Date().toISOString().split('T')[0] : undefined}
                         />
                     </div>
                     <div>
@@ -102,6 +103,7 @@ export function InternModal({ isOpen, onClose, onSubmit, initialData, isLoading 
                             type="date"
                             required
                             className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white"
+                            min={!isEdit ? new Date().toISOString().split('T')[0] : undefined}
                         />
                     </div>
                 </div>

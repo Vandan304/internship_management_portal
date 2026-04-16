@@ -4,6 +4,7 @@ import { Plus, Search, Filter, Trash2, Edit2, ListTodo, CheckCircle, Clock, Load
 import axios from 'axios';
 import { useToast } from '../../context/ToastContext';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
+import ConfirmModal from '../../components/ui/ConfirmModal';
 
 const TaskManagement = () => {
     const { addToast } = useToast();
@@ -17,11 +18,21 @@ const TaskManagement = () => {
     const [isCreating, setIsCreating] = useState(false);
     const [statusFilter, setStatusFilter] = useState('All');
     const [specificDateFilter, setSpecificDateFilter] = useState('');
+    const [monthFilter, setMonthFilter] = useState('');
 
     const openEditModal = (task) => {
         setTaskToEdit(task);
         setEditDeadline(new Date(task.deadline).toISOString().split('T')[0]);
         setIsEditModalOpen(true);
+    };
+
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [taskToDelete, setTaskToDelete] = useState(null);
+    const [isDeleting, setIsDeleting] = useState(false);
+
+    const openDeleteModal = (task) => {
+        setTaskToDelete(task);
+        setIsDeleteModalOpen(true);
     };
 
     const handleUpdateDeadline = async (e) => {
@@ -101,6 +112,27 @@ const TaskManagement = () => {
         }
     };
 
+    const handleDeleteTask = async () => {
+        if (!taskToDelete) return;
+        
+        setIsDeleting(true);
+        try {
+            const token = localStorage.getItem('token');
+            await axios.delete(`/api/tasks/${taskToDelete._id}`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            addToast('Task deleted successfully', 'success');
+            setTasks(prev => prev.filter(t => t._id !== taskToDelete._id));
+            setIsDeleteModalOpen(false);
+            setTaskToDelete(null);
+        } catch (error) {
+            console.error('Error deleting task:', error);
+            addToast(error.response?.data?.message || 'Failed to delete task', 'error');
+        } finally {
+            setIsDeleting(false);
+        }
+    };
+
     const filteredTasks = tasks.filter(task => {
         const matchesSearch = task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
             task.assignedTo?.name?.toLowerCase().includes(searchTerm.toLowerCase());
@@ -112,6 +144,13 @@ const TaskManagement = () => {
             const taskDate = new Date(task.deadline);
             taskDate.setHours(0, 0, 0, 0);
             matchesDeadline = taskDate.getTime() === selectedDate.getTime();
+        } else if (monthFilter) {
+            const taskDate = new Date(task.deadline);
+            const [filterYear, filterMonth] = monthFilter.split('-');
+            if (filterYear && filterMonth) {
+                matchesDeadline = taskDate.getFullYear() === parseInt(filterYear, 10) && 
+                               (taskDate.getMonth() + 1) === parseInt(filterMonth, 10);
+            }
         } else if (deadlineFilter !== 'All') {
             const today = new Date();
             today.setHours(0, 0, 0, 0);
@@ -149,8 +188,8 @@ const TaskManagement = () => {
                 </button>
             </div>
 
-            <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col sm:flex-row gap-4 flex-shrink-0">
-                <div className="relative flex-1">
+            <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm flex flex-col sm:flex-row flex-wrap gap-4 flex-shrink-0">
+                <div className="relative flex-1 min-w-[200px]">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
                     <input
                         type="text"
@@ -164,7 +203,13 @@ const TaskManagement = () => {
                     <select
                         className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white"
                         value={deadlineFilter}
-                        onChange={(e) => setDeadlineFilter(e.target.value)}
+                        onChange={(e) => {
+                            setDeadlineFilter(e.target.value);
+                            if (e.target.value !== 'All') {
+                                setSpecificDateFilter('');
+                                setMonthFilter('');
+                            }
+                        }}
                     >
                         <option value="All">All Deadlines</option>
                         <option value="Today">Today</option>
@@ -186,22 +231,42 @@ const TaskManagement = () => {
                 </div>
                 <div className="flex items-center gap-2">
                     <input
+                        type="month"
+                        className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white"
+                        value={monthFilter}
+                        onChange={(e) => {
+                            setMonthFilter(e.target.value);
+                            if (e.target.value) {
+                                setSpecificDateFilter('');
+                                setDeadlineFilter('All');
+                            }
+                        }}
+                        title="Filter Tasks by Month"
+                    />
+                </div>
+                <div className="flex items-center gap-2">
+                    <input
                         type="date"
                         className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 bg-white"
                         value={specificDateFilter}
                         onChange={(e) => {
                             setSpecificDateFilter(e.target.value);
-                            setDeadlineFilter('All'); // Priority to specific date
+                            if (e.target.value) {
+                                setMonthFilter('');
+                                setDeadlineFilter('All');
+                            }
                         }}
+                        title="Filter Tasks by Date"
                     />
                 </div>
-                {(searchTerm || statusFilter !== 'All' || deadlineFilter !== 'All' || specificDateFilter) && (
+                {(searchTerm || statusFilter !== 'All' || deadlineFilter !== 'All' || specificDateFilter || monthFilter) && (
                     <button
                         onClick={() => {
                             setSearchTerm('');
                             setStatusFilter('All');
                             setDeadlineFilter('All');
                             setSpecificDateFilter('');
+                            setMonthFilter('');
                         }}
                         className="text-sm text-brand-600 hover:text-brand-700 font-medium px-2"
                     >
@@ -267,14 +332,24 @@ const TaskManagement = () => {
                                             })()}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                            <button
-                                                onClick={() => openEditModal(task)}
-                                                className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-brand-700 bg-brand-50 rounded-lg hover:bg-brand-100 transition-colors"
-                                                disabled={isUpdating}
-                                            >
-                                                <Clock className="w-4 h-4" />
-                                                Edit Deadline
-                                            </button>
+                                            <div className="flex items-center justify-end gap-2">
+                                                <button
+                                                    onClick={() => openEditModal(task)}
+                                                    className="inline-flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-brand-700 bg-brand-50 rounded-lg hover:bg-brand-100 transition-colors"
+                                                    disabled={isUpdating}
+                                                >
+                                                    <Clock className="w-4 h-4" />
+                                                    Edit Deadline
+                                                </button>
+                                                <button
+                                                    onClick={() => openDeleteModal(task)}
+                                                    className={`p-1.5 rounded-lg transition-colors ${task.status !== 'approved' ? 'text-gray-400 bg-gray-50 cursor-not-allowed pointer-events-none' : 'text-red-600 hover:bg-red-50'}`}
+                                                    disabled={task.status !== 'approved'}
+                                                    title={task.status !== 'approved' ? "Can only delete approved tasks" : "Delete Task"}
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
+                                            </div>
                                         </td>
                                     </tr>
                                 ))
@@ -315,7 +390,14 @@ const TaskManagement = () => {
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Deadline</label>
-                                    <input type="date" required value={formData.deadline} onChange={e => setFormData({ ...formData, deadline: e.target.value })} className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-brand-500 focus:border-brand-500 outline-none" />
+                                    <input 
+                                        type="date" 
+                                        required 
+                                        value={formData.deadline} 
+                                        onChange={e => setFormData({ ...formData, deadline: e.target.value })} 
+                                        className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-brand-500 focus:border-brand-500 outline-none" 
+                                        min={new Date().toISOString().split('T')[0]}
+                                    />
                                 </div>
                             </div>
                             <div className="pt-4 flex justify-end gap-3">
@@ -349,6 +431,7 @@ const TaskManagement = () => {
                                     value={editDeadline} 
                                     onChange={e => setEditDeadline(e.target.value)} 
                                     className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-brand-500 focus:border-brand-500 outline-none" 
+                                    min={new Date().toISOString().split('T')[0]}
                                 />
                             </div>
                             <div className="pt-4 flex justify-end gap-3">
@@ -363,6 +446,22 @@ const TaskManagement = () => {
                 </div>,
                 document.body
             )}
+
+            {/* Delete Confirmation Modal */}
+            <ConfirmModal
+                isOpen={isDeleteModalOpen}
+                onClose={() => {
+                    setIsDeleteModalOpen(false);
+                    setTaskToDelete(null);
+                }}
+                onConfirm={handleDeleteTask}
+                title="Confirm Deletion"
+                message={`Are you sure you want to delete the task "${taskToDelete?.title}"? This action cannot be undone.`}
+                confirmText="Delete Task"
+                type="danger"
+                isLoading={isDeleting}
+                loadingText="Deleting..."
+            />
         </div>
     );
 };

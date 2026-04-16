@@ -9,7 +9,8 @@ const {
     submitTask,
     approveTask,
     rejectTask,
-    updateTaskDeadline
+    updateTaskDeadline,
+    deleteTask
 } = require('../controllers/taskController');
 
 // All routes require authentication
@@ -21,6 +22,7 @@ router.get('/', authorizeRoles('admin'), getAllTasks);
 router.patch('/:id/approve', authorizeRoles('admin'), approveTask);
 router.patch('/:id/reject', authorizeRoles('admin'), rejectTask);
 router.patch('/:id/deadline', authorizeRoles('admin'), updateTaskDeadline);
+router.delete('/:id', authorizeRoles('admin'), deleteTask);
 
 // Intern Routes
 router.get('/my-tasks', authorizeRoles('intern'), getInternTasks);
