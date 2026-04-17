@@ -29,16 +29,6 @@ router.get('/me', protect, (req, res) => {
     });
 });
 
-// @route GET /api/auth/admin-only
-// @desc  Test route for admin access only
-// @access Private/Admin
-router.get('/admin-only', protect, authorizeRoles('admin'), (req, res) => {
-    res.status(200).json({
-        success: true,
-        message: 'You have accessed the admin-only route successfully.',
-        user: req.user
-    });
-});
 
 // @route POST /api/auth/update-fcm-token
 // @desc  Update user's FCM token for push notifications

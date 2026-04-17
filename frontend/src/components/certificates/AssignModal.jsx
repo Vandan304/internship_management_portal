@@ -1,22 +1,16 @@
 import React from 'react';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
+import { useData } from '../../context/DataContext';
 
 export function AssignModal({ isOpen, onClose, onAssign, certificateName }) {
-
-    // Mock list of interns for the dropdown
-    const interns = [
-        { id: 1, name: "User 1" },
-        { id: 2, name: "User 2" },
-        { id: 3, name: "User 3" },
-        { id: 4, name: "User 4" },
-    ];
+    const { interns } = useData();
 
     const handleSubmit = (e) => {
         e.preventDefault();
         const internId = e.target.intern.value;
-        const internName = interns.find(i => i.id == internId)?.name;
-        onAssign(internName);
+        const intern = interns.find(i => i.id == internId || i._id == internId);
+        onAssign(intern?.name);
         onClose();
     };
 

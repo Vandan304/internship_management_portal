@@ -198,7 +198,6 @@ export default function Certificates() {
                                             <th className="px-6 py-3 font-medium text-nowrap">File Name</th>
                                             <th className="px-6 py-3 font-medium text-nowrap">Uploaded</th>
                                             <th className="px-6 py-3 font-medium text-nowrap">Size</th>
-                                            <th className="px-6 py-3 font-medium text-center text-nowrap">Status</th>
                                             <th className="px-6 py-3 font-medium text-center text-nowrap">View</th>
                                             <th className="px-6 py-3 font-medium text-right text-nowrap">Action</th>
                                         </tr>
@@ -225,14 +224,6 @@ export default function Certificates() {
                                                             ? (cert.fileSize / (1024 * 1024)).toFixed(1) + ' MB'
                                                             : (cert.fileSize / 1024).toFixed(1) + ' KB'
                                                     ) : 'Unknown'}
-                                                </td>
-                                                <td className="px-6 py-4 text-center">
-                                                    <span className={cn(
-                                                        "inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-medium",
-                                                        cert.assignedCount > 0 ? "bg-blue-50 text-blue-700" : "bg-gray-100 text-gray-700"
-                                                    )}>
-                                                        {cert.assignedCount > 0 ? 'Assigned' : 'Draft'}
-                                                    </span>
                                                 </td>
                                                 <td className="px-6 py-4 text-center">
                                                     <button
@@ -281,12 +272,6 @@ export default function Certificates() {
                                                         </p>
                                                     </div>
                                                 </div>
-                                                <span className={cn(
-                                                    "px-2 py-0.5 rounded-full text-[10px] font-medium shrink-0",
-                                                    cert.assignedCount > 0 ? "bg-blue-50 text-blue-700" : "bg-gray-100 text-gray-700"
-                                                )}>
-                                                    {cert.assignedCount > 0 ? 'Assigned' : 'Draft'}
-                                                </span>
                                             </div>
                                             
                                             <div className="flex items-center justify-between text-[11px] text-gray-500 mb-4 px-1">

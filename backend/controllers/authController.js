@@ -48,7 +48,8 @@ exports.register = async (req, res, next) => {
                 internId: user.internId,
                 internRole: user.internRole,
                 isActive: user.isActive,
-                loginAccess: user.loginAccess
+                loginAccess: user.loginAccess,
+                mobileNumber: user.mobileNumber
             }
         });
 
@@ -125,7 +126,8 @@ exports.login = async (req, res, next) => {
                         internId: user.internId,
                         internRole: user.internRole,
                         isActive: user.isActive,
-                        loginAccess: user.loginAccess
+                        loginAccess: user.loginAccess,
+                        mobileNumber: user.mobileNumber
                     },
                     redirectTo
                 });

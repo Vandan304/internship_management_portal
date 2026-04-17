@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { User, Mail, Calendar, Hash, Save, Camera, Loader2 } from 'lucide-react';
+import { User, Mail, Calendar, Hash, Save, Camera, Loader2, Phone } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import axios from 'axios';
@@ -13,14 +13,16 @@ const InternProfile = () => {
     // Form state
     const [formData, setFormData] = useState({
         name: '',
-        email: ''
+        email: '',
+        mobileNumber: ''
     });
 
     useEffect(() => {
         if (user) {
             setFormData({
                 name: user.name || '',
-                email: user.email || ''
+                email: user.email || '',
+                mobileNumber: user.mobileNumber || ''
             });
         }
     }, [user, isEditing]);
@@ -153,6 +155,24 @@ const InternProfile = () => {
                                             type="text"
                                             disabled
                                             defaultValue={user?.internId || 'APPI001'}
+                                            className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 outline-none disabled:bg-gray-50 disabled:text-gray-500"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-gray-700">Mobile Number</label>
+                                    <div className="relative">
+                                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                            <Phone className="h-5 w-5 text-gray-400" />
+                                        </div>
+                                        <input
+                                            type="tel"
+                                            name="mobileNumber"
+                                            disabled={!isEditing}
+                                            value={formData.mobileNumber}
+                                            onChange={handleInputChange}
+                                            placeholder="Enter mobile number"
                                             className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 outline-none disabled:bg-gray-50 disabled:text-gray-500"
                                         />
                                     </div>

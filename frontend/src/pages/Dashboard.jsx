@@ -32,12 +32,6 @@ export default function Dashboard() {
         user: intern.name
     }));
 
-    const handleDownload = () => {
-        addToast('Downloading monthly report...', 'info');
-        // Mock download
-        setTimeout(() => addToast('Report downloaded successfully!', 'success'), 1500);
-    };
-
     return (
         <div className="space-y-6 animate-fade-in-up overflow-y-auto scrollbar-hide h-full pb-8 pr-2">
             <div className="flex items-center justify-between">
@@ -45,10 +39,6 @@ export default function Dashboard() {
                     <h2 className="text-2xl font-bold text-gray-900">Dashboard</h2>
                     <p className="text-gray-500 text-sm mt-1">Overview of your internship program.</p>
                 </div>
-                {/* <Button onClick={handleDownload}>
-                    <Download size={16} className="mr-2" />
-                    Download Report
-                </Button> */}
             </div>
 
             {/* Stats Grid */}

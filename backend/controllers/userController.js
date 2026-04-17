@@ -6,7 +6,7 @@ const Notification = require('../models/Notification');
 // @access  Private/Intern
 exports.updateProfile = async (req, res, next) => {
     try {
-        const { name, email } = req.body;
+        const { name, email, mobileNumber } = req.body;
 
         // SAFE AUTH CHECK: Ensure user is populated by authMiddleware
         if (!req.user || !req.user.id) {
@@ -38,6 +38,10 @@ exports.updateProfile = async (req, res, next) => {
             user.name = name;
         }
 
+        if (mobileNumber !== undefined) {
+            user.mobileNumber = mobileNumber;
+        }
+
         // Save updated user (Note: role, isActive, loginAllowed are explicitly IGNORED from req.body)
         await user.save();
 
@@ -63,7 +67,8 @@ exports.updateProfile = async (req, res, next) => {
                 internId: user.internId,
                 internRole: user.internRole,
                 isActive: user.isActive,
-                loginAccess: user.loginAccess
+                loginAccess: user.loginAccess,
+                mobileNumber: user.mobileNumber
             }
         });
 
